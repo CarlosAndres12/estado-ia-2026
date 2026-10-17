@@ -95,6 +95,11 @@ zero errors; 9 videos play in sync; 17 láminas render/print with corrected figu
   odd/spec/data-model.md (diagrama.tipo `barras`; tool copy lives in actividades.js entries).
   Open: quiz hints are written by the worker → facilitator review; cuaderno cost amount/unit labels → T08.
 
+- Crash diagnosis: both resets (07:17, 07:25) ended the journal abruptly (no OOM/panic/MCE), thermal zone
+  72–73 °C at the next boot vs 50 °C idle, second crash seconds after two headless Chromium launches →
+  caused by the parallel workers' load. Mitigation: one worker at a time; every headless Chromium via
+  `tools/dev/chromium-safe.sh` (systemd-run CPUQuota=300%, MemoryMax=6G, nice 15); no real-time perf runs.
+
 ## Next step
 
 Merge wave 1 branches as they finish (verify each: checker, tests, headless console), then wave 2:
