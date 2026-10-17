@@ -205,6 +205,12 @@ EIA.data.actividades = {
       label: 'Ver la edición 2026',
       nota: 'No se compara directamente con la edición 2025',
       cifras: ['adop-7']
+    },
+    // Tool copy (prompt §10.5), not KB text.
+    ui: {
+      ayuda: 'Toca una barra para ver su cifra completa, su alcance y su fuente.',
+      ocultar: 'Ocultar la edición 2026',
+      escala: 'Todas las barras usan la misma escala, de 0 a 100%.'
     }
   },
   's3-linea-base': {

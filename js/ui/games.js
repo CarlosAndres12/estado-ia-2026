@@ -442,5 +442,87 @@
     }
   };
 
+  // =============================================================================================
+  // Figure and source triggers (the popovers of js/ui/chips.js open on any of these buttons).
+
+  function figButton(id, text, cls) {
+    if (!id || !EIA.cifra.has(id)) return h('span', { class: cls || null, text: text });
+    return h('button', { type: 'button', class: 'fig' + (cls ? ' ' + cls : ''), 'data-cifra': id, 'aria-haspopup': 'dialog', 'aria-expanded': 'false', text: text });
+  }
+  function sourceTags(ids) {
+    var keys = [];
+    (ids || []).forEach(function (id) {
+      if (!EIA.cifra.has(id)) return;
+      EIA.cifra(id).fuentes.forEach(function (k) { if (keys.indexOf(k) < 0 && EIA.data.fuentes[k]) keys.push(k); });
+    });
+    return keys.map(function (k) {
+      return h('button', { type: 'button', class: 'source-tag', 'data-cita': k, 'aria-haspopup': 'dialog', 'aria-expanded': 'false' }, [
+        h('span', { class: 'visually-hidden', text: ui.t('page.markup.fuente') + ' ' }), EIA.data.fuentes[k].etiqueta
+      ]);
+    });
+  }
+
+  // =============================================================================================
+  // S3 · «El embudo, con cuidado» (prompt §10.5): lámina D7's four bars on one zero-based scale,
+  // each a figure button; the fixed caution note; the 2026 edition on a separate panel.
+
+  tools['s3-embudo'] = {
+    mount: function (el, o) {
+      var a = act(o.id || 's3-embudo');
+      var d = a && (EIA.data.deck || []).filter(function (x) { return x.id === a.lamina; })[0];
+      if (!a || !d || !d.diagrama) return null;
+      var kit = K(), c = a.ui || {}, rot = d.rotulos || {};
+      var panelId = kit.uid('edicion');
+      var items = d.diagrama.items.map(function (it, i) {
+        var v = Math.max(0, Math.min(100, Number(it.valor) || 0));
+        var fill = h('span', { class: 'funnel__fill' + (it.aprox ? ' funnel__fill--aprox' : ''), style: 'width: ' + v.toFixed(4) + '%', 'data-aprox': it.aprox || null });
+        var bar = h('button', {
+          type: 'button', class: 'fig funnel__bar' + (it.cuello ? ' funnel__bar--neck' : ''), 'data-cifra': (it.cifras || [])[0] || a.barras[i],
+          'aria-haspopup': 'dialog', 'aria-expanded': 'false'
+        }, [
+          h('span', { class: 'funnel__track', 'aria-hidden': 'true' }, [fill]),
+          h('span', { class: 'funnel__label', text: it.text })
+        ]);
+        return h('li', { class: 'funnel__item' }, [
+          bar,
+          it.cuello && rot.cuello ? h('span', { class: 'funnel__neck', text: rot.cuello.text }) : null
+        ]);
+      });
+      var toggle = h('button', { type: 'button', class: 'btn funnel__toggle', 'aria-expanded': 'false', 'aria-controls': panelId, text: a.edicion2026.label });
+      var fid = a.edicion2026.cifras[0];
+      var f = EIA.cifra.has(fid) ? EIA.cifra(fid) : null;
+      var panel = h('section', { class: 'card funnel__panel', id: panelId, hidden: true, 'aria-label': a.edicion2026.label }, f ? [
+        h('p', { class: 'funnel__panel-meta', html: ui.chipHTML(f.clase, f.tipo) + ' ' + ui.estadoHTML(f.estado) }),
+        h('p', { class: 'funnel__panel-cifra' }, [figButton(fid, f.cifra)]),
+        h('p', { class: 'funnel__panel-alcance', text: f.alcanceTexto }),
+        h('p', { class: 'funnel__panel-src' }, sourceTags([fid])),
+        h('p', { class: 'funnel__panel-note' }, [h('span', { class: 'funnel__nc', 'aria-hidden': 'true' }), h('strong', { text: a.edicion2026.nota })])
+      ] : []);
+      toggle.addEventListener('click', function () {
+        var open = panel.hidden;
+        panel.hidden = !open;
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        toggle.textContent = open ? c.ocultar : a.edicion2026.label;
+      });
+      var box = h('div', { class: 'funnel' }, [
+        c.ayuda ? h('p', { class: 'funnel__help', text: c.ayuda }) : null,
+        h('div', { class: 'card funnel__chart' }, [
+          h('div', { class: 'funnel__ends', 'aria-hidden': 'true' }, [
+            rot.uso ? h('span', { class: 'funnel__end funnel__end--top', text: rot.uso.text }) : null,
+            rot.valor ? h('span', { class: 'funnel__end funnel__end--bottom', text: rot.valor.text }) : null
+          ]),
+          h('ol', { class: 'funnel__list', 'aria-label': d.titulo }, items),
+          c.escala ? h('p', { class: 'funnel__scale', text: c.escala }) : null,
+          sourceTags(a.barras).length ? h('p', { class: 'funnel__src' }, sourceTags(a.barras)) : null
+        ]),
+        h('p', { class: 'margin-note funnel__note', text: a.nota }),
+        h('p', { class: 'funnel__actions' }, [toggle]),
+        panel
+      ]);
+      el.appendChild(box);
+      return { destroy: function () { box.remove(); } };
+    }
+  };
+
   ui.games = { sorter: sorter, pasos: pasos };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -1477,4 +1477,117 @@ html:not(.has-decor) .feedback--casi .feedback__sign { border-style: dotted; }
   border-radius: 10px 14px 9px 15px / 14px 9px 15px 10px;
 }
 .calc__caption { margin-top: var(--sp-2); font-size: 1rem; color: var(--ink-muted); }
+
+/* ---- «El embudo, con cuidado» (S3): one zero-based scale, exact widths ----------------------- */
+
+.funnel__help { max-width: var(--text-max); }
+.funnel__chart { position: relative; padding: var(--sp-5) var(--sp-5) var(--sp-4) 4.6rem; }
+.funnel__ends {
+  position: absolute;
+  left: 0.9rem;
+  top: var(--sp-5);
+  bottom: 5.6rem;
+  width: 2.8rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-display);
+  font-weight: var(--fw-black);
+  font-size: 1.05rem;
+}
+.funnel__ends::before {
+  content: "";
+  position: absolute;
+  top: 1.9rem;
+  bottom: 1.9rem;
+  left: 50%;
+  border-left: 3px solid var(--tinta);
+  border-radius: 2px;
+}
+.funnel__ends::after {
+  content: "";
+  position: absolute;
+  bottom: 1.75rem;
+  left: calc(50% - 7px);
+  width: 12px;
+  height: 12px;
+  border-right: 3px solid var(--tinta);
+  border-bottom: 3px solid var(--tinta);
+  transform: rotate(45deg);
+}
+.funnel__end { position: relative; z-index: 1; padding: 0.1rem 0.2rem; background: var(--papel); }
+.funnel__list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-4); }
+.funnel__item { margin: 0; }
+.fig.funnel__bar {
+  display: block;
+  width: 100%;
+  padding: 0.3rem 0;
+  font-weight: var(--fw-regular);
+  text-align: center;
+  text-decoration: none;
+  border-radius: 10px;
+}
+.fig.funnel__bar:hover, .fig.funnel__bar[aria-expanded="true"] { background: var(--wash-ocre); }
+.funnel__track {
+  display: flex;
+  justify-content: center;
+  height: 2.5rem;
+  border-left: 2px dashed var(--line-soft);
+  border-right: 2px dashed var(--line-soft);
+}
+.funnel__fill {
+  display: block;
+  height: 100%;
+  background: var(--amarillo);
+  border: 2.5px solid var(--tinta);
+  border-radius: 5px 8px 6px 9px;
+}
+.funnel__fill--aprox { border-left-style: dotted; border-right-style: dotted; border-width: 2.5px 4px; }
+.funnel__bar--neck .funnel__fill { background: var(--celeste); }
+.funnel__label {
+  display: inline-block;
+  margin-top: 0.4rem;
+  font-weight: var(--fw-bold);
+  text-decoration: underline dotted var(--tinta);
+  text-decoration-thickness: 2.5px;
+  text-underline-offset: 0.22em;
+}
+.funnel__fill--aprox { position: relative; }
+.funnel__fill--aprox::after {
+  content: attr(data-aprox);
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  margin-left: 0.45rem;
+  font-weight: var(--fw-bold);
+  font-size: 1.3rem;
+  line-height: 1;
+  transform: translateY(-50%);
+}
+.funnel__neck {
+  display: block;
+  margin-top: 0.1rem;
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  font-style: italic;
+  text-align: center;
+}
+.funnel__neck::before, .funnel__neck::after { content: "⟶ "; font-style: normal; }
+.funnel__neck::after { content: " ⟵"; }
+.funnel__scale { margin: var(--sp-4) 0 var(--sp-2); font-size: 0.98rem; color: var(--ink-muted); }
+.funnel__src { margin: 0; }
+.funnel__note { max-width: var(--text-max); font-size: 1.1rem; }
+.funnel__actions { margin: var(--sp-3) 0 0; }
+.funnel__panel { margin-top: var(--sp-4); max-width: 780px; }
+.funnel__panel-meta { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; }
+.funnel__panel-cifra { font-size: 1.25rem; line-height: 1.4; }
+.funnel__panel-cifra .fig { text-align: left; }
+.funnel__panel-alcance { color: var(--ink-muted); }
+.funnel__panel-note { display: flex; align-items: center; gap: 0.6rem; margin: var(--sp-3) 0 0; }
+.funnel__nc { flex: none; width: 2.2em; height: 2.2em; background: var(--casi, none) no-repeat center / contain; }
+@media (max-width: 520px) {
+  .funnel__chart { padding-left: var(--sp-4); }
+  .funnel__ends { display: none; }
+}
 /* ==== [/interactions] ==== */
