@@ -138,6 +138,36 @@
     }
   });
 
+  // Diagram fixtures: item texts are verbatim KB strings (slide scripts and video rótulos).
+  var DIAGRAMS = [
+    { tipo: 'flujo', items: [{ text: 'Capital' }, { text: 'Cómputo' }, { text: 'Modelos' }, { text: 'Productos' }] },
+    { tipo: 'pasos', items: [{ text: 'Producto auténtico' }, { text: 'Bitácora de proceso' }, { text: 'Defensa oral' }, { text: 'Uso declarado de IA' }] },
+    { tipo: 'causal', items: [{ text: 'Capital, datos, gestión' }, { text: 'Exposición a IA' }, { text: 'Ingreso por empleado' }, { text: 'asociación' }] },
+    { tipo: 'columnas', items: [{ text: 'Uso malicioso', sign: 'anzuelo' }, { text: 'Fallos', sign: 'grieta' }, { text: 'Riesgos sistémicos', sign: 'red-pueblo' }] },
+    { tipo: 'ciclo', items: [{ text: 'Inventario' }, { text: 'Clasificar riesgo' }, { text: 'Evaluar' }, { text: 'Supervisar' }, { text: 'Monitorear incidentes' }, { text: 'Corregir' }] },
+    { tipo: 'semaforo', items: [{ text: 'evidencia insuficiente' }, { text: 'resultado de laboratorio' }, { text: 'apoyo al flujo de trabajo' }] },
+    { tipo: 'linea', items: [{ text: '1 de agosto de 2024: entra en vigor' }, { text: '2 de febrero de 2025: prohibiciones y alfabetización en IA' },
+      { text: '2 de agosto de 2025: obligaciones para modelos de propósito general' }] },
+    { tipo: 'tarjetas', items: [{ text: 'Gobiernos' }, { text: 'Universidades' }, { text: 'Organizaciones' }] }
+  ];
+
+  section('lamina', 3, function (ctx, o) {
+    var lam = E.lamina;
+    if (o.page === 1) { lam.render(ctx, 'd07', { t: o.t, still: q.still === '1' }); return; }
+    if (o.page === 2) { lam.render(ctx, 'd06', { t: o.t, still: q.still === '1' }); return; }
+    E.ink.background(ctx, 'personas', { seed: 'gallery-diagrams' });
+    var cells = [
+      { x: 30, y: 20, w: 600, h: 130 }, { x: 650, y: 20, w: 600, h: 150 },
+      { x: 30, y: 170, w: 600, h: 200 }, { x: 650, y: 190, w: 600, h: 150 },
+      { x: 30, y: 400, w: 420, h: 300 }, { x: 470, y: 400, w: 330, h: 190 },
+      { x: 820, y: 360, w: 440, h: 190 }, { x: 470, y: 600, w: 790, h: 100 }
+    ];
+    DIAGRAMS.forEach(function (d, i) {
+      lam.diagram(ctx, d, cells[i], { p: o.p });
+      devLabel(ctx, d.tipo, cells[i].x + 4, cells[i].y + 12, { align: 'left', size: 11 });
+    });
+  });
+
   section('tags', 1, function (ctx, o) {
     var ink = E.ink, tags = E.tags, L = E.palette.legend;
     ink.background(ctx, 'personas', { seed: 'gallery-tags' });
@@ -234,6 +264,13 @@
   EIA.dev = EIA.dev || {};
   EIA.dev.sections = sections;
   EIA.dev.renderSection = renderSection;
+
+  // ?mount=<id>: the same code path as index.html?lamina=<id> (bare canvas, renderFrame, renderReady),
+  // fed by the fixture deck while the real js/data/deck.js is a stub.
+  if (q.mount) {
+    E.lamina.mountRender(q.mount, q).then(function () { document.title = 'READY ' + q.mount; });
+    return;
+  }
 
   fontsReady().then(function () {
     nav();

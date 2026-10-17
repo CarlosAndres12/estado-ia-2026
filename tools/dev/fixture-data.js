@@ -114,6 +114,16 @@
   ];
   fuentes.hai8 = { etiqueta: 'Stanford, cap. 8', url: 'https://hai.stanford.edu/assets/files/ai_index_report_2026_chapter_8_policy_and_governance.pdf',
     titulo: '8 Políticas y gobernanza', grupo: 'Informes de síntesis' };
+  fuentes.epoch = { etiqueta: 'Epoch AI', url: 'https://epoch.ai/gradient-updates/r-and-d-vs-training-compute',
+    titulo: 'Final training runs account for a minority of R&D compute spending', grupo: 'Evaluaciones técnicas' };
+  cifras.push(
+    row('eco-1', 'economia-e-infraestructura', 'Inversión privada en IA 2025: 344.700 millones de dólares (+127,5%); la IA generativa crece más de 200% y capta ~la mitad',
+      'Global', 'Resultado observado', 'resultado', ['hai4'], 'Verificada'),
+    row('eco-3', 'economia-e-infraestructura', 'EE. UU. invierte 23 veces (23,1×) más capital privado que China', 'China posiblemente subestimada',
+      'Resultado observado', 'resultado', ['hai4'], 'Verificada'),
+    row('eco-6', 'economia-e-infraestructura', 'La corrida final de entrenamiento es 9,6% (OpenAI, 2024), 22,6% (MiniMax) y 12,3% (Z.ai) del cómputo de I+D',
+      'Estimación de Epoch AI', 'Resultado observado', 'resultado', ['epoch'], 'Verificada')
+  );
 
   EIA.data.fuentes = EIA.data.fuentes || {};
   Object.keys(fuentes).forEach(function (k) { if (!EIA.data.fuentes[k]) EIA.data.fuentes[k] = fuentes[k]; });
@@ -125,4 +135,78 @@
 
   EIA.dev = EIA.dev || {};
   EIA.dev.fixtureIds = cifras.map(function (c) { return c.id; });
+
+  // ---------------------------------------------------------------------------------------------
+  // Deck fixtures (KB §6 "Guion de diapositivas", D6 and D7), in the shape of contracts §2.
+  // D7 adds the caution line the prompt asks for (§12.1) in rotulos.cautela.
+
+  var deck = [
+    { id: 'd06', n: 6, sesion: 3,
+      titulo: 'Capital e infraestructura', titular: 'Capital e infraestructura', subtitulo: '',
+      cifras: [
+        { valor: '+127,5%', etiqueta: 'inversión privada 2025', cifras: ['eco-1'] },
+        { valor: '23×', etiqueta: 'EE. UU. frente a China', cifras: ['eco-3'] },
+        { valor: '29,6 GW', etiqueta: 'centros de datos de IA', cifras: ['eco-4'] }
+      ],
+      diagrama: { tipo: 'flujo', titulo: '', items: [
+        { text: 'Capital', cifras: [] }, { text: 'Cómputo', cifras: [] }, { text: 'Modelos', cifras: [] }, { text: 'Productos', cifras: [] }] },
+      ideaCentral: { text: 'La corrida final de entrenamiento es solo 9,6%–22,6% del cómputo de I+D', cifras: ['eco-6'] },
+      pie: null,
+      rotulos: {},
+      notas: { decir: '', nota: '', metafora: 'río de monedas luminosas que desemboca en un embalse con una sola compuerta, junto a una torre de servidores con medidor de energía.' },
+      kb: [], contenido: [] },
+    { id: 'd07', n: 7, sesion: 3,
+      titulo: 'Del uso al valor: el embudo de la adopción', titular: 'Del uso al valor: el embudo de la adopción', subtitulo: '',
+      cifras: [],
+      diagrama: { tipo: 'embudo', titulo: 'embudo con barras proporcionales a cada porcentaje', items: [
+        { text: '88% usa IA en al menos una función', cifras: ['adop-1'] },
+        { text: '62% experimenta o escala agentes', cifras: ['adop-2'] },
+        { text: '~1/3 escala la IA en toda la organización (la barra más estrecha, el cuello de botella)', cifras: ['adop-4'] },
+        { text: '39% reporta algún impacto en EBIT (normalmente <5%)', cifras: ['adop-5'] }] },
+      ideaCentral: { text: 'El cuello de botella es organizacional, no el acceso al modelo', cifras: [] },
+      pie: null,
+      rotulos: {
+        uso: { text: 'Uso', cifras: [] },
+        valor: { text: 'Valor', cifras: [] },
+        cautela: { text: 'Cada barra sale de una pregunta distinta de la misma encuesta.', cifras: [] }
+      },
+      notas: { decir: 'los niveles vienen de preguntas distintas; mencionar la edición 2026.', nota: '',
+        metafora: 'puente sobre un abismo, de «Uso» a «Valor», con el último tramo en construcción.' },
+      kb: [], contenido: [] }
+  ];
+  EIA.data.deck = EIA.data.deck || [];
+  var haveDeck = {};
+  EIA.data.deck.forEach(function (d) { haveDeck[d.id] = true; });
+  deck.forEach(function (d) { if (!haveDeck[d.id]) EIA.data.deck.push(d); });
+
+  // Fixture lámina modules (dev only; the real ones live in js/laminas/). They only use the engine
+  // API and take every string from the deck entry.
+  EIA.laminas = EIA.laminas || {};
+  if (!EIA.laminas.d07) {
+    EIA.laminas.d07 = {
+      layout: { diagrama: { x: 56, y: 186, w: 820, h: 300 }, ilustracion: { x: 900, y: 170, w: 324, h: 340 } },
+      setup: function (env) { return { seed: 'd07' }; },
+      draw: function (ctx, s, env) {
+        var r = s.zones.ilustracion, rot = s.lamina.rotulos, fig = env.fig;
+        if (fig.bridge) {
+          fig.bridge(ctx, r.x + r.w / 2, r.y + r.h * 0.62, r.w / 400, { seed: 'd07', built: 0.72, t: s.t,
+            labels: { left: rot.uso.text, right: rot.valor.text } });
+        }
+      },
+      drawAfter: function (ctx, s, env) {
+        var d = s.zones.diagrama;
+        env.ink.text(ctx, s.lamina.rotulos.cautela.text, d.x, d.y + d.h + 4, { size: 16, italic: true, maxWidth: d.w });
+      }
+    };
+  }
+  if (!EIA.laminas.d06) {
+    EIA.laminas.d06 = {
+      setup: function () { return null; },
+      draw: function (ctx, s, env) {
+        var r = s.zones.ilustracion, fig = env.fig;
+        if (fig.river) fig.river(ctx, r.x, r.y, r.w / 1280, { seed: 'd06', coins: true, t: s.t, h: r.h * 1280 / r.w });
+        if (fig.serverTower) fig.serverTower(ctx, r.x + r.w - 90, r.y + r.h - 10, 1, { seed: 'd06' });
+      }
+    };
+  }
 })(window.EIA);

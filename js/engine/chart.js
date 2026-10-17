@@ -646,8 +646,9 @@
   // Proportional funnel: centered bars on one zero-based scale; the narrowest is the bottleneck.
 
   /* chart.funnel(ctx, opts) -> [geometry]. opts: x, y, w (total width of the widest possible bar),
-   * items [{ text, cifras }], max (100), h (bar thickness), gap, p, color, labelX (default x + w + 24),
-   * labelWidth, labelSize, mark (true: bracket the narrowest bar), mono. */
+   * items [{ text, cifras }], max (100), h (bar thickness), gap, pitch (row height; default h + gap),
+   * p, color, labelX (default x + w + 24), labelWidth, labelSize, mark (true: bracket the narrowest
+   * bar), tags (true), mono. */
   chart.funnel = function (ctx, o) {
     o = o || {};
     var items = o.items || [], x = o.x || 0, y = o.y || 0, w = o.w || 400, h = o.h || 46, gap = o.gap == null ? 18 : o.gap;
@@ -656,7 +657,8 @@
     var specs = items.map(function (it, i) { var s = barSpec(it); if (Math.abs(s.value) < nv) { nv = Math.abs(s.value); narrow = i; } return s; });
     for (var i = 0; i < items.length; i++) {
       var it = items[i], s = specs[i], ip = seg(p, 0.05 + 0.6 * i / items.length, 0.05 + 0.6 * i / items.length + 0.4);
-      var full = Math.abs(s.value) / max * w, len = full * grow(ip), yy = y + i * (h + gap);
+      var pitch = o.pitch || (h + gap);
+      var full = Math.abs(s.value) / max * w, len = full * grow(ip), yy = y + i * pitch + (pitch - gap - h) / 2;
       var g = { x0: cx - len / 2, x1: cx + len / 2, y0: yy, y1: yy + h, value: s.value, len: len, full: full, cap: s.cap, orient: 'h' };
       if (len > 0.5) {
         var path = fieldPath(g, 'funnel' + i, false);
@@ -691,7 +693,7 @@
       out.push(g);
     }
     // Shared center axis.
-    if (items.length) ink.dotted(ctx, [cx, y - 14, cx, y + items.length * (h + gap) - gap + 14], { r: 1.4, gap: 7, seed: 'funnel-axis' + Math.round(cx), p: seg(p, 0, 0.2) });
+    if (items.length) ink.dotted(ctx, [cx, y - 14, cx, y + items.length * (o.pitch || (h + gap)) - gap + 14], { r: 1.4, gap: 7, seed: 'funnel-axis' + Math.round(cx), p: seg(p, 0, 0.2) });
     return out;
   };
 
