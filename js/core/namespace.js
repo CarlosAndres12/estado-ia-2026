@@ -187,13 +187,14 @@
   /* "Copiar cita" text, exactly:
    *   {cifra} ({alcance}). Tipo de evidencia: {tipo}. Fuente: {fuentes}. Estado en la base del curso: {estado}.
    * {fuentes} is each source as "{etiqueta}, {url}" joined by "; "; the "Tipo de evidencia" sentence is
-   * left out when the KB type is "—". */
+   * left out when the KB type is "—". Context figures (ctx-*) carry no KB estado, so their estado
+   * sentence is left out too instead of being invented. */
   util.citation = function (id) {
     var c = EIA.cifra(id);
     var parts = [c.cifra + ' (' + c.alcanceTexto + ').'];
     if (c.clase !== 'ninguno') parts.push('Tipo de evidencia: ' + c.tipo + '.');
     parts.push('Fuente: ' + c.fuentesList.map(function (f) { return f.etiqueta + ', ' + f.url; }).join('; ') + '.');
-    parts.push('Estado en la base del curso: ' + c.estado + '.');
+    if (c.estado) parts.push('Estado en la base del curso: ' + c.estado + '.');
     return parts.join(' ');
   };
 
