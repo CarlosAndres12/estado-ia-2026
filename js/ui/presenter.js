@@ -730,7 +730,6 @@
     var el = h('div', { class: 'clase clase--facilitador', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': titleId }, [
       h('div', { class: 'clase__bar' }, [h('h2', { class: 'clase__title', id: titleId, text: cl('ventana', { sesion: opt.label }) }), status]),
       h('div', { class: 'clase-facil' }, [
-        h('p', { class: 'clase__warning' }, [h('span', { class: 'clase__warning-sign', 'aria-hidden': 'true' }), mc('avisoNotas')]),
         current, next, clockEl,
         h('p', { class: 'clase-facil__buttons' }, [bPrev, bNext, bClock]),
         notes
