@@ -175,6 +175,11 @@ zero errors; 9 videos play in sync; 17 láminas render/print with corrected figu
   sharp-outline option; `fig.boat` motor detached.
 - D13–D17 launched (running: V03, V04, D13–D17).
 
+- V03 done (cherry-picked d210da2..bdfa75c): 15 scenes, est. 6:22 (target 5:00–7:00), determinism ok,
+  checker 0 errors. Parent fix (test-first): video glossary notes now honour `excluir` (RED 1 fail →
+  GREEN 188/188). More engine wishes: cordillera deep valleys look rectangular; default fillJitter/
+  fillScale grow with size; agentLoop `lamp:false` + labelSize; ruledLadder crack size + scale rungs.
+
 ## Next step
 
 Merge wave 1 branches as they finish (verify each: checker, tests, headless console), then wave 2:
