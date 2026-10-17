@@ -41,7 +41,7 @@ exceeds it. Slicing into PRs is left to the user (each task commit is a candidat
 |---|---|---|---|
 | T01 | Scaffold: branch, KB copy, tree, `index.html`, namespace contract, stubs, fonts, tools config, this doc | inline (mechanical, already understood) | done (2869e53, 958ffd8) |
 | T02 | Data layer + content checker: `kb-parse`, `load-data`, all `js/data/*` except `videos.js`, `check-content.mjs` | delegated writer (2+ non-trivial files, KB reading prepares the write) | running (wave 1, worktree) |
-| T03 | Video scripts as data: `js/data/videos.js` (9 videos, prompt §13) | delegated writer (large transcription) | running (wave 1, worktree) |
+| T03 | Video scripts as data: `js/data/videos.js` (9 videos, prompt §13) | delegated writer (large transcription) | done (84e78b8) |
 | T04 | Drawing engine: rng, easing, palette + tokens.css, ink, chart, tags, figures, lamina layout, API doc | delegated writer (many non-trivial files) | running (wave 1, worktree) |
 | T05 | Video runtime: timeline, captions, narrator, player, recorder, render mode, CDP browser lib, snapshots | delegated writer (many non-trivial files) | running (wave 1, worktree) |
 | T06 | V02 end to end + art review against prompt §3 | delegated writer | pending |
@@ -76,6 +76,14 @@ zero errors; 9 videos play in sync; 17 láminas render/print with corrected figu
   estado sentence for ctx-* figures (958ffd8).
 - Wave 1 launched in worktrees `.claude/worktrees/agent-*` (branches `worktree-agent-*`): T02, T03, T04, T05.
   Coordination: `EIA.data.course.ui.player` copy is owned by T05 (merge appends it to T02's course.js).
+
+- T03 done (84e78b8): `js/data/videos.js` 9 videos / 108 scenes / 197 lines / 16 checkpoints / 334 rótulos,
+  verbatim from prompt §13; `node --test tools/test/videos-data.test.mjs` 12/12 pass (parent re-run);
+  headless index.html 0 console lines; assess risk medium (executable data) → writer self-verification +
+  parent spot check. Open items for T06/T10: scenes need extra rótulos the script never quotes (gauge and
+  ladder names, interval values, indicator questions, KB §3.2 limits…) — add them verbatim with ids.
+  Hints are stored without "Pista:" (UI adds "Casi. Pista: "). v08 `omnibus` lectora line names the
+  banned AI Act claim only to call it an error (checker must allow it).
 
 ## Next step
 
