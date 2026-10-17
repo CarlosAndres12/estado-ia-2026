@@ -198,6 +198,79 @@
     fig.youngLadder(ctx, 980, 680, 1.4, { p: o.p });
   });
 
+  // Places: six stages per page, each a 1280×720 stage drawn at one third.
+  section('places', 3, function (ctx, o) {
+    var fig = E.figures;
+    if (o.page === 3) {
+      E.ink.background(ctx, 'personas', { seed: 'road' });
+      fig.road(ctx, 0, 0, 1, { p: o.p, signs: ['matraz', 'moneda', 'escalera', 'microscopio', 'volante', 'brujula'] });
+      return;
+    }
+    ctx.fillStyle = '#d9d4c8';
+    ctx.fillRect(0, 0, W, H);
+    var list = o.page === 1
+      ? [['oficina'], ['patio'], ['aula'], ['biblioteca'], ['laboratorio'], ['hospital']]
+      : [['consultorio'], ['marNocturno'], ['cordillera'], ['river'], ['ciudad'], ['latam']];
+    var cells = grid(6, 3, 0, 0, W, H);
+    list.slice(0, 6).forEach(function (pl, i) {
+      var c = cells[i], s = (c.w - 8) / 1280, x0 = c.x - c.w / 2 + 4, y0 = c.y - c.h / 2 + 4;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(x0, y0, 1280 * s, 720 * s); ctx.clip();
+      var a = fig[pl[0]](ctx, x0, y0, s, { p: o.p, t: o.t, coins: true, seed: 'g' });
+      if (pl[0] === 'marNocturno') fig.iceberg(ctx, x0 + 640 * s, a.horizon, 0.9 * s, { glow: 0.6 });
+      ctx.restore();
+      devLabel(ctx, pl[0], c.x, c.y + c.h / 2 - 6, { size: 12 });
+    });
+  });
+
+  section('props', 2, function (ctx, o) {
+    var fig = E.figures, ink = E.ink;
+    ink.background(ctx, 'personas', { seed: 'gallery-props' });
+    if (o.page === 1) {
+      fig.headline(ctx, 100, 90, 1, { seed: 'h1', p: o.p, rot: -0.1 });
+      fig.sheet(ctx, 230, 90, 1, { p: o.p, rot: 0.3 });
+      fig.coin(ctx, 330, 90, 1, { p: o.p });
+      fig.coinPile(ctx, 430, 160, 1, { height: 120 });
+      fig.coinPile(ctx, 500, 160, 1, { height: 40 });
+      fig.bridge(ctx, 760, 110, 0.8, { built: 0.7, labels: { left: 'Uso', right: 'Valor' }, p: o.p });
+      fig.suspensionBridge(ctx, 1110, 170, 0.5, { built: 0.55, p: o.p });
+      fig.balance(ctx, 140, 520, 0.9, { tilt: 0.12, p: o.p });
+      fig.hourglass(ctx, 330, 400, 0.8, { level: 0.35, p: o.p });
+      fig.stopwatch(ctx, 450, 400, 0.8, { turn: 0.3, p: o.p });
+      fig.telescope(ctx, 590, 520, 0.8, { p: o.p });
+      fig.microscope(ctx, 730, 420, 0.8, { p: o.p });
+      fig.trafficLight(ctx, 880, 700, 0.7, { lit: 'ambar', p: o.p });
+      fig.steeringWheel(ctx, 1130, 450, 0.7, { turn: 0.2, p: o.p });
+      fig.calendar(ctx, 350, 620, 0.8, { marked: 15, p: o.p });
+      fig.lighthouse(ctx, 520, 710, 0.55, { beam: -0.3, p: o.p });
+      return;
+    }
+    fig.stamp(ctx, 80, 120, 1, { p: o.p });
+    fig.folder(ctx, 200, 100, 1, { p: o.p });
+    fig.envelope(ctx, 340, 100, 1, { p: o.p });
+    fig.key(ctx, 470, 100, 1, { p: o.p });
+    fig.keyRing(ctx, 600, 120, 1, { p: o.p });
+    fig.lock(ctx, 720, 100, 1, { p: o.p });
+    fig.mailbox(ctx, 830, 200, 0.9, { p: o.p });
+    fig.phone(ctx, 930, 100, 1, { p: o.p });
+    fig.drawer(ctx, 1080, 120, 0.9, { cards: 3, p: o.p });
+    fig.bucket(ctx, 1200, 120, 0.8, { p: o.p });
+    fig.chain(ctx, 150, 290, 0.9, { p: o.p });
+    fig.doorway(ctx, 360, 360, 0.9, { p: o.p });
+    fig.roadSign(ctx, 480, 380, 0.8, { text: '2030', p: o.p });
+    fig.lever(ctx, 600, 380, 0.9, { p: o.p });
+    fig.steppingStones(ctx, 900, 330, 0.6, { n: 6, p: o.p });
+    fig.boat(ctx, 220, 560, 0.8, { motor: true, passengers: 3, t: o.t, p: o.p });
+    fig.net(ctx, 560, 560, 0.6, { p: o.p });
+    fig.foldingDoc(ctx, 760, 430, 0.5, { n: 6, open: 0.8, p: o.p });
+    fig.pennant(ctx, 1150, 560, 0.8, { pattern: 'cuadros', p: o.p });
+    fig.bubble(ctx, 780, 560, 200, 110, { tail: { x: 760, y: 700 }, p: o.p });
+    fig.bubble(ctx, 1010, 600, 160, 90, { thought: true, tail: { x: 990, y: 710 }, p: o.p });
+    fig.flipCard(ctx, 1180, 380, 80, 110, { flip: 0.2, p: o.p });
+    fig.plank(ctx, 1150, 300, 0.7, { p: o.p });
+    fig.desk(ctx, 660, 715, 0.35, { p: o.p });
+  });
+
   section('machine', 1, function (ctx, o) {
     var fig = E.figures, chart = E.chart, ink = E.ink;
     ink.background(ctx, 'personas', { seed: 'gallery-machine' });

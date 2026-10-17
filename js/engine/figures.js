@@ -1423,5 +1423,1050 @@
     return { ladder: { x: x, top: y - 250 * s, bottom: y } };
   };
 
-  /* @@figures-more@@ */
+  // =============================================================================================
+  // PLACES (prompt §3.4, §3.6). Each place is a stage of 1280×720 at scale 1 with (x, y) = its
+  // top-left corner; it draws its own ground unless opts.ground === false, leaves generous empty
+  // space for the subject, and returns anchor points. Finished places are cached as layers.
+
+  function placeDraw(ctx, key, x, y, s, o, build) {
+    var p = o.p == null ? 1 : o.p;
+    var d = cached('place|' + key, build);
+    if (p >= 1) {
+      var w = 1280 * s, h = 720 * s;
+      I().drawLayer(ctx, 'placeL|' + key + '|' + s.toFixed(4), x, y, w, h, function (g) { I().draw(g, d, 0, 0, s, { offset: 3 }); });
+    } else {
+      I().draw(ctx, d, x, y, s, { p: p, offset: 3 });
+    }
+  }
+  function ground(ctx, kind, x, y, s, o) {
+    if (o.ground === false) return;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s, s);
+    I().background(ctx, kind, { seed: o.seed || kind, horizon: o.horizon, contours: o.contours });
+    ctx.restore();
+  }
+  function plantInto(b, x, y, k) {
+    b.shape([x - 26 * k, y - 46 * k, x + 26 * k, y - 46 * k, x + 20 * k, y, x - 20 * k, y], { fill: M().siena, w: 3 });
+    var leaves = [[-30, -96, -10], [0, -120, 0], [28, -100, 10], [-14, -78, -6], [16, -76, 6]];
+    leaves.forEach(function (l, i) {
+      b.blob(x + l[0] * k, y + l[1] * k, 13 * k, 26 * k, { fill: i % 2 ? M().verde : P().mix(M().verde, M().amarillo, 0.25), w: 2.6, irr: 0.12, rot: l[2] * 0.06, n: 8 });
+      b.stroke([x + l[0] * k * 0.2, y - 46 * k, x + l[0] * k, y + (l[1] + 20) * k], { w: 2, profile: 'lift' });
+    });
+  }
+  function windowInto(b, x0, y0, w, h, o) {
+    b.shape(box(x0, y0, x0 + w, y0 + h, 0.02), { fill: '@sky', w: 4.5 });
+    if (o && o.sun) b.circle(x0 + w * 0.68, y0 + h * 0.34, Math.min(w, h) * 0.13, { fill: M().rojo, line: false });
+    b.stroke([x0 + w / 2, y0 + 3, x0 + w / 2 + 1, y0 + h - 3], { w: 3.4, profile: 'blunt' });
+    b.stroke([x0 + 3, y0 + h / 2, x0 + w - 3, y0 + h / 2 + 1], { w: 3.4, profile: 'blunt' });
+  }
+  function booksInto(b, x0, y, w, h, r) {
+    var x = x0, cols = [M().rojo, M().azul, M().amarillo, M().verde, M().tierra, M().lienzoOcre, M().siena];
+    while (x < x0 + w - 12) {
+      var bw = r.range(12, 22), bh = h * r.range(0.72, 1);
+      b.shape(box(x, y - bh, x + bw, y, 0.04), { fill: r.pick(cols), w: 2.2, fillScale: 0 });
+      x += bw + r.range(1, 3);
+    }
+    b.stroke([x0 - 8, y + 2, x0 + w + 8, y + 3], { w: 5, profile: 'blunt' });
+  }
+  function deskInto(b, x0, y0, w, h) {
+    b.shape(box(x0, y0, x0 + w, y0 + 18, 0.02), { fill: '@wood2', w: 4 });
+    b.shape(box(x0 + 14, y0 + 18, x0 + w - 14, y0 + h, 0.02), { fill: '@wood', w: 4 });
+    b.stroke([x0 + w * 0.55, y0 + 30, x0 + w * 0.55, y0 + h - 6], { w: 2.6, profile: 'blunt' });
+    b.dot(x0 + w * 0.62, y0 + 54, 4);
+    b.dot(x0 + w * 0.62, y0 + 100, 4);
+  }
+  var PLACE_COLORS = function () { return { sky: M().celeste, wood: M().madera, wood2: M().tierra }; };
+
+  /* fig.oficina(ctx, x, y, scale, opts) -> { desk: { x, y, w }, wallY, window } — a warm office:
+   * a window with sky and a red sun, a shelf of books, a plant, a desk. opts: seed, p, ground. */
+  fig.oficina = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1;
+    ground(ctx, 'personas', x, y, s, o);
+    placeDraw(ctx, 'oficina|' + (o.seed || ''), x, y, s, o, function () {
+      var b = I().drawing('oficina' + (o.seed || ''), { w: 4, jitter: 1 }), r = E.rng.create('oficina' + (o.seed || ''));
+      b.fill([0, 500, 1280, 492, 1280, 720, 0, 720], { fill: M().lienzoOcre, fillScale: 0, fillAlpha: 0.7, poly: true });
+      b.stroke(I().wavePoints(-10, 498, 1290, 3, 900, 0.3), { w: 5, profile: 'blunt' });
+      windowInto(b, 880, 90, 270, 230, { sun: true });
+      booksInto(b, 110, 210, 300, 80, r);
+      booksInto(b, 130, 330, 260, 70, r);
+      plantInto(b, 1185, 500, 1.1);
+      deskInto(b, 420, 420, 420, 210);
+      return b.done({ colors: PLACE_COLORS() });
+    });
+    return { desk: { x: x + 630 * s, y: y + 420 * s, w: 420 * s }, wallY: y + 498 * s, window: { x: x + 880 * s, y: y + 90 * s, w: 270 * s, h: 230 * s } };
+  };
+
+  /* fig.patio(ctx, x, y, scale, opts) -> { groundY } — a university courtyard: arcade, trees, bench. */
+  fig.patio = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1;
+    ground(ctx, 'territorio', x, y, s, merge(o, { horizon: 0.62, contours: false }));
+    placeDraw(ctx, 'patio|' + (o.seed || ''), x, y, s, o, function () {
+      var b = I().drawing('patio' + (o.seed || ''), { w: 4, jitter: 1 });
+      b.shape(box(60, 170, 1220, 446, 0.01), { fill: M().lienzoOcre, w: 4, fillScale: 0 });
+      b.fill([60, 150, 640, 128, 1220, 150, 1220, 176, 60, 176], { fill: M().siena, fillScale: 0, poly: true });
+      for (var i = 0; i < 7; i++) {
+        var ax = 120 + i * 160;
+        b.shape(arc(ax, 300, 52, Math.PI, TAU, 10).concat([ax + 52, 446, ax - 52, 446]), { fill: P().mix(M().tierra, M().lienzoOcre, 0.4), w: 3.6 });
+      }
+      [[150, 446], [1120, 446]].forEach(function (t, k) {
+        b.shape([t[0] - 9, t[1], t[0] - 7, t[1] - 120, t[0] + 7, t[1] - 120, t[0] + 9, t[1]], { fill: M().madera, w: 3 });
+        b.blob(t[0], t[1] - 170, 80, 70, { fill: M().verde, w: 3.6, irr: 0.2, n: 11 });
+        b.blob(t[0] + (k ? -30 : 30), t[1] - 200, 46, 40, { fill: P().mix(M().verde, M().amarillo, 0.3), w: 3, irr: 0.2 });
+      });
+      b.shape(box(520, 520, 760, 540, 0.03), { fill: M().madera, w: 3.2 });
+      b.stroke([540, 540, 540, 580], { w: 4, profile: 'blunt' });
+      b.stroke([740, 540, 740, 580], { w: 4, profile: 'blunt' });
+      return b.done();
+    });
+    return { groundY: y + 446 * s };
+  };
+
+  /* fig.aula(ctx, x, y, scale, opts) -> { board: { x, y, w, h } } — a classroom: board, desks, window. */
+  fig.aula = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1;
+    ground(ctx, 'personas', x, y, s, o);
+    placeDraw(ctx, 'aula|' + (o.seed || ''), x, y, s, o, function () {
+      var b = I().drawing('aula' + (o.seed || ''), { w: 4, jitter: 1 });
+      b.fill([0, 520, 1280, 512, 1280, 720, 0, 720], { fill: M().lienzoOcre, fillScale: 0, fillAlpha: 0.7, poly: true });
+      b.stroke(I().wavePoints(-10, 516, 1290, 3, 800, 0), { w: 5, profile: 'blunt' });
+      b.shape(box(300, 90, 980, 380, 0.02), { fill: P().mix(M().verde, M().tinta, 0.45), w: 6 });
+      b.stroke([360, 160, 520, 150, 560, 190], { w: 2.4, profile: 'hair', color: M().lienzo });
+      b.stroke([380, 250, 700, 240], { w: 2.4, profile: 'hair', color: M().lienzo });
+      b.stroke([380, 300, 620, 296], { w: 2.4, profile: 'hair', color: M().lienzo });
+      windowInto(b, 1060, 110, 160, 220, { sun: false });
+      [[200, 600], [520, 600], [840, 600]].forEach(function (d) {
+        b.shape(box(d[0], d[1], d[0] + 220, d[1] + 16, 0.03), { fill: M().tierra, w: 3.4 });
+        b.stroke([d[0] + 20, d[1] + 16, d[0] + 20, d[1] + 90], { w: 4, profile: 'blunt' });
+        b.stroke([d[0] + 200, d[1] + 16, d[0] + 200, d[1] + 90], { w: 4, profile: 'blunt' });
+      });
+      return b.done({ colors: PLACE_COLORS() });
+    });
+    return { board: { x: x + 300 * s, y: y + 90 * s, w: 680 * s, h: 290 * s } };
+  };
+
+  /* fig.biblioteca(ctx, x, y, scale, opts) -> { table: { x, y, w } } — tall shelves of books, a
+   * reading table and a library ladder. */
+  fig.biblioteca = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1;
+    ground(ctx, 'personas', x, y, s, o);
+    placeDraw(ctx, 'biblioteca|' + (o.seed || ''), x, y, s, o, function () {
+      var b = I().drawing('biblio' + (o.seed || ''), { w: 4, jitter: 1 }), r = E.rng.create('biblio' + (o.seed || ''));
+      b.fill([0, 560, 1280, 552, 1280, 720, 0, 720], { fill: M().lienzoOcre, fillScale: 0, fillAlpha: 0.7, poly: true });
+      [[60, 420], [880, 340]].forEach(function (sh) {
+        b.shape(box(sh[0], 60, sh[0] + sh[1], 560, 0.01), { fill: M().madera, w: 5 });
+        for (var row = 0; row < 4; row++) booksInto(b, sh[0] + 20, 170 + row * 120, sh[1] - 40, 92, r);
+      });
+      ladderInto(b, { rungs: 7, w: 5 }, 820, 330, 70, 460);
+      b.shape(box(500, 600, 820, 620, 0.02), { fill: M().tierra, w: 4 });
+      b.stroke([520, 620, 522, 700], { w: 5, profile: 'blunt' });
+      b.stroke([800, 620, 798, 700], { w: 5, profile: 'blunt' });
+      return b.done();
+    });
+    return { table: { x: x + 660 * s, y: y + 600 * s, w: 320 * s } };
+  };
+
+  function glasswareInto(b, x, y, k, kind, liquid) {
+    if (kind === 'flask') {
+      b.fill([x - 16 * k, y - 18 * k, x + 16 * k, y - 18 * k, x + 26 * k, y - 4 * k, x + 22 * k, y, x - 22 * k, y, x - 26 * k, y - 4 * k], { fill: liquid, fillScale: 0 });
+      b.shape([x - 6 * k, y - 70 * k, x - 6 * k, y - 46 * k, x - 28 * k, y - 6 * k, x - 24 * k, y, x + 24 * k, y, x + 28 * k, y - 6 * k, x + 6 * k, y - 46 * k, x + 6 * k, y - 70 * k],
+        { w: 3, fillScale: 0 });
+    } else if (kind === 'tube') {
+      b.fill([x - 6 * k, y - 34 * k, x + 6 * k, y - 34 * k, x + 6 * k, y - 4 * k, x, y, x - 6 * k, y - 4 * k], { fill: liquid, fillScale: 0 });
+      b.shape([x - 7 * k, y - 76 * k, x + 7 * k, y - 76 * k, x + 7 * k, y - 6 * k, x, y + 2 * k, x - 7 * k, y - 6 * k], { w: 2.6, fillScale: 0 });
+    } else {
+      b.fill([x - 20 * k, y - 30 * k, x + 20 * k, y - 30 * k, x + 20 * k, y, x - 20 * k, y], { fill: liquid, fillScale: 0 });
+      b.shape([x - 22 * k, y - 66 * k, x + 22 * k, y - 66 * k, x + 22 * k, y, x - 22 * k, y], { w: 3, fillScale: 0 });
+    }
+  }
+
+  /* fig.laboratorio(ctx, x, y, scale, opts) -> { bench: { x, y, w } } — a laboratory with warm
+   * glassware on a bench and jars on a shelf. */
+  fig.laboratorio = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1;
+    ground(ctx, 'personas', x, y, s, o);
+    placeDraw(ctx, 'laboratorio|' + (o.seed || ''), x, y, s, o, function () {
+      var b = I().drawing('lab' + (o.seed || ''), { w: 4, jitter: 0.8 }), m = M();
+      b.fill([0, 540, 1280, 532, 1280, 720, 0, 720], { fill: m.lienzoOcre, fillScale: 0, fillAlpha: 0.7, poly: true });
+      windowInto(b, 1000, 80, 200, 200, { sun: true });
+      b.stroke([100, 250, 760, 252], { w: 6, profile: 'blunt' });
+      [[150, 'jar', m.amarillo], [240, 'flask', m.rojo], [340, 'jar', m.verde], [440, 'tube', m.azul], [480, 'tube', m.amarillo], [580, 'flask', m.celeste], [690, 'jar', m.rojo]]
+        .forEach(function (g) { glasswareInto(b, g[0], 247, 0.9, g[1], g[2]); });
+      b.shape(box(140, 500, 1140, 528, 0.01), { fill: m.tierra, w: 4 });
+      b.shape(box(170, 528, 1110, 690, 0.01), { fill: m.madera, w: 4 });
+      [[320, 'flask', m.amarillo], [420, 'tube', m.rojo], [450, 'tube', m.verde], [480, 'tube', m.celeste], [880, 'flask', m.azul], [980, 'jar', m.amarillo]]
+        .forEach(function (g) { glasswareInto(b, g[0], 498, 1.25, g[1], g[2]); });
+      return b.done({ colors: PLACE_COLORS() });
+    });
+    return { bench: { x: x + 640 * s, y: y + 500 * s, w: 1000 * s } };
+  };
+
+  /* fig.hospital(ctx, x, y, scale, opts) -> { door: { x, y } } — a hospital in warm shapes: facade,
+   * windows, door, a plain plus sign (never the Red Cross emblem), trees. */
+  fig.hospital = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1;
+    ground(ctx, 'territorio', x, y, s, merge(o, { horizon: 0.78, contours: false }));
+    placeDraw(ctx, 'hospital|' + (o.seed || ''), x, y, s, o, function () {
+      var b = I().drawing('hosp' + (o.seed || ''), { w: 4, jitter: 1 }), m = M();
+      b.shape(box(300, 150, 980, 562, 0.01), { fill: m.lienzo, w: 5 });
+      b.shape(box(260, 130, 1020, 160, 0.02), { fill: m.siena, w: 4 });
+      for (var r2 = 0; r2 < 3; r2++) for (var c = 0; c < 5; c++) {
+        if (r2 === 2 && c === 2) continue;
+        b.shape(box(340 + c * 124, 200 + r2 * 112, 410 + c * 124, 270 + r2 * 112, 0.04), { fill: m.celeste, w: 3 });
+      }
+      b.shape(box(580, 430, 700, 562, 0.03), { fill: m.azul, w: 4 });
+      b.circle(640, 96, 34, { fill: m.lienzo, w: 4 });
+      b.fill([628, 70, 652, 70, 652, 84, 666, 84, 666, 108, 652, 108, 652, 122, 628, 122, 628, 108, 614, 108, 614, 84, 628, 84], { fill: m.verde, fillScale: 0 });
+      [[160, 560], [1120, 560]].forEach(function (t) {
+        b.stroke([t[0], t[1], t[0] + 2, t[1] - 110], { w: 7, profile: 'blunt', color: m.madera });
+        b.blob(t[0], t[1] - 150, 64, 60, { fill: m.verde, w: 3.4, irr: 0.18 });
+      });
+      return b.done();
+    });
+    return { door: { x: x + 640 * s, y: y + 562 * s } };
+  };
+
+  /* fig.consultorio(ctx, x, y, scale, opts) -> { desk: { x, y, w } } — a doctor's desk in warm
+   * shapes: desk, papers, stethoscope, plant and window. */
+  fig.consultorio = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1;
+    ground(ctx, 'personas', x, y, s, o);
+    placeDraw(ctx, 'consultorio|' + (o.seed || ''), x, y, s, o, function () {
+      var b = I().drawing('consul' + (o.seed || ''), { w: 4, jitter: 1 }), m = M();
+      b.fill([0, 500, 1280, 494, 1280, 720, 0, 720], { fill: m.lienzoOcre, fillScale: 0, fillAlpha: 0.7, poly: true });
+      windowInto(b, 140, 90, 240, 220, { sun: true });
+      deskInto(b, 520, 430, 520, 220);
+      b.shape(rotPts(box(600, 396, 700, 428, 0.05), -0.05, 650, 412), { fill: m.lienzo, w: 2.6 });
+      b.shape(rotPts(box(612, 386, 712, 418, 0.05), 0.04, 662, 402), { fill: m.lienzo, w: 2.6 });
+      b.stroke([800, 428, 790, 400, 820, 388, 850, 400, 846, 428], { w: 3.2, profile: 'even' });
+      b.circle(866, 420, 9, { fill: m.celeste, w: 2.6 });
+      plantInto(b, 1150, 500, 1);
+      return b.done({ colors: PLACE_COLORS() });
+    });
+    return { desk: { x: x + 780 * s, y: y + 430 * s, w: 520 * s } };
+  };
+
+  /* fig.iceberg(ctx, x, y, scale, opts): the luminous tip above a calligraphic waterline and the
+   * large submerged mass below. (x, y) = waterline center; scale 1 = 420 px wide.
+   * opts: reveal (0..1 how much of the mass shows), glow (tip glow 0..1), p. */
+  fig.iceberg = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1, m = M(), p = o.p == null ? 1 : o.p;
+    var d = cached('iceberg', function () {
+      var b = I().drawing('iceberg', { w: 4, jitter: 0.8 });
+      b.shape([-200, 14, -170, 120, -80, 230, 40, 260, 160, 190, 210, 60, 190, 14], { fill: '@mass', w: 4.4 });
+      b.shape([-70, 4, -40, -70, -10, -120, 20, -150, 44, -96, 74, -40, 96, 4], { fill: '@tip', w: 4.4 });
+      b.stroke([-20, -100, 0, -60], { w: 2, profile: 'hair', color: m.celeste });
+      return b.done();
+    });
+    var reveal = o.reveal == null ? 1 : o.reveal;
+    if (o.glow) I().glow(ctx, x, y - 80 * s, 180 * s, m.amarillo, 0.35 * o.glow);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x - 260 * s, y - 200 * s, 520 * s, 200 * s + 280 * s * reveal);
+    ctx.clip();
+    I().draw(ctx, d, x, y, s, { p: p, colors: { tip: m.lienzo, mass: P().mix(m.celeste, m.azul, 0.35) } });
+    ctx.restore();
+    I().wave(ctx, x - 300 * s, y, x + 300 * s, { amp: 5 * s, len: 120 * s, w: 4.5 * s, seed: 'waterline', profile: 'swell', p: p, color: m.lienzo });
+  };
+
+  /* fig.marNocturno(ctx, x, y, scale, opts) -> { horizon } — a night sea: ultramarine and noche
+   * washes, calligraphic waves, a crescent moon and irregular stars. opts: horizon (0..1, 0.5),
+   * moon (true), stars (9), t (stars twinkle gently), seed, p. Draw an iceberg with fig.iceberg. */
+  fig.marNocturno = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1, hz = o.horizon == null ? 0.5 : o.horizon, t = o.t || 0;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s, s);
+    I().background(ctx, 'mar', { seed: o.seed || 'mar', horizon: hz });
+    if (o.moon !== false) fig.sign(ctx, 'luna', 1040, 140, 130, { seed: 'moon', p: o.p });
+    var r = E.rng.create('stars' + (o.seed || ''));
+    var n = o.stars == null ? 9 : o.stars;
+    for (var i = 0; i < n; i++) {
+      var sx = r.range(60, 1220), sy = r.range(40, 720 * hz - 50), sz = r.range(26, 50);
+      if (Math.hypot(sx - 1040, sy - 140) < 110) continue;
+      var tw = 0.85 + 0.15 * Math.sin(t * 1.3 + i * 1.7);
+      fig.sign(ctx, 'estrella', sx, sy, sz * tw, { seed: 'night' + i, colors: { a: M().rojo, ink: i % 3 ? M().amarillo : M().lienzo }, p: o.p, alpha: 0.95 });
+    }
+    ctx.restore();
+    return { horizon: y + 720 * hz * s };
+  };
+
+  /* fig.cordillera(ctx, x, y, scale, opts) -> { peaks: [{ x, y }], valleys: [{ x, y }] } — an Andean
+   * cordillera of flat biomorphic mountains. opts.peaks: [{ x (0..1), h (0..1), lit (yellow),
+   * deep (ultramarine valley after it) }]; default five peaks. ground (territorio), p, seed. */
+  fig.cordillera = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1, m = M();
+    var peaks = o.peaks || [{ x: 0.12, h: 0.42 }, { x: 0.3, h: 0.72, lit: true, deep: true }, { x: 0.5, h: 0.5 }, { x: 0.68, h: 0.8, lit: true, deep: true }, { x: 0.88, h: 0.46 }];
+    ground(ctx, 'territorio', x, y, s, merge(o, { horizon: 0.72, contours: false }));
+    var key = 'cordillera|' + JSON.stringify(peaks) + '|' + (o.seed || '');
+    var base = 600;
+    placeDraw(ctx, key, x, y, s, o, function () {
+      var b = I().drawing(key, { w: 4.5, jitter: 1.2 }), cols = [m.verde, m.tierra, m.azul, m.siena, P().mix(m.verde, m.amarillo, 0.3)];
+      // Deep valleys: dark ultramarine wedges behind the mountains; only the V between slopes shows.
+      peaks.forEach(function (pk, i) {
+        if (!pk.deep) return;
+        var nx = peaks[i + 1] ? peaks[i + 1].x : pk.x + 0.15;
+        var vx = (pk.x + nx) / 2 * 1280;
+        b.fill([vx - 150, base - 330, vx + 150, base - 330, vx + 8, base + 2, vx - 8, base + 2], { fill: P().mix(m.azul, M().tinta, 0.35), poly: true });
+      });
+      peaks.forEach(function (pk, i) {
+        var px = pk.x * 1280, top = base - pk.h * 520, hw = 120 + pk.h * 120;
+        b.shape([px - hw, base, px - hw * 0.45, base - pk.h * 300, px - 12, top + 6, px + 8, top, px + hw * 0.5, base - pk.h * 280, px + hw, base],
+          { fill: cols[i % cols.length], w: 4.6 });
+        if (pk.lit) b.shape([px - 52, top + 96, px - 12, top + 8, px + 8, top + 2, px + 50, top + 92, px, top + 110], { fill: m.amarillo, w: 3.6 });
+      });
+
+      b.stroke([-10, base, 1290, base + 2], { w: 5, profile: 'blunt' });
+      return b.done();
+    });
+    var out = { peaks: [], valleys: [] };
+    peaks.forEach(function (pk, i) {
+      out.peaks.push({ x: x + pk.x * 1280 * s, y: y + (base - pk.h * 520) * s });
+      if (pk.deep) {
+        var nx = peaks[i + 1] ? peaks[i + 1].x : pk.x + 0.15;
+        out.valleys.push({ x: x + (pk.x + nx) / 2 * 1280 * s, y: y + (base - 40) * s });
+      }
+    });
+    return out;
+  };
+
+  /* fig.river(ctx, x, y, scale, opts) -> { at(u) -> { x, y }, reservoir, gate } — a valley river
+   * flowing into a reservoir closed by a dam with a single sluice gate. opts: coins (gold coins
+   * drift along the river with t), gate (0..1 how open), t, p, h (stage height, 720). */
+  fig.river = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1, m = M(), t = o.t || 0;
+    ground(ctx, 'territorio', x, y, s, merge(o, { horizon: 0.32, contours: false }));
+    var pts = [-20, 260, 200, 300, 380, 380, 520, 360, 660, 430, 760, 520];
+    placeDraw(ctx, 'river|' + (o.seed || ''), x, y, s, o, function () {
+      var b = I().drawing('river' + (o.seed || ''), { w: 4, jitter: 1 });
+      b.shape([-20, 250, 300, 160, 640, 220, 980, 150, 1300, 230, 1300, 340, -20, 340], { fill: P().mix(m.verde, m.amarillo, 0.2), w: 4 });
+      b.shape([700, 480, 820, 410, 1010, 420, 1120, 500, 1080, 640, 860, 680, 720, 610], { fill: m.celeste, w: 4.4 });
+      var band = [];
+      for (var i = 0; i < pts.length; i += 2) band.push(pts[i], pts[i + 1] - 26);
+      for (i = pts.length - 2; i >= 0; i -= 2) band.push(pts[i], pts[i + 1] + 26);
+      b.shape(band, { fill: m.celeste, w: 3.6 });
+      b.shape(box(1100, 450, 1150, 690, 0.04), { fill: m.lienzoOcre, w: 4 });
+      b.shape(box(1104, 540, 1146, 600, 0.06), { fill: m.madera, w: 3 });
+      return b.done();
+    });
+    var path = I().smoothPath(pts, false, 6);
+    function at(u) {
+      var k = clamp(Math.floor(u * (path.n - 1)), 0, path.n - 1);
+      return { x: x + path.x[k] * s, y: y + path.y[k] * s };
+    }
+    if (o.coins && (o.p == null || o.p >= 1)) {
+      var nC = typeof o.coins === 'number' ? o.coins : 9;
+      for (var c = 0; c < nC; c++) {
+        var u = (c / nC + t * 0.04) % 1, q2 = at(u);
+        fig.coin(ctx, q2.x, q2.y + Math.sin(t * 2 + c) * 3 * s, 0.32 * s, { seed: 'rc' + c });
+      }
+    }
+    return { at: at, reservoir: { x: x + 910 * s, y: y + 540 * s }, gate: { x: x + 1125 * s, y: y + 570 * s } };
+  };
+
+  /* fig.ciudad(ctx, x, y, scale, opts) -> { groundY } — a Latin American city: hills, rows of houses
+   * with tiled roofs and colorful façades, a bell tower without symbols, a sun. */
+  fig.ciudad = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1;
+    ground(ctx, 'territorio', x, y, s, merge(o, { horizon: 0.42, contours: false }));
+    placeDraw(ctx, 'ciudad|' + (o.seed || ''), x, y, s, o, function () {
+      var b = I().drawing('ciudad' + (o.seed || ''), { w: 3.6, jitter: 0.8 }), m = M(), r = E.rng.create('ciudad' + (o.seed || ''));
+      b.circle(1080, 120, 50, { fill: m.rojo, line: false });
+      b.shape([-20, 330, 260, 210, 520, 290, 760, 190, 1060, 280, 1300, 220, 1300, 380, -20, 380], { fill: m.verde, w: 4 });
+      var facades = [m.amarillo, m.celeste, m.rojo, m.lienzo, P().mix(m.verde, m.lienzo, 0.4), m.tierra, m.lienzoOcre];
+      [[400, 0.85], [520, 1]].forEach(function (row, ri) {
+        var xx = -10;
+        while (xx < 1290) {
+          var w = r.range(90, 150), h = r.range(80, 140) * row[1], gy = row[0] + ri * 80;
+          if (ri === 0 && xx > 560 && xx < 700) {
+            b.shape(box(xx, gy - 260, xx + 70, gy, 0.03), { fill: m.lienzo, w: 3.6 });
+            b.shape([xx - 6, gy - 260, xx + 35, gy - 320, xx + 76, gy - 260], { fill: m.siena, w: 3.4 });
+            b.shape(arc(xx + 35, gy - 205, 16, Math.PI, TAU, 6).concat([xx + 51, gy - 180, xx + 19, gy - 180]), { fill: m.tinta, w: 2 });
+            xx += 80;
+            continue;
+          }
+          b.shape(box(xx, gy - h, xx + w, gy, 0.03), { fill: r.pick(facades), w: 3.4 });
+          b.shape([xx - 8, gy - h, xx + w * 0.5, gy - h - 36, xx + w + 8, gy - h], { fill: r() < 0.7 ? m.siena : m.tierra, w: 3.2 });
+          b.shape(box(xx + w * 0.2, gy - h * 0.55, xx + w * 0.42, gy - h * 0.2, 0.08), { fill: m.azul, w: 2.4 });
+          b.shape(box(xx + w * 0.58, gy - h * 0.6, xx + w * 0.8, gy, 0.06), { fill: m.madera, w: 2.4 });
+          xx += w + r.range(4, 14);
+        }
+      });
+      return b.done();
+    });
+    return { groundY: y + 600 * s };
+  };
+
+  var LATAM = [430, 40, 520, 70, 560, 130, 600, 175, 640, 200, 650, 240, 700, 262, 760, 300, 830, 330, 900, 380, 930, 450,
+    900, 520, 860, 560, 800, 600, 740, 660, 700, 700, 670, 690, 650, 640, 640, 580, 600, 520, 560, 470, 540, 420, 520, 360,
+    530, 320, 560, 290, 520, 260, 470, 215, 420, 170, 360, 120, 330, 80, 380, 50];
+  /* fig.latam(ctx, x, y, scale, opts) -> { anchors: { norte, centro, andes, sur, caribe } } — Latin
+   * America and the Caribbean as ONE warm biomorphic landmass without borders, plus island blobs.
+   * (x, y) = top-left of a 1280×720 stage; opts: color, ground ('lienzo'), p, seed. */
+  fig.latam = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1, m = M();
+    if (o.ground !== false) ground(ctx, 'lienzo', x, y, s, o);
+    placeDraw(ctx, 'latam|' + (o.color || ''), x, y, s, o, function () {
+      var b = I().drawing('latam', { w: 5, jitter: 2 });
+      var land = b.shape(LATAM, { fill: '@land', w: 5.5, fillJitter: 6 });
+      b.blob(700, 210, 70, 34, { fill: '@land2', w: 3.4, irr: 0.25, rot: -0.2 });
+      b.overlap(land, b.blob(560, 330, 60, 90, { fill: P().mix(m.verde, m.amarillo, 0.25), line: false, irr: 0.3 }), m.verde);
+      [[660, 150, 26, 10], [720, 168, 18, 8], [770, 190, 12, 7], [800, 214, 9, 6]].forEach(function (isl) {
+        b.blob(isl[0], isl[1], isl[2], isl[3], { fill: '@land', w: 3, irr: 0.2 });
+      });
+      return b.done({ colors: { land: o.color || m.tierra, land2: P().mix(m.tierra, m.amarillo, 0.35) } });
+    });
+    function pt(px, py) { return { x: x + px * s, y: y + py * s }; }
+    return { anchors: { norte: pt(430, 100), centro: pt(560, 240), caribe: pt(720, 175), andes: pt(600, 470), sur: pt(690, 650), este: pt(860, 420) } };
+  };
+
+  var ROAD_DEFAULT = [80, 600, 260, 520, 420, 560, 560, 430, 720, 380, 880, 430, 1020, 300, 1200, 220];
+  /* fig.road(ctx, x, y, scale, opts) -> { stations: [{ x, y }], at(u) } — a calligraphic road that
+   * unrolls (p) with n stations at even distances. opts: points (flat control points in a
+   * 1280×720 stage), stations (6), signs (array of sign names drawn at the stations), p, seed. */
+  fig.road = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1, p = o.p == null ? 1 : o.p, m = M(), ink = I();
+    var pts = o.points || ROAD_DEFAULT;
+    var key = 'road|' + pts.join(',');
+    var geo = cached(key, function () {
+      var path = ink.smoothPath(pts, false, 4), L = [0];
+      for (var i = 1; i < path.n; i++) L.push(L[i - 1] + Math.hypot(path.x[i] - path.x[i - 1], path.y[i] - path.y[i - 1]));
+      return { path: path, L: L, total: L[L.length - 1],
+        edge: ink.strokeGeom(pts, { w: 30, profile: 'even', seed: 'road-body' }), line: ink.strokeGeom(pts, { w: 4, profile: 'swell', seed: 'road-line' }) };
+    });
+    function at(u) {
+      var target = clamp(u, 0, 1) * geo.total, lo = 0, hi = geo.L.length - 1;
+      while (lo < hi) { var mid = (lo + hi + 1) >> 1; if (geo.L[mid] <= target) lo = mid; else hi = mid - 1; }
+      return { x: x + geo.path.x[lo] * s, y: y + geo.path.y[lo] * s };
+    }
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s, s);
+    var rp = seg(p, 0, 0.6);
+    ctx.fillStyle = m.tinta;
+    ink.fillStroke(ctx, geo.edge, rp, 1.12);
+    ctx.fillStyle = m.lienzoOcre;
+    ink.fillStroke(ctx, geo.edge, rp, 0.92);
+    ctx.fillStyle = P().rgba(m.tinta, 0.55);
+    for (var d0 = 0; d0 < geo.total * rp; d0 += 34) ink.strokeRange(ctx, geo.line, d0, Math.min(d0 + 14, geo.total * rp), 0.55, false);
+    ctx.restore();
+    var n = o.stations == null ? 6 : o.stations, st = [];
+    for (var i = 0; i < n; i++) {
+      var u = n === 1 ? 0.5 : i / (n - 1), q2 = at(u), sp = seg(p, 0.3 + 0.6 * u - 0.05, 0.3 + 0.6 * u + 0.1);
+      st.push(q2);
+      if (sp <= 0) continue;
+      ink.circle(ctx, q2.x, q2.y, 24 * s, { fill: m.lienzo, w: 4 * s, seed: 'station' + i, p: sp });
+      if (o.signs && o.signs[i]) fig.sign(ctx, o.signs[i], q2.x, q2.y, 34 * s, { seed: 'st' + i, p: sp });
+    }
+    return { stations: st, at: at };
+  };
+
+  // =============================================================================================
+  // PROPS (prompt §5.7). Built in local px at scale 1 and cached per (name, seed, variant); each
+  // returns its anchor points in screen coordinates so callers can attach labels and tags.
+
+  var PROPS = {};
+  function anchorsOut(a, x, y, s, flip) {
+    if (!a) return null;
+    var out = {};
+    for (var k in a) {
+      var v = a[k];
+      if (Array.isArray(v) && typeof v[0] === 'number') out[k] = { x: x + (flip ? -v[0] : v[0]) * s, y: y + v[1] * s };
+      else if (Array.isArray(v)) out[k] = v.map(function (q2) { return { x: x + (flip ? -q2[0] : q2[0]) * s, y: y + q2[1] * s }; });
+      else out[k] = v;
+    }
+    return out;
+  }
+  function defProp(name, build, meta) {
+    meta = meta || {};
+    PROPS[name] = true;
+    fig[name] = function (ctx, x, y, scale, o) {
+      o = o || {};
+      var s = scale || 1, vk = meta.variant ? meta.variant(o) : '', seed = o.seed == null ? '' : String(o.seed);
+      var d = cached('prop|' + name + '|' + seed + '|' + vk, function () {
+        var b = I().drawing('prop:' + name + ':' + seed, { w: meta.w || 4, jitter: meta.jitter == null ? 0.8 : meta.jitter });
+        var a = build(b, o);
+        var dd = b.done({ colors: meta.colors ? meta.colors() : null });
+        dd.anchors = a || null;
+        return dd;
+      });
+      I().draw(ctx, d, x, y, s, { p: o.p, colors: o.colors, mono: o.mono, flip: o.flip, rot: o.rot, alpha: o.alpha, weight: o.weight });
+      var out = anchorsOut(d.anchors, x, y, s, o.flip) || {};
+      if (meta.after) meta.after(ctx, x, y, s, o, out);
+      return out;
+    };
+  }
+  fig.propNames = function () { return Object.keys(PROPS); };
+  function q01(v) { return Math.round(clamp(v == null ? 0 : v, -10, 10) * 100) / 100; }
+
+  // ---- Notebook and paper
+
+  /* fig.notebookPage(ctx, x, y, w, h, opts) -> inner rect: a field-notebook page (spiral holes, ruled
+   * lines, red margin line). opts: p, seed, lines (true), tilt. */
+  fig.notebookPage = function (ctx, x, y, w, h, o) {
+    o = o || {};
+    var ink = I(), m = M(), p = o.p == null ? 1 : o.p;
+    ctx.save();
+    if (o.tilt) { ctx.translate(x + w / 2, y + h / 2); ctx.rotate(o.tilt); ctx.translate(-x - w / 2, -y - h / 2); }
+    ink.card(ctx, x, y, w, h, { seed: o.seed || 'page', weight: 3.6, radius: 6, p: p });
+    if (p > 0.3) {
+      ctx.save();
+      ctx.globalAlpha *= seg(p, 0.3, 0.7);
+      ink.notebookLines(ctx, x + 6, y + 18, w - 12, h - 26, { top: 44, spacing: 30, margin: 52 });
+      for (var i = 0; i < Math.floor((w - 40) / 34); i++) {
+        ctx.fillStyle = m.lienzoOcre;
+        ctx.beginPath(); ctx.arc(x + 30 + i * 34, y + 16, 5, 0, TAU); ctx.fill();
+        ctx.strokeStyle = m.tinta; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.arc(x + 30 + i * 34, y + 8, 7, Math.PI * 0.15, Math.PI * 0.85, true); ctx.stroke();
+      }
+      ctx.restore();
+    }
+    ctx.restore();
+    return { x: x + 60, y: y + 44, w: w - 80, h: h - 60 };
+  };
+
+  // Newspaper headline as scribbles with a big "%" and no readable numbers.
+  defProp('headline', function (b) {
+    var r = b.r;
+    b.shape(box(-80, -56, 80, 56, 0.03), { fill: '@paper', w: 3.4 });
+    b.stroke([-66, -36, -10, -40, 20, -34, 64, -38], { w: 7, profile: 'blunt' });
+    for (var i = 0; i < 4; i++) b.stroke(I().wavePoints(-66, -12 + i * 14, i === 3 ? -6 : 10, 2, 18 + r() * 6, r() * 3), { w: 2.2, profile: 'even' });
+    b.stroke([24, 34, 62, -14], { w: 5, profile: 'blunt' });
+    b.stroke(arc(28, -6, 8, 0, TAU, 10), { w: 4, profile: 'even', closed: true });
+    b.stroke(arc(58, 26, 8, 0, TAU, 10), { w: 4, profile: 'even', closed: true });
+  }, { w: 3 });
+
+  // A sheet of paper (flies like a bird in some scenes).
+  defProp('sheet', function (b) {
+    b.shape([-30, -40, 26, -44, 32, 38, -24, 42], { fill: '@paper', w: 3 });
+    for (var i = 0; i < 4; i++) b.stroke([-18, -24 + i * 14, 18, -26 + i * 14], { w: 1.8, profile: 'even' });
+  });
+
+  // ---- Money
+
+  defProp('coin', function (b) {
+    b.circle(0, 0, 30, { fill: '@a', w: 4.2 });
+    b.stroke(arc(0, 0, 21, 0, TAU, 12), { w: 1.8, profile: 'outline', closed: true });
+    b.stroke([0, -11, 0, 11], { w: 4, profile: 'blunt' });
+  }, { colors: function () { return { a: M().oro }; }, jitter: 0.4 });
+
+  /* fig.coinPile(ctx, x, y, scale, opts): a pile of flat coins whose top sits exactly `height` px
+   * above y (honest when height comes from a shared scale). opts: height (px), w (coin width 60), p. */
+  fig.coinPile = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1, h = (o.height || 60) * (o.p == null ? 1 : 1 - Math.pow(1 - clamp(o.p, 0, 1), 3)), w = (o.w || 60) * s, ch = 9 * s, m = M();
+    var n = Math.max(1, Math.floor(h / ch));
+    for (var i = 0; i < n; i++) {
+      var cy = y - i * ch - ch / 2;
+      ctx.fillStyle = m.oro;
+      ctx.beginPath(); ctx.ellipse(x, cy, w / 2, ch * 0.62, 0, 0, TAU); ctx.fill();
+      ctx.strokeStyle = m.tinta; ctx.lineWidth = Math.max(1.4, 2 * s);
+      ctx.stroke();
+    }
+    // The exact top edge: a clean stroke at y - height.
+    if (o.p == null || o.p >= 1) { ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(x - w / 2 - 6, y - (o.height || 60)); ctx.lineTo(x + w / 2 + 6, y - (o.height || 60)); ctx.stroke(); }
+    return { top: { x: x, y: y - (o.height || 60) } };
+  };
+
+  // ---- Bridges
+
+  /* fig.bridge(ctx, x, y, scale, opts) -> { left, right, end }: a bridge over an abyss from one bank to
+   * the other, its last spans still scaffolding. (x, y) = middle of the deck; 400 px wide at scale 1.
+   * opts: built (0..1 share of the deck finished, 0.72), labels { left, right } (verbatim, from data),
+   * p, seed. */
+  defProp('bridge', function (b, o) {
+    var m = M(), built = clamp(o.built == null ? 0.72 : o.built, 0, 1);
+    // The abyss: a dark chasm between two straight-edged cliffs.
+    b.fill([-152, 6, 152, 6, 60, 200, -60, 200], { fill: P().mix(m.azul, m.tinta, 0.55), poly: true });
+    b.shape([-280, 0, -210, -2, -150, 0, -146, 40, -158, 90, -148, 140, -156, 200, -220, 202, -280, 200, -282, 100], { fill: m.tierra, w: 4.2, fillScale: 0 });
+    b.shape([150, 0, 210, -2, 280, 0, 282, 100, 280, 200, 220, 202, 156, 200, 148, 140, 160, 90, 146, 40], { fill: m.siena, w: 4.2, fillScale: 0 });
+    b.stroke([-150, 60, -120, 140, -100, 200], { w: 2, profile: 'hair' });
+    b.stroke([150, 60, 118, 140, 100, 200], { w: 2, profile: 'hair' });
+    var x0 = -150, x1 = 150, xb = lerp(x0, x1, built);
+    b.shape(box(x0, -8, xb, 8, 0.02), { fill: m.madera, w: 3.6 });
+    for (var k = x0 + 30; k < xb - 10; k += 30) b.stroke([k, -8, k + 1, 8], { w: 1.6, profile: 'even' });
+    var piers = [-75, 0, 75];
+    piers.forEach(function (px) { if (px < xb) b.stroke([px, 8, px - 2, 120], { w: 5, profile: 'blunt' }); });
+    for (var sx = xb; sx < x1; sx += 26) {
+      b.stroke([sx, -6, sx + 26, 6], { w: 1.6, profile: 'hair' });
+      b.stroke([sx, 6, sx + 26, -6], { w: 1.6, profile: 'hair' });
+      b.stroke([sx, -8, sx, 40], { w: 1.4, profile: 'hair' });
+    }
+    b.stroke([xb, -8, x1, -8], { w: 1.4, profile: 'hair' });
+    return { left: [-205, 0], right: [205, 0], end: [xb, 0] };
+  }, { variant: function (o) { return q01(o.built == null ? 0.72 : o.built); }, w: 4,
+    after: function (ctx, x, y, s, o, a) {
+      if (!o.labels) return;
+      var ink = I();
+      if (o.labels.left) ink.letter(ctx, o.labels.left, a.left.x, a.left.y + 40 * s, { size: 34 * s, align: 'center', seed: 'bl', underline: false, stars: false, p: o.p, color: M().lienzo });
+      if (o.labels.right) ink.letter(ctx, o.labels.right, a.right.x, a.right.y + 40 * s, { size: 34 * s, align: 'center', seed: 'br', underline: false, stars: false, p: o.p, color: M().lienzo });
+    } });
+
+  /* fig.suspensionBridge(ctx, x, y, scale, opts) -> { left, right, end }: towers, cables and a deck
+   * still under construction. (x, y) = middle of the deck; 520 px wide at scale 1. opts: built
+   * (0..1), labels { left, right }, p. */
+  defProp('suspensionBridge', function (b, o) {
+    var m = M(), built = clamp(o.built == null ? 0.6 : o.built, 0, 1);
+    b.fill([-240, 26, 240, 26, 240, 130, -240, 130], { fill: m.azul, poly: true, fillAlpha: 0.9 });
+    b.stroke(I().wavePoints(-220, 60, 220, 3, 60, 0), { w: 2.4, profile: 'swell', color: m.celeste });
+    b.shape([-340, 0, -280, -2, -230, 0, -226, 60, -236, 130, -340, 132], { fill: m.amarillo, w: 4, fillScale: 0 });
+    b.shape([230, 0, 280, -2, 340, 0, 340, 132, 236, 130, 226, 60], { fill: m.tierra, w: 4, fillScale: 0 });
+    [-170, 170].forEach(function (tx) { b.shape(box(tx - 9, -150, tx + 9, 40, 0.04), { fill: m.rojo, w: 3.6 }); });
+    b.stroke([-230, -6, -170, -146, 0, -40, 170, -146, 230, -6], { w: 2.6, profile: 'even' });
+    var xb = lerp(-230, 230, built);
+    for (var hx = -150; hx < 160; hx += 30) {
+      var cy = hx < 0 ? -146 + (hx + 170) / 170 * 106 : -40 - hx / 170 * 106;
+      b.stroke([hx, cy, hx, hx < xb ? -6 : 10], { w: 1.4, profile: 'hair' });
+    }
+    b.shape(box(-230, -8, xb, 6, 0.02), { fill: m.madera, w: 3.4 });
+    return { left: [-280, 0], right: [280, 0], end: [xb, 0] };
+  }, { variant: function (o) { return q01(o.built == null ? 0.6 : o.built); },
+    after: function (ctx, x, y, s, o, a) {
+      if (!o.labels) return;
+      if (o.labels.left) I().letter(ctx, o.labels.left, a.left.x, a.left.y + 30 * s, { size: 28 * s, align: 'center', seed: 'sl', underline: false, stars: false, p: o.p });
+      if (o.labels.right) I().letter(ctx, o.labels.right, a.right.x, a.right.y + 30 * s, { size: 28 * s, align: 'center', seed: 'sr', underline: false, stars: false, p: o.p });
+    } });
+
+  /* fig.plank(ctx, x, y, scale, opts): a wooden plank carried by workers; opts.label (verbatim). */
+  defProp('plank', function (b) {
+    b.shape(box(-70, -9, 70, 9, 0.03), { fill: M().tierra, w: 3.2 });
+    b.stroke([-50, -2, 40, 0], { w: 1.4, profile: 'hair' });
+  }, { after: function (ctx, x, y, s, o) { if (o.label) I().text(ctx, o.label, x, y + 12 * s, { size: 16 * s, weight: 700, align: 'center', p: o.p }); } });
+
+  // ---- Measurement and time
+
+  /* fig.balance(ctx, x, y, scale, opts) -> { leftPan, rightPan }: a balance scale. (x, y) = foot of the
+   * post; ~300 px wide at scale 1. opts.tilt (radians, > 0 lowers the right pan). */
+  defProp('balance', function (b, o) {
+    var m = M(), t = o.tilt || 0, top = -230, hw = 140;
+    b.shape(box(-60, -14, 60, 0, 0.1), { fill: m.madera, w: 3.6 });
+    b.stroke([0, -14, 0, top], { w: 7, profile: 'blunt' });
+    b.circle(0, top, 9, { fill: m.oro, w: 3 });
+    var lx = -Math.cos(t) * hw, ly = top - Math.sin(t) * hw, rx = Math.cos(t) * hw, ry = top + Math.sin(t) * hw;
+    b.stroke([lx, ly, 0, top, rx, ry], { w: 6, profile: 'blunt' });
+    var pans = [[lx, ly], [rx, ry]];
+    pans.forEach(function (pp) {
+      b.stroke([pp[0], pp[1], pp[0] - 46, pp[1] + 70], { w: 1.6, profile: 'hair' });
+      b.stroke([pp[0], pp[1], pp[0] + 46, pp[1] + 70], { w: 1.6, profile: 'hair' });
+      b.shape(arc(pp[0], pp[1] + 66, 54, 0.05, Math.PI - 0.05, 8), { fill: m.oro, w: 3.6 });
+    });
+    return { leftPan: [lx, ly + 66], rightPan: [rx, ry + 66], pivot: [0, top] };
+  }, { variant: function (o) { return q01(o.tilt); } });
+
+  /* fig.hourglass(ctx, x, y, scale, opts): (x, y) = center; 120 × 200 at scale 1. opts.level (0..1:
+   * share of sand still on top, 0.5), p. */
+  defProp('hourglass', function (b, o) {
+    var m = M(), lv = clamp(o.level == null ? 0.5 : o.level, 0, 1);
+    b.shape(box(-56, -100, 56, -86, 0.1), { fill: m.madera, w: 3.4 });
+    b.shape(box(-56, 86, 56, 100, 0.1), { fill: m.madera, w: 3.4 });
+    var ty = -86 + (1 - lv) * 74;
+    if (lv > 0.02) b.fill([-40 + (1 - lv) * 30, ty, 40 - (1 - lv) * 30, ty, 4, -8, -4, -8], { fill: m.amarillo, fillScale: 0 });
+    if (lv < 0.98) b.fill([-42, 84, 42, 84, 42 * (1 - lv) * 0.6, 84 - (1 - lv) * 64, -42 * (1 - lv) * 0.6, 84 - (1 - lv) * 64], { fill: m.amarillo, fillScale: 0 });
+    b.shape([-46, -86, 46, -86, 8, -6, 46, 86, -46, 86, -8, -6], { w: 4, fillScale: 0 });
+  }, { variant: function (o) { return q01(o.level == null ? 0.5 : o.level); } });
+
+  /* fig.stopwatch(ctx, x, y, scale, opts): (x, y) = center of the dial; 120 px at scale 1.
+   * opts.turn (0..1: hand position as a share of a full turn — pass a value from data when it
+   * encodes one), p. */
+  defProp('stopwatch', function (b, o) {
+    var m = M(), a = -Math.PI / 2 + TAU * clamp(o.turn || 0, 0, 1);
+    b.shape(box(-10, -76, 10, -62, 0.2), { fill: m.rojo, w: 3 });
+    b.circle(0, 0, 58, { fill: '@paper', w: 5 });
+    for (var i = 0; i < 12; i++) {
+      var ta = i / 12 * TAU;
+      b.stroke([Math.cos(ta) * 44, Math.sin(ta) * 44, Math.cos(ta) * (i % 3 ? 50 : 52), Math.sin(ta) * (i % 3 ? 50 : 52)], { w: i % 3 ? 2 : 3.6, profile: 'even' });
+    }
+    b.stroke([0, 0, Math.cos(a) * 40, Math.sin(a) * 40], { w: 4.6, profile: 'lift' });
+    b.circle(0, 0, 5, { fill: m.rojo, w: 2 });
+  }, { variant: function (o) { return q01(o.turn); } });
+
+  /* fig.telescope(ctx, x, y, scale, opts): a telescope on a tripod. (x, y) = feet center; ~260 px
+   * tall at scale 1. opts.angle (tube elevation, radians, 0.5), p. */
+  defProp('telescope', function (b, o) {
+    var m = M(), a = o.angle == null ? 0.5 : o.angle, hx = 0, hy = -170;
+    b.stroke([hx, hy, -60, 0], { w: 4.6, profile: 'blunt' });
+    b.stroke([hx, hy, 60, 0], { w: 4.6, profile: 'blunt' });
+    b.stroke([hx, hy, 4, 0], { w: 4, profile: 'blunt' });
+    var tube = rotPts([-70, -14, 110, -22, 110, 22, -70, 14], -a, 0, 0);
+    b.shape(movePts(tube, hx, hy), { fill: m.azul, w: 4 });
+    var lens = rotPts([110, -26, 124, -27, 124, 27, 110, 26], -a, 0, 0);
+    b.shape(movePts(lens, hx, hy), { fill: m.amarillo, w: 3.4 });
+    var eye = rotPts([-70, -9, -92, -8, -92, 8, -70, 9], -a, 0, 0);
+    b.shape(movePts(eye, hx, hy), { fill: m.tinta, w: 3 });
+    var tip = rotPts([124, 0], -a, 0, 0);
+    return { lens: [hx + tip[0], hy + tip[1]] };
+  }, { variant: function (o) { return q01(o.angle == null ? 0.5 : o.angle); } });
+
+  /* fig.microscope / magnifier / spyglass / flask: the legend signs at prop size in neutral colors.
+   * (x, y) = center; opts.size (px, 160). Magnifier and spyglass belong only to scenes about
+   * measurement and intentions (prompt §5.7). */
+  fig.microscope = function (ctx, x, y, scale, o) { fig.sign(ctx, 'microscopio', x, y, 160 * (scale || 1), merge({ seed: 'prop' }, o)); };
+  fig.magnifier = function (ctx, x, y, scale, o) { fig.sign(ctx, 'lupa', x, y, 160 * (scale || 1), merge({ seed: 'prop', colors: { a: M().celeste } }, o)); };
+  fig.spyglass = function (ctx, x, y, scale, o) { fig.sign(ctx, 'catalejo', x, y, 160 * (scale || 1), merge({ seed: 'prop', colors: { a: M().madera } }, o)); };
+  fig.flask = function (ctx, x, y, scale, o) { fig.sign(ctx, 'matraz', x, y, 160 * (scale || 1), merge({ seed: 'prop', colors: { a: M().amarillo } }, o)); };
+  fig.compass = function (ctx, x, y, scale, o) { fig.sign(ctx, 'brujula', x, y, 160 * (scale || 1), merge({ seed: 'prop' }, o)); };
+  fig.chair = function (ctx, x, y, scale, o) { fig.sign(ctx, 'silla-vacia', x, y, 160 * (scale || 1), merge({ seed: 'prop' }, o)); };
+
+  /* fig.trafficLight(ctx, x, y, scale, opts) -> { lights: [{ key, x, y, r }] }: the tall
+   * calligraphic clinical traffic light — fixed positions top "Rojo", middle "Ámbar", bottom
+   * "Verde", each with its sign and legend label. (x, y) = foot; ~420 px tall at scale 1.
+   * opts.lit ('rojo' | 'ambar' | 'verde' | null: that light glows, the others dim), labels (true), p. */
+  fig.trafficLight = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1, ink = I(), m = M(), p = o.p == null ? 1 : o.p, lights = L2().semaforo;
+    var R = 42 * s, cx = x, top = y - 400 * s;
+    ink.line(ctx, postPts(cx, y, top), { w: 8 * s, profile: 'blunt', seed: 'tl-post', p: seg(p, 0, 0.3) });
+    ink.card(ctx, cx - R - 18 * s, top, (R + 18 * s) * 2, R * 6.6, { seed: 'tl-body', weight: 4.4 * s, radius: R, fill: m.tinta, p: seg(p, 0, 0.4) });
+    var out = [];
+    for (var i = 0; i < lights.length; i++) {
+      var lt = lights[i], ly = top + R * 1.1 + lt.pos * R * 2.2, on = !o.lit || o.lit === lt.key, lp = seg(p, 0.3 + i * 0.15, 0.6 + i * 0.15);
+      if (o.lit === lt.key) ink.glow(ctx, cx, ly, R * 2.4, lt.color, 0.55 * lp);
+      ctx.save();
+      ctx.globalAlpha *= on ? 1 : 0.35;
+      ink.circle(ctx, cx, ly, R * 0.86, { fill: lt.color, line: false, seed: 'tl' + i, p: lp });
+      ctx.restore();
+      fig.sign(ctx, lt.sign, cx, ly, R * 1.05, { seed: 'tl', mono: true, p: lp, alpha: on ? 1 : 0.6 });
+      if (o.labels !== false) ink.text(ctx, lt.label, cx + R + 30 * s, ly - 13 * s, { size: 24 * s, weight: 700, p: lp });
+      out.push({ key: lt.key, x: cx, y: ly, r: R });
+    }
+    return { lights: out };
+  };
+  function L2() { return E.palette.legend; }
+  var postCache = new Map();
+  function postPts(x, y0, y1) {
+    var k = x + '|' + y0 + '|' + y1, v = postCache.get(k);
+    if (!v) { v = [x, y0, x - 2, (y0 + y1) / 2, x, y1]; postCache.set(k, v); }
+    return v;
+  }
+
+  // ---- Office and mail
+
+  defProp('stamp', function (b) {
+    b.circle(0, -62, 16, { fill: M().rojo, w: 3.4 });
+    b.shape(box(-7, -48, 7, -22, 0.1), { fill: M().madera, w: 3 });
+    b.shape(box(-34, -22, 34, -4, 0.08), { fill: M().madera, w: 3.4 });
+    b.shape(box(-30, -4, 30, 4, 0.1), { fill: M().tinta, w: 2.4 });
+  });
+  defProp('folder', function (b) {
+    b.shape([-60, -30, -20, -30, -12, -40, 20, -40, 26, -30, 60, -30, 60, 40, -60, 40], { fill: M().amarillo, w: 3.6 });
+    b.stroke([-60, -18, 60, -18], { w: 2.4, profile: 'even' });
+  });
+  defProp('envelope', function (b) {
+    b.shape(box(-60, -38, 60, 38, 0.04), { fill: '@paper', w: 3.6 });
+    b.stroke([-58, -36, 0, 6, 58, -36], { w: 3, profile: 'even' });
+    b.circle(0, 6, 7, { fill: M().rojo, w: 2 });
+  });
+  defProp('key', function (b) {
+    b.circle(-34, 0, 14, { fill: M().oro, w: 3.4 });
+    b.circle(-34, 0, 4, { fill: '@paper', w: 1.6 });
+    b.stroke([-20, 0, 40, 0], { w: 5.5, profile: 'blunt' });
+    b.stroke([28, 0, 28, 12], { w: 4, profile: 'blunt' });
+    b.stroke([38, 0, 38, 9], { w: 4, profile: 'blunt' });
+  });
+  // A ring with too many keys: keys hang below the ring in a fan, each with its bow and teeth.
+  defProp('keyRing', function (b) {
+    var m = M(), cols = [m.oro, m.tierra, m.lienzoOcre, m.oro, m.siena, m.oro, m.tierra];
+    b.stroke(arc(0, -50, 20, 0, TAU, 14), { w: 3.6, closed: true, profile: 'outline' });
+    for (var i = 0; i < 7; i++) {
+      var a = Math.PI * (0.18 + i * 0.107), bx = Math.cos(a) * 30, by = -50 + Math.sin(a) * 30;
+      var ex = Math.cos(a) * 84, ey = -50 + Math.sin(a) * 84;
+      b.stroke([Math.cos(a) * 17, -50 + Math.sin(a) * 17, bx, by], { w: 2.4, profile: 'even' });
+      b.circle(bx, by, 7, { fill: cols[i], w: 2.6 });
+      b.stroke([bx + Math.cos(a) * 7, by + Math.sin(a) * 7, ex, ey], { w: 4, profile: 'blunt' });
+      var tx = lerp(bx, ex, 0.8), ty = lerp(by, ey, 0.8), nx = -Math.sin(a), ny = Math.cos(a);
+      b.stroke([tx, ty, tx + nx * 7, ty + ny * 7], { w: 3, profile: 'blunt' });
+      b.stroke([lerp(bx, ex, 0.92), lerp(by, ey, 0.92), lerp(bx, ex, 0.92) + nx * 5, lerp(by, ey, 0.92) + ny * 5], { w: 2.6, profile: 'blunt' });
+    }
+  });
+  defProp('lock', function (b) {
+    b.stroke(arc(0, -22, 22, Math.PI, TAU, 10).concat([22, -6]), { w: 6, profile: 'blunt' });
+    b.stroke([-22, -22, -22, -6], { w: 6, profile: 'blunt' });
+    b.shape(box(-34, -8, 34, 44, 0.08), { fill: M().oro, w: 4 });
+    b.circle(0, 12, 6, { fill: M().tinta, w: 2 });
+    b.stroke([0, 16, 0, 30], { w: 4, profile: 'blunt' });
+  });
+  defProp('mailbox', function (b) {
+    b.stroke([0, 0, 0, -110], { w: 7, profile: 'blunt' });
+    b.shape(arc(0, -150, 44, Math.PI, TAU, 10).concat([44, -110, -44, -110]), { fill: M().azul, w: 4 });
+    b.shape(box(-30, -136, 18, -124, 0.1), { fill: M().tinta, w: 2 });
+    b.stroke([36, -150, 36, -186], { w: 3.4, profile: 'blunt' });
+    b.shape([36, -186, 60, -180, 36, -172], { fill: M().rojo, w: 2.6 });
+    return { slot: [-6, -130] };
+  });
+  defProp('phone', function (b) {
+    b.shape(box(-20, -38, 20, 38, 0.18), { fill: M().tinta, w: 3 });
+    b.fill(box(-15, -30, 15, 26, 0.1), { fill: '@paper', fillScale: 0, tex: false });
+    b.dot(0, 32, 2.4, { color: '@paper' });
+  });
+  defProp('calendar', function (b, o) {
+    var marked = o.marked == null ? 14 : o.marked, m = M();
+    b.shape(box(-90, -70, 90, 80, 0.03), { fill: '@paper', w: 4 });
+    b.fill(box(-90, -70, 90, -40, 0.03), { fill: m.rojo, fillScale: 0 });
+    for (var i = 0; i < 4; i++) b.stroke(arc(-60 + i * 40, -72, 6, Math.PI, TAU, 6), { w: 3, profile: 'blunt' });
+    var cells = [];
+    for (var row = 0; row < 4; row++) for (var c = 0; c < 6; c++) cells.push([-74 + c * 28, -24 + row * 26]);
+    cells.forEach(function (cc, k) {
+      b.stroke([cc[0] - 6, cc[1], cc[0] + 6, cc[1]], { w: 1.4, profile: 'even' });
+      if (k < marked) { b.stroke([cc[0] - 7, cc[1] - 8, cc[0] + 7, cc[1] + 6], { w: 2.6, profile: 'blunt' }); b.stroke([cc[0] + 7, cc[1] - 8, cc[0] - 7, cc[1] + 6], { w: 2.6, profile: 'blunt' }); }
+    });
+    return { header: [0, -55] };
+  }, { variant: function (o) { return o.marked == null ? '' : o.marked; } });
+  defProp('drawer', function (b, o) {
+    var m = M(), n = o.cards == null ? 3 : o.cards;
+    for (var i = 0; i < n; i++) b.shape(box(-60 + i * 12, -50 - i * 3, 40 + i * 12, -10, 0.05), { fill: '@paper', w: 2.6 });
+    b.shape(box(-90, -20, 90, 40, 0.04), { fill: m.madera, w: 4 });
+    b.stroke([-20, 10, 20, 10], { w: 5, profile: 'blunt' });
+    return { label: [0, 56] };
+  }, { variant: function (o) { return o.cards == null ? '' : o.cards; } });
+  defProp('bucket', function (b) {
+    var m = M();
+    b.shape([-50, -60, 50, -60, 38, 40, -38, 40], { fill: m.celeste, w: 4 });
+    b.stroke(arc(0, -60, 50, Math.PI, TAU, 10), { w: 2.6, profile: 'even' });
+    [[-20, 54], [6, 66], [26, 52]].forEach(function (d) { b.blob(d[0], d[1], 4, 6, { fill: m.azul, w: 1.6, irr: 0.1 }); });
+    b.stroke([-14, 20, -6, 30], { w: 2, profile: 'hair' });
+  });
+  defProp('chain', function (b, o) {
+    var n = o.links || 5, crack = o.crack == null ? 2 : o.crack;
+    for (var i = 0; i < n; i++) {
+      var cx = (i - (n - 1) / 2) * 36;
+      b.stroke(ell(cx, 0, 24, 12, 14), { w: 4.4, closed: true, profile: 'outline' });
+      if (i === crack) b.stroke([cx - 3, -14, cx + 3, -6, cx - 2, 0], { w: 2.2, profile: 'hair', color: M().rojo });
+    }
+  }, { variant: function (o) { return (o.links || 5) + '|' + (o.crack == null ? 2 : o.crack); } });
+  // A calligraphic doorway: an open arch with its door leaf ajar and a step.
+  defProp('doorway', function (b) {
+    var m = M();
+    b.shape([-50, 0, -50, -112, -40, -140, 0, -158, 40, -140, 50, -112, 50, 0], { fill: m.lienzoOcre, line: false, poly: true });
+    b.shape([50, 0, 50, -150, 88, -134, 88, -12], { fill: m.rojo, w: 3.6, fillScale: 0 });
+    b.dot(80, -70, 3.4);
+    b.stroke(arc(0, -110, 62, Math.PI, TAU, 12).concat([62, 0]), { w: 6.5, profile: 'blunt' });
+    b.stroke([-62, -110, -62, 0], { w: 6.5, profile: 'blunt' });
+    b.shape(box(-80, 0, 80, 12, 0.05), { fill: m.tierra, w: 3.4 });
+  });
+  /* fig.roadSign(ctx, x, y, scale, opts): a post with a sign board; opts.text (a rótulo, e.g. a year
+   * that only names a moment). (x, y) = foot of the post. */
+  defProp('roadSign', function (b) {
+    b.stroke([0, 0, 0, -150], { w: 7, profile: 'blunt' });
+    b.shape(box(-60, -200, 60, -150, 0.06), { fill: M().amarillo, w: 4 });
+    return { board: [0, -175] };
+  }, { after: function (ctx, x, y, s, o, a) { if (o.text) I().text(ctx, o.text, a.board.x, a.board.y - 15 * s, { size: 26 * s, weight: 700, align: 'center', p: o.p }); } });
+  defProp('lever', function (b) {
+    b.shape(box(-30, -16, 30, 0, 0.1), { fill: M().tinta, w: 3 });
+    b.stroke([0, -10, 30, -100], { w: 7, profile: 'blunt' });
+    b.circle(32, -106, 12, { fill: M().rojo, w: 3 });
+    return { handle: [32, -106] };
+  });
+  defProp('steppingStones', function (b, o) {
+    var n = o.n || 6, out = [], r = b.r;
+    for (var i = 0; i < n; i++) {
+      var sx = (i - (n - 1) / 2) * 120, sy = Math.sin(i * 1.3) * 14;
+      b.blob(sx, sy, 46, 18, { fill: P().mix(M().lienzoOcre, M().tierra, 0.3 + r() * 0.3), w: 3.6, irr: 0.18 });
+      out.push([sx, sy]);
+    }
+    return { stones: out };
+  }, { variant: function (o) { return o.n || 6; } });
+
+  // ---- Governance and navigation
+
+  /* fig.steeringWheel(ctx, x, y, scale, opts) -> { center, rim }: a warm steering wheel with a brake
+   * disc behind it. (x, y) = center; rim radius 150 px at scale 1. opts.turn (radians), p. */
+  defProp('steeringWheel', function (b, o) {
+    var m = M(), tr = o.turn || 0;
+    b.circle(110, 110, 62, { fill: m.rojo, w: 4 });
+    for (var i = 0; i < 6; i++) { var a = i / 6 * TAU; b.circle(110 + Math.cos(a) * 36, 110 + Math.sin(a) * 36, 6, { fill: M().tinta, w: 1.6 }); }
+    b.circle(110, 110, 14, { fill: m.lienzoOcre, w: 2.6 });
+    b.stroke(arc(0, 0, 150, 0, TAU, 28), { w: 22, closed: true, profile: 'even', color: m.madera });
+    b.stroke(arc(0, 0, 162, 0, TAU, 28), { w: 4, closed: true, profile: 'outline' });
+    b.stroke(arc(0, 0, 138, 0, TAU, 28), { w: 4, closed: true, profile: 'outline' });
+    for (i = 0; i < 3; i++) {
+      var sa = tr + Math.PI / 2 + i * TAU / 3;
+      b.shape(rotPts([20, -9, 140, -12, 140, 12, 20, 9], sa), { fill: m.madera, w: 3.4 });
+    }
+    b.circle(0, 0, 32, { fill: m.amarillo, w: 4 });
+    return { center: [0, 0], rimR: 150 };
+  }, { variant: function (o) { return q01(o.turn); } });
+
+  /* fig.lighthouse(ctx, x, y, scale, opts): (x, y) = base; ~330 px tall at scale 1. opts.beam
+   * (radians: direction of the light beam, null = none), p. */
+  fig.lighthouse = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1;
+    if (o.beam != null) {
+      ctx.save();
+      ctx.translate(x, y - 250 * s);
+      ctx.rotate(o.beam);
+      var g = ctx.createLinearGradient(0, 0, 420 * s, 0);
+      g.addColorStop(0, P().rgba(M().amarillo, 0.7));
+      g.addColorStop(1, P().rgba(M().amarillo, 0));
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(420 * s, -60 * s); ctx.lineTo(420 * s, 60 * s); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+    fig.sign(ctx, 'faro', x, y - 165 * s, 330 * s, { seed: 'lighthouse', p: o.p });
+  };
+
+  /* fig.boat(ctx, x, y, scale, opts) -> { motor, deck }: a fast warm boat; opts.motor (true: a small
+   * ruled motor — the lamp — pushes it), compass (false), passengers (0..4), t, p. (x, y) = waterline
+   * center; 300 px long at scale 1. */
+  fig.boat = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1, m = M(), p = o.p == null ? 1 : o.p, n = o.passengers || 0;
+    for (var i = 0; i < n; i++) fig.person(ctx, x + (i - (n - 1) / 2) * 52 * s, y - 14 * s, 0.75 * s, { role: 'estudiante', seed: 'boat' + i, pose: 'standing', skin: (i * 2) % 5, p: p });
+    var d = cached('boat', function () {
+      var b = I().drawing('boat', { w: 4.4, jitter: 1 });
+      b.shape([-150, -40, -100, -34, 110, -34, 165, -52, 120, 22, -130, 22], { fill: '@a', w: 4.6 });
+      b.stroke([-120, -10, 120, -10], { w: 2.2, profile: 'even', color: m.lienzo });
+      return b.done({ colors: { a: m.rojo } });
+    });
+    I().draw(ctx, d, x, y, s, { p: p, offset: 3 });
+    I().wave(ctx, x - 200 * s, y + 18 * s, x + 200 * s, { amp: 4 * s, len: 60 * s, w: 3 * s, seed: 'boatwave', color: m.celeste, p: p });
+    var motor = { x: x - 170 * s, y: y - 12 * s };
+    if (o.motor !== false) {
+      I().rRect(ctx, motor.x - 30 * s, motor.y - 22 * s, 30 * s, 44 * s, { fill: Q().noche, color: Q().linea, w: 1.4, p: p });
+      fig.lamp(ctx, motor.x - 15 * s, motor.y - 34 * s, 0.32 * s, { t: o.t, p: p });
+    }
+    if (o.compass) fig.sign(ctx, 'brujula', x + 60 * s, y - 110 * s, 80 * s, { seed: 'boat', p: p, rot: o.compassRot || 0 });
+    return { motor: motor, deck: { x: x, y: y - 34 * s } };
+  };
+
+  /* fig.net(ctx, x, y, scale, opts) -> { path: Path2D (screen space test with isPointInPath) }: a
+   * large hand-drawn fishing net. (x, y) = center; 360 × 240 at scale 1. */
+  fig.net = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1, ink = I(), p = o.p == null ? 1 : o.p;
+    var rim = cached('net-rim', function () { return ink.blobPoints(E.rng.create('net'), 0, 0, 180, 120, 12, 0.08); });
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s, s);
+    var g = ink.shapeGeom(rim, { seed: 'net', w: 5 });
+    ctx.save();
+    ctx.clip(g.path);
+    ctx.strokeStyle = M().tinta;
+    ctx.lineWidth = 1.4 / s;
+    ctx.globalAlpha *= seg(p, 0.3, 0.8);
+    ctx.beginPath();
+    for (var i = -200; i <= 200; i += 22) {
+      ctx.moveTo(i, -140); ctx.quadraticCurveTo(i + 14, 0, i, 140);
+      ctx.moveTo(-200, i * 0.66); ctx.quadraticCurveTo(0, i * 0.66 + 10, 200, i * 0.66);
+    }
+    ctx.stroke();
+    ctx.restore();
+    ctx.fillStyle = M().tinta;
+    ink.fillStroke(ctx, g.outline, seg(p, 0, 0.6), 1);
+    ctx.restore();
+    var path = new Path2D();
+    for (var k = 0; k < rim.length; k += 2) { var px = x + rim[k] * s, py = y + rim[k + 1] * s; if (k === 0) path.moveTo(px, py); else path.lineTo(px, py); }
+    path.closePath();
+    return { path: path };
+  };
+
+  /* fig.foldingDoc(ctx, x, y, scale, opts) -> { panels: [rects] }: a document that opens like a
+   * folding map into n panels. (x, y) = top-left; each panel 130 × 180 at scale 1. opts.n (6),
+   * open (0..1), p. */
+  fig.foldingDoc = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1, n = o.n || 6, open = clamp(o.open == null ? 1 : o.open, 0, 1), pw = 130 * s, ph = 180 * s, out = [];
+    for (var i = 0; i < n; i++) {
+      var shown = clamp(open * n - i, 0, 1);
+      if (shown <= 0 && i > 0) break;
+      var w = pw * (i === 0 ? 1 : shown);
+      var rx = x + i * pw;
+      ctx.save();
+      ctx.globalAlpha *= i === 0 ? 1 : 0.4 + 0.6 * shown;
+      I().card(ctx, rx, y + (i % 2) * 4 * s, Math.max(4, w), ph, { seed: 'fold' + i, weight: 3 * s, radius: 4, p: o.p, fill: i % 2 ? M().lienzo : P().mix(M().lienzo, M().lienzoOcre, 0.4) });
+      ctx.restore();
+      out.push({ x: rx, y: y, w: w, h: ph });
+    }
+    return { panels: out };
+  };
+
+  /* fig.pennant(ctx, x, y, scale, opts): a plain pennant on a short stick with a pattern fill (no
+   * names, flags or logos). (x, y) = foot of the stick. opts.pattern, color, t (flutter), p. */
+  fig.pennant = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1, t = o.t || 0, top = y - 120 * s, fl = Math.sin(t * 3 + x * 0.01) * 5 * s;
+    I().line(ctx, [x, y, x, top], { w: 4 * s, profile: 'blunt', seed: 'pen-stick', p: o.p });
+    var tri = new Path2D();
+    tri.moveTo(x, top); tri.lineTo(x + 80 * s, top + 22 * s + fl); tri.lineTo(x, top + 46 * s); tri.closePath();
+    ctx.save();
+    ctx.fillStyle = o.color || M().lienzo;
+    ctx.globalAlpha *= o.p == null ? 1 : seg(o.p, 0.3, 1);
+    ctx.fill(tri);
+    if (o.pattern) fig.pattern(ctx, o.pattern, x, top - 2, 84 * s, 52 * s, { clip: tri, spacing: 12 * s, seed: 'pn' + o.pattern });
+    ctx.strokeStyle = M().tinta; ctx.lineWidth = 2.6 * s; ctx.lineJoin = 'round';
+    ctx.stroke(tri);
+    ctx.restore();
+  };
+
+  /* fig.flipCard(ctx, x, y, w, h, opts): a card that turns from front to back. opts.flip (0..1),
+   * front(ctx, rect), back(ctx, rect) draw the faces (text from data), seed, peek, p. */
+  fig.flipCard = function (ctx, x, y, w, h, o) {
+    o = o || {};
+    var f = clamp(o.flip || 0, 0, 1), k = Math.abs(Math.cos(f * Math.PI)), front = f < 0.5;
+    ctx.save();
+    ctx.translate(x + w / 2, y);
+    ctx.scale(Math.max(0.02, k), 1);
+    ctx.translate(-w / 2, 0);
+    I().card(ctx, 0, 0, w, h, { seed: o.seed || 'flip', p: o.p, peek: o.peek, fill: front ? M().lienzo : P().mix(M().lienzo, M().lienzoOcre, 0.5) });
+    var face = front ? o.front : o.back;
+    if (face && k > 0.2) face(ctx, { x: 0, y: 0, w: w, h: h });
+    ctx.restore();
+  };
+
+  /* fig.bubble(ctx, x, y, w, h, opts) -> inner rect: a speech bubble (tail to opts.tail { x, y })
+   * or a thought bubble (opts.thought: true). Paper fill, brush outline. */
+  fig.bubble = function (ctx, x, y, w, h, o) {
+    o = o || {};
+    var ink = I(), key = 'bubble|' + Math.round(w) + '|' + Math.round(h) + '|' + (o.thought ? 't' : 's') + '|' + (o.seed || '');
+    var pts = cached(key, function () {
+      var r = E.rng.create(key), out = [];
+      var n = o.thought ? 14 : 16;
+      for (var i = 0; i < n; i++) {
+        var a = i / n * TAU, bump = o.thought ? (i % 2 ? 0.92 : 1.06) : 1 + r.jitter(0.02);
+        out.push(w / 2 + Math.cos(a) * w / 2 * bump, h / 2 + Math.sin(a) * h / 2 * bump);
+      }
+      return out;
+    });
+    ctx.save();
+    ctx.translate(x, y);
+    ink.shape(ctx, pts, { fill: o.fill || M().lienzo, w: o.w || 3.4, seed: key, p: o.p, tex: false, offset: 2 });
+    ctx.restore();
+    if (o.tail) {
+      if (o.thought) {
+        var tx = o.tail.x, ty = o.tail.y, bx = x + w * 0.3, by = y + h;
+        [0.25, 0.55, 0.8].forEach(function (u, i) { ink.circle(ctx, lerp(bx, tx, u), lerp(by, ty, u), 9 - i * 2.5, { fill: o.fill || M().lienzo, w: 2.4, seed: key + 'c' + i, p: o.p }); });
+      } else {
+        ink.line(ctx, [x + w * 0.3, y + h * 0.92, (x + w * 0.3 + o.tail.x) / 2, (y + h + o.tail.y) / 2, o.tail.x, o.tail.y], { w: 3.4, seed: key + 'tail', profile: 'lift', p: o.p });
+      }
+    }
+    return { x: x + w * 0.15, y: y + h * 0.18, w: w * 0.7, h: h * 0.64 };
+  };
+
+  /* fig.desk(ctx, x, y, scale, opts) -> { top }: a warm desk seen from the front with drawers.
+   * (x, y) = front center on the floor; 420 × 210 at scale 1. */
+  fig.desk = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1;
+    var d = cached('desk', function () {
+      var b = I().drawing('desk', { w: 4, jitter: 1 });
+      deskInto(b, -210, -210, 420, 210);
+      return b.done({ colors: PLACE_COLORS() });
+    });
+    I().draw(ctx, d, x, y, s, { p: o.p, offset: 3 });
+    return { top: { x: x, y: y - 210 * s, w: 420 * s } };
+  };
 })(typeof window !== 'undefined' ? window : globalThis);

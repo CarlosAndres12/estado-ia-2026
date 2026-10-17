@@ -387,8 +387,16 @@
       fc[2 * i] = cx + (c[2 * i] - cx) * fs + r.jitter(fj);
       fc[2 * i + 1] = cy + (c[2 * i + 1] - cy) * fs + r.jitter(fj);
     }
-    var fp = o.exact ? smoothPath(c, true, o.step || 1.5) : smoothPath(fc, true, o.step || 1.5);
-    var path = toPath2D(fp.x, fp.y, fp.n, true);
+    var path;
+    if (o.poly) {
+      // Straight-edged field (floors, walls, bands): the polygon itself, offset but not smoothed.
+      path = new Path2D();
+      for (i = 0; i < n; i++) { if (i === 0) path.moveTo(c[0], c[1]); else path.lineTo(c[2 * i], c[2 * i + 1]); }
+      path.closePath();
+    } else {
+      var fp = o.exact ? smoothPath(c, true, o.step || 1.5) : smoothPath(fc, true, o.step || 1.5);
+      path = toPath2D(fp.x, fp.y, fp.n, true);
+    }
     var outline = o.line === false ? null : strokeGeom(c, {
       closed: true, w: o.w, profile: o.profile || 'outline', seed: seed + ':o', second: o.second,
       overshoot: o.overshoot, dot: o.dot, press: o.press, rough: o.rough
@@ -557,7 +565,7 @@
     var c = this._jit(pts, o.jitter != null ? o.jitter : this.jitter);
     var g = shapeGeom(c, {
       seed: this._seed(), w: o.w || this.w, line: o.line, profile: o.profile, fillJitter: o.fillJitter,
-      fillScale: o.fillScale, second: o.second, overshoot: o.overshoot, exact: o.exact, press: o.press
+      fillScale: o.fillScale, second: o.second, overshoot: o.overshoot, exact: o.exact, press: o.press, poly: o.poly
     });
     var fill = null, line = null;
     if (o.fill) {
