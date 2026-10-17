@@ -46,7 +46,7 @@ exceeds it. Slicing into PRs is left to the user (each task commit is a candidat
 | T05 | Video runtime: timeline, captions, narrator, player, recorder, render mode, CDP browser lib, snapshots | delegated writer (many non-trivial files) | done (fast-forward to 58a2c61) |
 | T06 | V02 end to end + art review against prompt §3 | delegated writer | done (cherry-picked 4832670..9f98293) |
 | T07 | Page shell: router, markup, views, nav, hero, chips, citations/popovers, banco, glossary, FAQ, references, asistente, footer, CSS | delegated writer | done (cherry-picked b22f7c2..4c08e68) |
-| T08 | Interactions: quizzes, games, calculator, embudo, cuaderno, rubric, Ley de IA timeline, indicadores, timer, láminas viewer, Modo clase, print | delegated writer | running (worktree) |
+| T08 | Interactions: quizzes, games, calculator, embudo, cuaderno, rubric, Ley de IA timeline, indicadores, timer, láminas viewer, Modo clase, print | delegated writer | done (cherry-picked 540ff7d..cb96f5a) |
 | T09 | Láminas D01–D17 | delegated writers (parallel, worktrees) | running (D01–D06; brief odd/spec/lamina-worker-brief.md) |
 | T10 | Videos V01, V03–V09 | delegated writers (parallel, worktrees) | running (one video per worker, brief in odd/spec/video-worker-brief.md) |
 | T11 | Voice-over tooling with **Edge TTS** (user decision; Azure kept optional): normalizer, SSML, Edge bridge + adapter, alignment, generator, listening sheet | delegated writer (many non-trivial files) | done (merged; fix b91d3af) |
@@ -161,6 +161,12 @@ zero errors; 9 videos play in sync; 17 láminas render/print with corrected figu
   diagram drawer; `fig.agentLoop` label size/inset; tag thread colour on navy panels; lamp loop phase;
   doc: person `hand` is {left,right}, ink caches by position; hero iceberg vs `fig.iceberg` unify.
 - D07–D12 launched.
+
+- T08 done (cherry-picked 14 commits): quiz, games/tools S1–S7, cuaderno, rubric, proyecto, láminas
+  viewer, Modo clase (+ facilitator window), print. Parent re-run: 187/187 tests, checker 0 errors,
+  `check-routes.mjs --interact` 8 checks 0 problems (cuaderno PDF 5 pages). Parent fix: S5 Verde sign
+  name → `estrella-visto`; data-model.md documents tool copy. Untested: facilitator-window sync with two
+  windows, timer chime (no-audio rule), real-mouse drag, video playback in Modo clase.
 
 ## Next step
 
