@@ -862,3 +862,22 @@ EIA.data.course = EIA.data.course || {}; EIA.data.course.ui = EIA.data.course.ui
     region: 'Créditos del sitio'
   }
 };
+
+/* [interactions] Copy of the interactive tools: quizzes, games, calculator, team notebook, rubric,
+ * láminas viewer and Modo clase (js/ui/quiz.js, games.js, worksheets.js, proyecto.js, rubrica.js,
+ * laminas-viewer.js, presenter.js). Owner: T08. Tool-specific copy lives in each tool's entry of
+ * js/data/actividades.js; this block holds the shared chrome. Words in {braces} are filled in by
+ * the tools. The prompt-quoted strings stay in ui.feedback, ui.cuaderno, ui.rubrica, ui.laminas and
+ * ui.modoClase above; the keys added here only complete them. */
+EIA.data.course = EIA.data.course || {}; EIA.data.course.ui = EIA.data.course.ui || {};
+EIA.data.course.ui.quiz = {
+  region: 'Quiz de la sesión {n}',
+  progreso: 'Pregunta {n} de {total}',
+  opciones: 'Opciones de respuesta',
+  probada: 'ya la intentaste',
+  respuesta: 'Respuesta: {letra}) {opcion}',
+  siguiente: 'Siguiente pregunta',
+  terminar: 'Ver el puntaje',
+  fin: 'Terminaste el quiz de la sesión {n}.',
+  puntaje: 'Puntaje: {n} de {total} al primer intento'
+};

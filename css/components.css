@@ -1244,4 +1244,98 @@ li.update--caja { margin-left: -1.4em; }
 /* ==== [/player] ==== */
 
 /* ==== [interactions] games, calculator, worksheets, rubric, láminas viewer, Modo clase ==== */
+/* Owner: T08 (js/ui/quiz.js, games.js, worksheets.js, rubrica.js, laminas-viewer.js, presenter.js).
+ * Same language as the page (prompt §3.11): brush-outline cards, signs, ≥ 44 px targets. Feedback
+ * is a sign + words, never color alone: var(--exito) bursting star, var(--casi) gentle spiral. */
+
+/* ---- Feedback (shared by every tool) -------------------------------------------------------- */
+
+.feedback {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  margin: var(--sp-4) 0 0;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--papel);
+  border: 2.5px solid var(--tinta);
+  border-radius: var(--radius-hand);
+}
+.feedback--bien { background: var(--wash-amarillo); }
+.feedback--casi { background: #F6EEDB; border-style: dashed; }
+.feedback__sign { flex: none; width: 54px; height: 54px; background: no-repeat center / contain; }
+.feedback--bien .feedback__sign { background-image: var(--exito, none); }
+.feedback--casi .feedback__sign { background-image: var(--casi, none); }
+.feedback--info .feedback__sign { background-image: var(--sign-lapiz-mono, none); width: 40px; height: 40px; }
+html:not(.has-decor) .feedback__sign { width: 30px; height: 30px; border: 3px solid var(--tinta); border-radius: 50%; }
+html:not(.has-decor) .feedback--casi .feedback__sign { border-style: dotted; }
+.feedback__text { flex: 1 1 auto; min-width: 0; }
+.feedback__main { margin: 0; font-weight: var(--fw-bold); font-size: 1.2rem; }
+.feedback__extra { margin: 0.3rem 0 0; }
+.has-motion .feedback--bien .feedback__sign { animation: eia-burst 560ms ease-out; }
+.has-motion .feedback--casi .feedback__sign { animation: eia-wobble 620ms ease-out; }
+@keyframes eia-burst {
+  0% { transform: scale(0.35) rotate(-40deg); opacity: 0; }
+  65% { transform: scale(1.14) rotate(8deg); opacity: 1; }
+  100% { transform: none; opacity: 1; }
+}
+@keyframes eia-wobble {
+  0% { transform: rotate(-120deg); opacity: 0; }
+  100% { transform: none; opacity: 1; }
+}
+
+/* ---- Quiz (prompt §10.8) -------------------------------------------------------------------- */
+
+.quiz { max-width: 880px; }
+.quiz__progress {
+  margin: 0 0 var(--sp-2);
+  font-weight: var(--fw-bold);
+  font-size: 0.95rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+.quiz__q { font-size: clamp(1.35rem, 1.1rem + 1vw, 1.8rem); margin-bottom: var(--sp-4); }
+.quiz__q:focus { outline: none; }
+.quiz__options { display: grid; gap: var(--sp-3); }
+.quiz__option {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: 58px;
+  padding: 0.65rem 1rem;
+  font-size: 1.2rem;
+  line-height: 1.3;
+  text-align: left;
+  background: var(--papel);
+  border: 2.5px solid var(--tinta);
+  border-radius: var(--radius-hand-2);
+  transition: transform 140ms ease-out, background-color 140ms ease-out;
+}
+.quiz__option:hover { background: var(--wash-amarillo); transform: rotate(-0.4deg); }
+.quiz__letter {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2em;
+  height: 2em;
+  font-weight: var(--fw-bold);
+  border: 2px solid var(--tinta);
+  border-radius: 50%;
+}
+.quiz__text { flex: 1 1 auto; }
+.quiz__mark { flex: none; width: 42px; height: 42px; background: no-repeat center / contain; }
+.quiz__option.is-right { font-weight: var(--fw-bold); background: var(--wash-amarillo); border-width: 3.5px; }
+.quiz__option.is-right .quiz__mark { background-image: var(--exito, none); }
+.quiz__option.is-wrong { color: var(--ink-muted); border-style: dashed; }
+.quiz__option.is-wrong .quiz__mark { background-image: var(--casi, none); }
+.quiz__option[aria-disabled="true"] { cursor: default; transform: none; }
+.quiz__option.is-wrong:hover, .quiz__option[aria-disabled="true"]:not(.is-right):hover { background: var(--papel); }
+.quiz__actions { margin: var(--sp-4) 0 0; }
+.quiz__card--end { text-align: center; }
+.quiz__end-sign { display: block; width: 96px; height: 96px; margin: 0 auto var(--sp-2); background: var(--exito, none) no-repeat center / contain; }
+.quiz__done { margin-bottom: var(--sp-2); }
+.quiz__score { font-family: var(--font-display); font-weight: var(--fw-black); font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2.1rem); }
+.quiz__score:focus { outline: none; }
 /* ==== [/interactions] ==== */
