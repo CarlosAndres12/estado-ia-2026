@@ -1328,7 +1328,14 @@ EIA.data.videos = [
         seVe: 'Los escritorios administrativos brillan más y se les suman pequeños signos de medios, software y finanzas; luego, dos campos de mil puntos, «mujeres» y «hombres», con exactamente cuarenta y siete puntos oscuros en el primero y veinticuatro en el segundo; después, lo mismo para los países de ingresos altos, con noventa y seis y treinta y cinco puntos oscuros.',
         rotulos: {
           mujeres: { text: 'mujeres' },
-          hombres: { text: 'hombres' }
+          hombres: { text: 'hombres' },
+          empleoMundial: { text: 'empleo mundial' },
+          mujeresMundo: { text: '4,7%', cifras: ['trab-3'] },
+          hombresMundo: { text: '2,4%', cifras: ['trab-3'] },
+          ingresosAltos: { text: 'países de ingresos altos' },
+          mujeresAltos: { text: '9,6%', cifras: ['trab-3'] },
+          hombresAltos: { text: '3,5%', cifras: ['trab-3'] },
+          masAlta: { text: 'exposición más alta' }
         },
         lines: [
           {
@@ -1347,7 +1354,8 @@ EIA.data.videos = [
         min: 16,
         seVe: 'La metáfora de la lámina D9: una escalera profesional, caligráfica y cálida, cuyo primer peldaño se deshace en puntos; una persona joven mira hacia arriba desde abajo; el rótulo «Desarrolladores de software de 22 a 25 años · EE. UU. · casi −20% de empleo desde 2024».',
         rotulos: {
-          caida: { text: 'Desarrolladores de software de 22 a 25 años · EE. UU. · casi −20% de empleo desde 2024', cifras: ['trab-4'] }
+          caida: { text: 'Desarrolladores de software de 22 a 25 años · EE. UU. · casi −20% de empleo desde 2024', cifras: ['trab-4'] },
+          hipotesis: { text: 'Una hipótesis plausible, pero no demostrada' }
         },
         lines: [
           {

@@ -63,7 +63,11 @@
       altos: [0, '34%', 'word'], bajos: [0, '11%', 'word'], masAlta: [1, '3,3%', 'chunk'], categoria: [1, 'exposición más alta', 'word'] },
     'tres-conceptos': { distintos: [0, 'Son tres', 'chunk'], expuesta: [0, 'Una ocupación expuesta', 'chunk'],
       automatizacion: [0, 'La automatización', 'chunk'], integracion: [0, 'integración organizacional', 'word'],
-      desplazamiento: [1, 'Y el desplazamiento', 'chunk'], desempleo: [1, 'exposición no es desempleo', 'word'] }
+      desplazamiento: [1, 'Y el desplazamiento', 'chunk'], desempleo: [1, 'exposición no es desempleo', 'word'] },
+    desigual: { administrativas: [0, 'Las ocupaciones administrativas', 'chunk'], medios: [0, 'medios', 'word'], software: [0, 'software', 'word'],
+      finanzas: [0, 'finanzas', 'word'], mundo: [1, '4,7%', 'chunk'], altos: [1, '9,6%', 'chunk'] },
+    entrada: { entrada: [0, 'puestos de entrada', 'word'], cifra: [0, 'casi 20%', 'chunk'], patron: [0, 'aunque las pérdidas', 'chunk'],
+      automatizando: [1, 'se están automatizando', 'chunk'] }
   };
 
   // The scene's cues as shares of their lines, read from the player's s.cue (subtitle timing: the
@@ -557,13 +561,311 @@
   }
 
   // ---------------------------------------------------------------------------------------------
+  // 4 · desigual — exposure is not shared out evenly. One sun lights a row of work places: its
+  // light falls most on the two administrative desks (folders, a stamp, papers) and faintly on the
+  // others; then the small signs of media, software and finance drift in and join the light. On the
+  // second line the work places give way to four fields of exactly 1.000 dots: «mujeres» (47 dark)
+  // and «hombres» (24 dark) of the «empleo mundial», then the same for «países de ingresos altos»
+  // (96 and 35); each value over its field and one source tag for the figure (trab-3).
+
+  var DES = {
+    floor: 506, sun: { x: 640, y: 96, size: 116 },
+    stations: [
+      { x: 178, admin: true, desk: true, person: { role: 'servidor', skin: 1, hair: 'short', seed: 'v05:adm1', cloth: 'azul' } },
+      { x: 430, admin: true, desk: true, person: { role: 'directiva', skin: 4, hair: 'bun', seed: 'v05:adm2', cloth: 'rojo' } },
+      { x: 812, admin: false, desk: false, person: { role: 'campesina', skin: 2, hair: 'braids', seed: 'v05:campo', cloth: 'verde' } },
+      { x: 1072, admin: false, desk: false, person: { role: 'medica', skin: 3, hair: 'long', seed: 'v05:salud' } }
+    ],
+    joiners: [{ kind: 'medios', x: 104, y: 214, cue: 'medios' }, { kind: 'software', x: 304, y: 178, cue: 'software' },
+      { kind: 'finanzas', x: 500, y: 214, cue: 'finanzas' }],
+    fields: { y: 306, R: 110, xs: [222, 474, 806, 1058], valueY: 132, valueSize: 46, labelY: 428, labelSize: 25 },
+    captions: { y: 50, size: 32, xs: [350, 930] },
+    keys: [['mujeres', 'mujeresMundo'], ['hombres', 'hombresMundo'], ['mujeres', 'mujeresAltos'], ['hombres', 'hombresAltos']],
+    legend: { x: 92, y: 484 },
+    tag: { x: 566, y: 456 }
+  };
+
+  // One work place: its person, its desk (seen from the front) and what lies on it.
+  function station(ctx, env, S, i, p) {
+    var fig = env.fig, m = env.pal.mundo, gy = DES.floor, sp = S.person;
+    var who = { role: sp.role, pose: S.desk ? 'standing' : 'presenting', facing: i % 2 ? -1 : 1, skin: sp.skin, hair: sp.hair, seed: sp.seed,
+      cloth: sp.cloth ? m[sp.cloth] : null, p: p };
+    if (S.desk) {
+      fig.person(ctx, S.x, gy - 8, 1.95, who);
+      fig.desk(ctx, S.x, gy, 0.46, { p: p });
+      var top = gy - 210 * 0.46;
+      if (i === 0) {
+        fig.folder(ctx, S.x - 44, top - 14, 0.34, { seed: 'v05:carpeta0', p: p });
+        fig.stamp(ctx, S.x + 52, top + 1, 0.46, { seed: 'v05:sello0', p: p });
+      } else {
+        fig.sheet(ctx, S.x - 52, top - 20, 0.62, { seed: 'v05:hoja1', p: p, rot: -0.2 });
+        fig.sheet(ctx, S.x - 36, top - 18, 0.62, { seed: 'v05:hoja2', p: p, rot: 0.1 });
+        fig.folder(ctx, S.x + 46, top - 14, 0.34, { seed: 'v05:carpeta1', p: p });
+      }
+    } else {
+      fig.person(ctx, S.x, gy, 1.95, who);
+      if (sp.role === 'campesina') {
+        for (var k = 0; k < 3; k++) {
+          env.ink.blob(ctx, S.x + 70 + k * 30, gy - 16 - (k % 2) * 6, 9, 20, { fill: k % 2 ? m.verde : env.pal.mix(m.verde, m.amarillo, 0.3),
+            w: 2.4, irr: 0.15, rot: (k - 1) * 0.3, n: 8, seed: 'v05:brote' + k, p: p });
+        }
+      }
+    }
+  }
+
+  // A small sign of the work that multimodality reaches: a headline, a laptop, coins.
+  function joinerSign(ctx, env, kind, x, y, p) {
+    var fig = env.fig, m = env.pal.mundo, ink = env.ink;
+    if (kind === 'medios') fig.headline(ctx, x, y, 0.42, { seed: 'v05:medios', masthead: m.rojo, p: p });
+    else if (kind === 'finanzas') {
+      fig.coin(ctx, x - 14, y + 6, 0.42, { seed: 'v05:moneda0', p: p });
+      fig.coin(ctx, x + 10, y - 4, 0.42, { seed: 'v05:moneda1', p: p });
+    } else {
+      ink.shape(ctx, [x - 34, y + 14, x + 34, y + 14, x + 40, y + 22, x - 40, y + 22], { fill: m.lienzoOcre, w: 2.6, seed: 'v05:laptop-base', p: p, fillScale: 0 });
+      ink.shape(ctx, [x - 30, y + 14, x - 26, y - 26, x + 26, y - 26, x + 30, y + 14], { fill: m.azul, w: 2.6, seed: 'v05:laptop-pantalla', p: p, fillScale: 0 });
+      ink.line(ctx, [x - 16, y - 12, x - 4, y - 12], { w: 2.4, profile: 'even', color: m.amarillo, seed: 'v05:codigo0', p: p });
+      ink.line(ctx, [x - 10, y - 2, x + 14, y - 2], { w: 2.4, profile: 'even', color: m.lienzo, seed: 'v05:codigo1', p: p });
+    }
+  }
+
+  // Light from the sun onto a place: a soft beam that widens toward it.
+  function beam(ctx, env, x, y, alpha) {
+    if (alpha <= 0) return;
+    var S = DES.sun;
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    ctx.fillStyle = env.pal.mundo.amarillo;
+    ctx.beginPath();
+    ctx.moveTo(S.x - 16, S.y + 30);
+    ctx.lineTo(S.x + 16, S.y + 30);
+    ctx.lineTo(x + 92, y);
+    ctx.lineTo(x - 92, y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function desigual(ctx, s, env) {
+    var C = cuesOf(s, 'desigual'), st = s.state.desigual, ink = env.ink, fig = env.fig, m = env.pal.mundo;
+    ground(ctx, s, env);
+    var a0 = s.at(0), a1 = s.at(1), i, intro = out3(s.intro);
+    // Line 1: the work places under one sun (they give way to the fields as line 2 begins).
+    var away = 1 - seg(a1, 0, 0.05);
+    if (away > 0) {
+      ctx.save();
+      ctx.globalAlpha *= away;
+      var lit = beat(a0, 0.02, 0.14), adm = beat(a0, C.administrativas - 0.02, C.administrativas + 0.1);
+      for (i = 0; i < DES.stations.length; i++) {
+        var S = DES.stations[i];
+        beam(ctx, env, S.x, DES.floor - 120, lit * (S.admin ? 0.12 + 0.2 * adm : 0.09));
+        if (S.admin) ink.glow(ctx, S.x, DES.floor - 110, 120, m.amarillo, 0.5 * adm);
+      }
+      for (i = 0; i < DES.joiners.length; i++) {
+        var J = DES.joiners[i], jp = beat(a0, C[J.cue] - 0.04, C[J.cue] + 0.02);
+        if (jp > 0) ink.glow(ctx, J.x, J.y, 70, m.amarillo, 0.45 * jp);
+      }
+      fig.sign(ctx, 'sol', DES.sun.x, DES.sun.y, DES.sun.size, { seed: 'v05:sol-desigual', rays: true, p: intro });
+      for (i = 0; i < DES.stations.length; i++) station(ctx, env, DES.stations[i], i, out3(seg(s.intro, 0.1 + i * 0.08, 0.7 + i * 0.08)));
+      for (i = 0; i < DES.joiners.length; i++) {
+        var J2 = DES.joiners[i], e = inOut3(beat(a0, C[J2.cue] - 0.1, C[J2.cue]));
+        if (e <= 0) continue;
+        // Each sign drifts in from the right edge and settles beside the administrative desks.
+        joinerSign(ctx, env, J2.kind, lerp(1340, J2.x, e), lerp(J2.y - 60, J2.y, e) + Math.sin(s.t * 0.9 + i) * 2 * e, 1);
+      }
+      ctx.restore();
+    }
+    // Line 2: four fields of exactly 1.000 dots; dark dots = exposición más alta.
+    var Fd = DES.fields, Cp = DES.captions, w1 = landWindow(C.mundo), w2 = landWindow(C.altos);
+    var show = [seg(a1, 0, 0.05), seg(a1, 0, 0.05), beat(a1, w2[0] - 0.06, w2[0]), beat(a1, w2[0] - 0.06, w2[0])];
+    var grow = [out3(beat(a1, w1[0], w1[1])), out3(beat(a1, w1[0] + 0.02, w1[1] + 0.02)), out3(beat(a1, w2[0], w2[1])), out3(beat(a1, w2[0] + 0.02, w2[1] + 0.02))];
+    var land = [seg(a1, w1[1], w1[1] + 0.03), seg(a1, w1[1] + 0.02, w1[1] + 0.05), seg(a1, w2[1], w2[1] + 0.03), seg(a1, w2[1] + 0.02, w2[1] + 0.05)];
+    if (show[2] > 0) ink.line(ctx, st.divider, { w: 3, profile: 'swell', seed: 'v05:divisor', p: show[2], dot: 'detached' });
+    for (i = 0; i < 4; i++) {
+      if (show[i] <= 0) continue;
+      var key = DES.keys[i], n = Math.round(val(env, rot(s, key[1])) * st.field.n / 100);
+      drawField(ctx, env, st.field, Fd.xs[i], Fd.y, { base: show[i], dark: n * grow[i], color: st.color, key: 'desigual' + i });
+      ink.text(ctx, rot(s, key[0]), Fd.xs[i], Fd.labelY, { size: Fd.labelSize, weight: 700, align: 'center', p: show[i] });
+      if (land[i] > 0) hero(ctx, env, rot(s, key[1]), Fd.xs[i], Fd.valueY - 12, Fd.valueSize, { align: 'center', seed: 'v05:desigual' + i, p: land[i] });
+    }
+    if (show[0] > 0) label(ctx, env, rot(s, 'empleoMundial'), Cp.xs[0], Cp.y, Cp.size, { align: 'center', seed: 'v05:cap-mundo', p: show[0] });
+    if (show[2] > 0) label(ctx, env, rot(s, 'ingresosAltos'), Cp.xs[1], Cp.y, Cp.size, { align: 'center', seed: 'v05:cap-altos', p: show[2] });
+    if (show[0] > 0) {
+      legendDot(ctx, env, DES.legend.x, DES.legend.y + 14, 'dark', st.color, show[0]);
+      ink.text(ctx, rot(s, 'masAlta'), DES.legend.x + 22, DES.legend.y, { size: 24, weight: 700, p: show[0] });
+    }
+    // One tag for the figure, tied to the edge of the men's field of the first pair.
+    sourceTag(ctx, env, 'trab-3', DES.tag.x, DES.tag.y, { x: Fd.xs[1] + Fd.R * 0.72, y: Fd.y + Fd.R * 0.72 }, land[0]);
+  }
+
+  // ---------------------------------------------------------------------------------------------
+  // The career ladder of lámina D9 (wooden rails with brush outlines, brush rungs), six rungs evenly
+  // spaced. Local units: foot centre at (0, 0), up is negative. Its first rung is drawn apart: whole,
+  // as the dots it dissolves into, or (cierre) a new rung of another shape.
+
+  var LAD = { x: 430, y: 524, h: 392, w: 124, top: 96, lean: 0.07, rungs: 6 };
+  function ladL(up) { return lerp(-LAD.w / 2, -LAD.top / 2 + LAD.lean * LAD.h, up / LAD.h); }
+  function ladR(up) { return lerp(LAD.w / 2, LAD.top / 2 + LAD.lean * LAD.h, up / LAD.h); }
+  function rungUp(i) { return (i + 1) * LAD.h / (LAD.rungs + 1); }
+
+  function ladderSetup(env) {
+    var m = env.pal.mundo, ink = env.ink, H2 = LAD.h, i;
+    var b = ink.drawing('v05:escalera', { w: 4, jitter: 0.8 });
+    [[ladL, m.tierra], [ladR, env.pal.mix(m.tierra, m.siena, 0.4)]].forEach(function (side) {
+      var f = side[0], pts = [], j;
+      for (j = 0; j <= 6; j++) pts.push(f(H2 * j / 6) - 6, -H2 * j / 6);
+      for (j = 6; j >= 0; j--) pts.push(f(H2 * j / 6) + 6, -H2 * j / 6);
+      b.shape(pts, { fill: side[1], w: 3.8, fillJitter: 1.2, fillScale: 0.004 });
+    });
+    for (i = 1; i < LAD.rungs; i++) {
+      var up = rungUp(i);
+      b.stroke([ladL(up) + 6, -up, (ladL(up) + ladR(up)) / 2, -up + b.r.jitter(2), ladR(up) - 6, -up + b.r.jitter(1.5)], { w: 7, profile: 'blunt' });
+    }
+    var up0 = rungUp(0), l0 = ladL(up0), r0 = ladR(up0);
+    var b0 = ink.drawing('v05:peldano', { w: 7, jitter: 0.8 });
+    b0.stroke([l0 + 6, -up0, (l0 + r0) / 2, -up0 + 1.5, r0 - 6, -up0 + 0.5], { w: 7, profile: 'blunt' });
+    // The dots it dissolves into: they shrink and sag toward the right; a few have already fallen.
+    var r = env.rng('v05:puntos'), dots = [];
+    for (i = 0; i < 11; i++) {
+      var u = i / 10;
+      dots.push({ x: lerp(l0 + 7, r0 - 7, u) + r.jitter(1.5), y: -up0 + u * u * 14 + r.jitter(1.6), r: lerp(4.6, 1.8, u) });
+    }
+    dots.push({ x: l0 + 30, y: -up0 + 26, r: 2 }, { x: l0 + 62, y: -up0 + 40, r: 1.7 }, { x: r0 - 16, y: -up0 + 34, r: 1.5 });
+    // The new first rung of another shape (cierre): a wavy plank, red, wider than the old rung.
+    var bn = ink.drawing('v05:peldano-nuevo', { w: 4, jitter: 0.6 }), pts2 = [], k;
+    for (k = 0; k <= 8; k++) pts2.push(lerp(l0 - 16, r0 + 16, k / 8), -up0 - 9 + Math.sin(k * 1.4) * 3);
+    for (k = 8; k >= 0; k--) pts2.push(lerp(l0 - 16, r0 + 16, k / 8), -up0 + 9 + Math.sin(k * 1.4 + 1) * 3);
+    bn.shape(pts2, { fill: m.rojo, w: 4, fillJitter: 1, fillScale: 0.01 });
+    bn.dot(l0 - 4, -up0, 3.2);
+    bn.dot(r0 + 4, -up0, 3.2);
+    var ground2 = ink.drawing('v05:suelo', { w: 4.6, jitter: 0.8 });
+    ground2.stroke([-380, 0, -120, 2, 80, -1, 178, 1], { w: 4.6, profile: 'blunt' });
+    return { rails: b.done(), rung0: b0.done(), dots: dots, newRung: bn.done(), ground: ground2.done(), up0: up0, l0: l0, r0: r0 };
+  }
+
+  // The ladder at (LAD.x, LAD.y): rails and upper rungs (p), the first rung whole (1 - gone) and
+  // as dots (gone); in the ambient loop a few dots drift down and fade.
+  function drawLadder(ctx, s, env, L, o) {
+    var ink = env.ink, m = env.pal.mundo;
+    ink.draw(ctx, L.ground, LAD.x, LAD.y, 1, { p: o.p });
+    ink.draw(ctx, L.rails, LAD.x, LAD.y, 1, { p: o.p, offset: 3 });
+    var gone = o.gone || 0;
+    if (gone < 1) ink.draw(ctx, L.rung0, LAD.x, LAD.y, 1, { p: o.p, alpha: 1 - gone });
+    if (gone <= 0) return;
+    ctx.save();
+    ctx.globalAlpha *= gone;
+    for (var i = 0; i < L.dots.length; i++) ink.dot(ctx, LAD.x + L.dots[i].x, LAD.y + L.dots[i].y, L.dots[i].r, m.tinta);
+    if (o.drift) {
+      for (var k = 0; k < 4; k++) {
+        var u = (s.t * 0.12 + k / 4) % 1, px = LAD.x + lerp(L.l0 + 14, L.r0 - 14, (k + 0.5) / 4) + Math.sin(TAU * (u + k * 0.3)) * 4;
+        ctx.save();
+        ctx.globalAlpha *= Math.sin(Math.PI * u) * 0.8;
+        ink.dot(ctx, px, LAD.y - L.up0 + 12 + u * (L.up0 - 16), 1.9 - u * 0.6, m.tinta);
+        ctx.restore();
+      }
+    }
+    ctx.restore();
+  }
+
+  // ---------------------------------------------------------------------------------------------
+  // 5 · entrada — lámina D9's metaphor: the warm career ladder whose first rung dissolves into dots
+  // as «puestos de entrada» is said; someone already up the ladder; a young person looks up from
+  // below. Beside it, the figure: «Desarrolladores de software de 22 a 25 años · EE. UU.» and
+  // «casi −20%» as a bar on a 0–100% track that stops at the stated value with a dotted cap and «≈»
+  // (trab-4). Then the hypothesis, marked as such: a dotted arrow from the lost rung to the small
+  // lamp, and the note «Una hipótesis plausible, pero no demostrada». Last, the lectora asks; the
+  // pause holds the image.
+
+  var ENT = {
+    head: { x: 690, y: 66, w: 430, size: 30 },
+    value: { x: 690, size: 68 },
+    track: { x: 692, len: 500, h: 40 },
+    tag: { x: 962 },
+    young: { dx: -132, k: 1.62 },
+    climber: { rung: 3, k: 1.02 },
+    lamp: { x: 604, y: 418, k: 0.42 },
+    note: { x: 650, y: 494, size: 25, w: 600 },
+    lectora: { x: 104, y: 606, k: 2.62 }
+  };
+
+  function entrada(ctx, s, env) {
+    var C = cuesOf(s, 'entrada'), st = s.state.ladder, ink = env.ink, fig = env.fig, chart = env.chart, m = env.pal.mundo;
+    ground(ctx, s, env);
+    var a0 = s.at(0), a1 = s.at(1), a2 = s.at(2), intro = out3(s.intro);
+    floaters(ctx, s, env, [['sol', 590, 132, 64, { a: m.rojo }], ['estrella', 214, 150, 42, { a: m.amarillo }]], intro);
+    // The ladder; its first rung dissolves on «puestos de entrada».
+    var gone = beat(a0, C.entrada - 0.03, C.entrada + 0.12);
+    drawLadder(ctx, s, env, st, { p: seg(s.t, 0, 1.4), gone: gone, drift: gone >= 1 });
+    // «…aún no muestran un patrón general»: the rest of the ladder holds (a soft light on its rungs).
+    var holds = beat(a0, C.patron - 0.02, C.patron + 0.1) * (1 - 0.5 * seg(a0, C.patron + 0.2, 1));
+    if (holds > 0) {
+      for (var r = 1; r < LAD.rungs; r++) {
+        var up = rungUp(r);
+        ink.glow(ctx, LAD.x + (ladL(up) + ladR(up)) / 2, LAD.y - up, 46, m.amarillo, 0.35 * holds);
+      }
+    }
+    var cu = rungUp(ENT.climber.rung), cx = LAD.x + (ladL(cu) + ladR(cu)) / 2;
+    fig.person(ctx, cx, LAD.y - cu - 2, ENT.climber.k, { role: 'persona', pose: 'carrying', facing: 1, seed: 'v05:escala', skin: 1, hair: 'bun',
+      cloth: m.rojo, legs: m.tinta, p: out3(seg(s.intro, 0.3, 1)) });
+    fig.person(ctx, LAD.x + ENT.young.dx, LAD.y, ENT.young.k, { role: 'estudiante', pose: 'lookingUp', facing: 1, seed: 'v05:joven', skin: 3,
+      hair: 'curly', cloth: m.amarillo, legs: m.azul, p: out3(seg(s.intro, 0.4, 1)) });
+
+    // The figure: its label writes on just before the bar lands, by the chunk that says it.
+    var text = rot(s, 'caida'), who = piece(text, ' · ', 0), where = piece(text, ' · ', 1), what = piece(text, ' · ', 2);
+    var pv = chart.parseValue(what), rest = what.slice(pv.index + pv.raw.length).trim();
+    var win = landWindow(C.cifra), Hd = ENT.head;
+    var hp = beat(a0, win[0] - 0.06, win[0] + 0.04);
+    var HL = ink.text(ctx, who, Hd.x, Hd.y, { size: Hd.size, weight: 700, maxWidth: Hd.w, lineHeight: 1.12, p: hp });
+    var WL = ink.text(ctx, where, Hd.x, Hd.y + HL.h + 6, { size: 23, italic: true, p: hp });
+    var vy = Hd.y + HL.h + WL.h + 18, ty = vy + 132;
+    var T = ENT.track, sc = chart.scale(100, T.x, T.len);
+    var tp = seg(hp, 0.4, 1);
+    if (tp > 0) {
+      ctx.save();
+      ctx.globalAlpha *= tp * 0.55;
+      ctx.strokeStyle = m.tinta;
+      ctx.lineWidth = 1.6;
+      ctx.setLineDash([6, 6]);
+      ctx.strokeRect(T.x, ty, T.len, T.h);
+      ctx.restore();
+      chart.baseline(ctx, T.x, ty - 10, ty + T.h + 10, { p: tp });
+    }
+    var bp = beat(a0, win[0], win[1]);
+    var gb = chart.bar(ctx, { text: what, scale: sc, y: ty, h: T.h, labels: false, seed: 'v05:caida', p: bp, color: m.rojo });
+    var lp = seg(a0, win[1], win[1] + 0.03);
+    if (lp > 0) {
+      var VL = hero(ctx, env, pv.raw, ENT.value.x, vy, ENT.value.size, { seed: 'v05:caida', p: lp });
+      ink.text(ctx, rest, ENT.value.x + 4, vy + VL.h - 2, { size: 26, weight: 700, p: lp });
+      // «≈» beside the dotted cap at the exact value.
+      ink.text(ctx, env.pal.legend.words.aprox, gb.x1 + 12, ty + 2, { size: 32, weight: 700, p: lp });
+    }
+    sourceTag(ctx, env, 'trab-4', ENT.tag.x, ty + T.h + 26, { x: gb.x1 + 2, y: ty + T.h }, seg(a0, win[0] + 0.02, win[1] + 0.03));
+
+    // Line 2: the hypothesis, drawn as one: a dotted arrow from the lost rung to the small lamp.
+    var h1 = beat(a1, 0.01, 0.2), h2 = beat(a1, C.automatizando - 0.04, C.automatizando + 0.1);
+    if (h1 > 0) ink.text(ctx, rot(s, 'hipotesis'), ENT.note.x, ENT.note.y, { size: ENT.note.size, italic: true, maxWidth: ENT.note.w, p: h1 });
+    if (h2 > 0) {
+      var Lp = ENT.lamp;
+      ink.arrow(ctx, st.hypArrow, { w: 3, headSize: 12, dotted: true, seed: 'v05:hipotesis', p: h2 });
+      fig.lamp(ctx, Lp.x, Lp.y + Math.sin(s.t * 1.1) * 1.5 * calm(s), Lp.k, { t: s.t, p: seg(h2, 0.4, 1) });
+    }
+    // Line 3: the lectora steps in and asks; the pause holds the image.
+    var lq = out3(seg(a2, 0, 0.25));
+    if (lq > 0) fig.lectora(ctx, ENT.lectora.x, ENT.lectora.y, ENT.lectora.k, { pose: 'asking', facing: 1, p: lq });
+  }
+
+  // ---------------------------------------------------------------------------------------------
   // setup(): geometry built once (seeded), shared by every frame.
 
   function setup(env) {
     var m = env.pal.mundo;
+    var color = env.pal.mix(m.azul, m.lienzo, 0.42), ladder = ladderSetup(env);
+    // entrada: the hypothesis arrow, from the dots of the lost rung to the lamp.
+    ladder.hypArrow = [LAD.x + ladder.r0 + 10, LAD.y - ladder.up0 + 6, LAD.x + ladder.r0 + 70, LAD.y - ladder.up0 - 30, ENT.lamp.x - 34, ENT.lamp.y + 4];
     return {
       oficina: { desk: deskSetup(env) },
-      expo: { big: fieldGeom(1000, EXPO.field.R), small: fieldGeom(100, EXPO.small.R), color: env.pal.mix(m.azul, m.lienzo, 0.42) }
+      expo: { big: fieldGeom(1000, EXPO.field.R), small: fieldGeom(100, EXPO.small.R), color: color },
+      desigual: { field: fieldGeom(1000, DES.fields.R), color: color, divider: [640, 96, 642, 250, 638, 404] },
+      ladder: ladder
     };
   }
 
@@ -575,12 +877,16 @@
     layers: {
       oficina: groundLayer('personas', {}),
       exposicion: groundLayer('personas', {}),
-      'tres-conceptos': groundLayer('personas', {})
+      'tres-conceptos': groundLayer('personas', {}),
+      desigual: groundLayer('personas', {}),
+      entrada: groundLayer('personas', {})
     },
     scenes: {
       oficina: oficina,
       exposicion: exposicion,
-      'tres-conceptos': tresConceptos
+      'tres-conceptos': tresConceptos,
+      desigual: desigual,
+      entrada: entrada
     }
   };
 })(typeof window !== 'undefined' ? window : globalThis);
