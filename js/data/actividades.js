@@ -246,6 +246,7 @@ EIA.data.actividades = {
     tipo: 'tabla',
     titulo: 'Tareas del caso',
     hoja: 's4-tareas',
+    secciones: ['tareas'],
     kb: {
       titulo: 'Actividad A · Tareas del caso',
       duracion: '20 min',
@@ -263,6 +264,7 @@ EIA.data.actividades = {
     tipo: 'tabla',
     titulo: 'Evaluación rediseñada',
     hoja: 's4-tareas',
+    secciones: ['evaluacion', 'usos', 'declaran', 'sin-ia'],
     kb: {
       titulo: 'Actividad B · Rediseñar una evaluación',
       duracion: '35 min',
@@ -734,6 +736,7 @@ EIA.data.cuaderno = {
         {
           id: 'subtareas',
           tipo: 'filas',
+          fila: 'Subtarea',
           min: 6,
           max: 8,
           columnas: [
@@ -836,6 +839,7 @@ EIA.data.cuaderno = {
         {
           id: 'tareas',
           tipo: 'filas',
+          fila: 'Tarea',
           min: 6,
           max: 8,
           columnas: [
@@ -876,6 +880,7 @@ EIA.data.cuaderno = {
         {
           id: 'afirmaciones',
           tipo: 'filas',
+          fila: 'Afirmación',
           min: 1,
           max: 8,
           columnas: [
@@ -950,6 +955,7 @@ EIA.data.cuaderno = {
         {
           id: 'hitos',
           tipo: 'filas',
+          fila: 'Hito',
           min: 3,
           max: 3,
           columnas: [
@@ -984,6 +990,7 @@ EIA.data.cuaderno = {
         {
           id: 'entradas',
           tipo: 'filas',
+          fila: 'Entrada',
           min: 0,
           max: null,
           columnas: [

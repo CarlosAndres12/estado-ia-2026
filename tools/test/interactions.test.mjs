@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { loadData } from '../lib/load-data.mjs';
 
 const root = new URL('../../', import.meta.url).pathname;
-const EIA = await loadData({ root, extra: ['js/core/markup.js', 'js/ui/quiz.js', 'js/ui/games.js'] });
+const EIA = await loadData({ root, extra: ['js/core/markup.js', 'js/ui/quiz.js', 'js/ui/games.js', 'js/ui/worksheets.js'] });
 // Values created inside the vm carry another realm's prototypes; compare them as plain data.
 const plain = (v) => JSON.parse(JSON.stringify(v));
 
@@ -49,4 +49,85 @@ test('the step calculator clamps its inputs to the sliders of the data', () => {
   assert.equal(pasos.prob(150, 2), 1);
   assert.equal(pasos.prob(-5, 2), 0);
   assert.equal(pasos.prob(50, 2.6), 0.125);
+});
+
+// -------------------------------------------------------------------------------------------------
+// «Cuaderno del equipo» (prompt §10.7): the gentle personal-data check never blocks; it only says
+// when a text looks like it names or identifies someone. Export and import keep everything.
+
+test('the personal-data check spots names, long numbers, emails and phone numbers', () => {
+  const { detect } = EIA.ui.cuaderno;
+  assert.deepEqual(plain(detect('La atendió Ana María Pérez en la ventanilla')), ['nombre']);
+  assert.deepEqual(plain(detect('Luego Pedro Gómez revisó la salida')), ['nombre']);
+  assert.deepEqual(plain(detect('Escribir a ana.perez@universidad.edu.co')), ['correo']);
+  assert.deepEqual(plain(detect('Llamar al +57 300 123 4567')), ['telefono']);
+  assert.deepEqual(plain(detect('Teléfono 300 123 4567')), ['telefono']);
+  assert.deepEqual(plain(detect('Cédula 1.020.304.050')), ['numero']);
+  assert.deepEqual(plain(detect('Radicado 20261017001')), ['numero']);
+});
+
+test('the personal-data check stays quiet on ordinary case descriptions', () => {
+  const { detect } = EIA.ui.cuaderno;
+  for (const text of [
+    '',
+    'La IA sugiere y la persona decide.',
+    'El Ministerio de Educación revisa las solicitudes.',
+    'Tiempo por tarea: 25 minutos; meta 15 minutos.',
+    'Costo de licencias: $ 25.000.000 al año',
+    'Plan 2026-2028 con tres hitos.',
+    'Usamos la API de un proveedor y el EBIT no cambió.'
+  ]) {
+    assert.deepEqual(plain(detect(text)), [], text);
+  }
+});
+
+test('a notebook survives export and import unchanged', () => {
+  const C = EIA.ui.cuaderno;
+  const nb = C.blank({ id: 'c-prueba', now: '2026-10-17T10:00:00.000Z' });
+  nb.campos.equipo = 'Equipo Cóndor';
+  nb.campos.caso = 'Clasificación de solicitudes «PQRS» en la alcaldía';
+  nb.hojas['s1-ficha'] = { ficha: { tarea: 'La IA clasifica; una persona revisa.', usuarios: 'Ciudadanía y funcionarios' } };
+  nb.hojas['s2-picos'] = {
+    subtareas: [{ subtarea: 'Leer la solicitud', tipo: 'pico', pasos: '', costo: 'bajo', autonomia: 'la-ia-sugiere' }],
+    criterios: { elegidos: ['costo', 'privacidad'], porque: { costo: 'Presupuesto fijo', privacidad: 'Datos sensibles' } }
+  };
+  nb.hojas['s3-linea-base'] = { costo: { licencias: { marcado: true, monto: 1200, unidad: 'USD/año' } } };
+  nb.hojas['fuentes-ia'] = { cifras: ['adop-1', 'prod-5'], declaracion: 'Usamos IA para revisar la ortografía.' };
+  nb.notas.push({ sesion: 1, pregunta: '¿Qué cifra sobre IA escuchó recientemente?', respuesta: 'La del 88%.' });
+  nb.rubrica.niveles = { evidencia: 4, capacidad: 3 };
+  nb.rubrica.retro = { evidencia: { evidencia: 'Cada cifra con fuente', accion: 'Precisar el tipo' } };
+  const text = C.serialize(nb);
+  assert.equal(typeof text, 'string');
+  const back = C.parse(text);
+  assert.equal(back.ok, true);
+  assert.deepEqual(plain(back.cuaderno), plain(nb));
+  assert.equal(C.serialize(back.cuaderno), text);
+});
+
+test('importing rejects files that are not a team notebook and fills in missing parts', () => {
+  const C = EIA.ui.cuaderno;
+  assert.equal(C.parse('no es json').ok, false);
+  assert.equal(C.parse('{"formato":"otra-cosa","version":1}').ok, false);
+  assert.equal(C.parse('[1, 2, 3]').ok, false);
+  const r = C.parse('{"formato":"eia-cuaderno","version":1,"id":"c-x","campos":{"equipo":"Equipo Jaguar","extra":5},' +
+    '"hojas":{"s1-ficha":{"ficha":{"tarea":"Revisar","rara":{"f":null}}}}}');
+  assert.equal(r.ok, true);
+  assert.equal(r.cuaderno.campos.equipo, 'Equipo Jaguar');
+  assert.equal(r.cuaderno.campos.caso, '');
+  assert.equal(r.cuaderno.campos.extra, undefined);
+  assert.equal(r.cuaderno.hojas['s1-ficha'].ficha.tarea, 'Revisar');
+  assert.deepEqual(plain(r.cuaderno.notas), []);
+  assert.deepEqual(plain(r.cuaderno.rubrica), { niveles: {}, retro: {} });
+});
+
+test('the notebook copies as plain text with its sheet titles and labels', () => {
+  const C = EIA.ui.cuaderno;
+  const nb = C.blank({ id: 'c-texto', now: '2026-10-17T10:00:00.000Z' });
+  nb.campos.equipo = 'Equipo Colibrí';
+  nb.hojas['s1-ficha'] = { ficha: { tarea: 'La IA resume; la persona decide.' } };
+  const text = C.toText(nb);
+  assert.match(text, /Equipo Colibrí/);
+  assert.match(text, /Ficha del caso de uso/);
+  assert.match(text, /La tarea que hace la IA y la que sigue haciendo una persona\./);
+  assert.match(text, /La IA resume; la persona decide\./);
 });
