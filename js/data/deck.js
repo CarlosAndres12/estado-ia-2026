@@ -693,6 +693,7 @@ EIA.data.deck = [
       ago2025: { text: 'Ago 2025: aplican las obligaciones', cifras: ['ries-3'] },
       ago2026: { text: 'Ago 2026: la Comisión puede hacerlas cumplir', cifras: ['ries-3'] },
       ago2027: { text: 'Ago 2027: plazo para los modelos previos a agosto de 2025', cifras: ['ries-3'] },
+      omnibusTitulo: { text: 'Nota' },
       omnibus: {
         text: 'el Ómnibus Digital (2026) aplazó las reglas de alto riesgo a diciembre de 2027 y agosto de 2028',
         cifras: ['ries-4']
