@@ -891,7 +891,12 @@ EIA.data.videos = [
         rotulos: {
           eeuu: { text: 'Estados Unidos' },
           china: { text: 'China' },
-          nota: { text: 'posiblemente subestimada: fondos estatales de orientación' }
+          veces: { text: '23 veces (23,1×)', cifras: ['eco-3'] },
+          nota: { text: 'posiblemente subestimada: fondos estatales de orientación' },
+          publicaciones: { text: 'publicaciones' },
+          citaciones: { text: 'citaciones' },
+          patentes: { text: 'patentes concedidas' },
+          robots: { text: 'instalación de robots industriales' }
         },
         lines: [
           {
@@ -948,6 +953,7 @@ EIA.data.videos = [
         seVe: 'Una torre reglada de servidores con un medidor de energía dibujado a mano, cuya aguja se detiene en «29,6 GW»; luego, cuatro islas biomórficas flotantes con grupos exactos de puntos, los clústeres de supercomputación con respaldo estatal en 2025: «Europa y Asia Central: 44 (eran 3 en 2018)», «China: 85», «Norteamérica: 41» y «América Latina y el Caribe: 8».',
         rotulos: {
           medidor: { text: '29,6 GW', cifras: ['eco-4'] },
+          clusteres: { text: 'clústeres de supercomputación con respaldo estatal' },
           europa: { text: 'Europa y Asia Central: 44 (eran 3 en 2018)', cifras: ['eco-7'] },
           china: { text: 'China: 85', cifras: ['eco-7'] },
           norteamerica: { text: 'Norteamérica: 41', cifras: ['eco-7'] },
@@ -976,7 +982,8 @@ EIA.data.videos = [
           escala: { text: '~1/3 escala la IA en toda la organización', cifras: ['adop-4'] },
           cuelloDeBotella: { text: 'cuello de botella' },
           remateAprox: { text: '≈' },
-          impacto: { text: '39% reporta algún impacto en EBIT (normalmente <5%)', cifras: ['adop-5'] }
+          impacto: { text: '39% reporta algún impacto en EBIT (normalmente <5%)', cifras: ['adop-5'] },
+          cautela: { text: 'Cada barra sale de una pregunta distinta de la misma encuesta.' }
         },
         lines: [
           {
@@ -1001,6 +1008,7 @@ EIA.data.videos = [
         min: 14,
         seVe: 'Un puente sobre un abismo, de la orilla «Uso» a la orilla «Valor»; su último tramo todavía es andamio; figuras cálidas cargan tablones con los rótulos «procesos», «liderazgo», «métricas» y «transformación».',
         rotulos: {
+          idea: { text: 'El cuello de botella es organizacional, no el acceso al modelo' },
           orillaUso: { text: 'Uso' },
           orillaValor: { text: 'Valor' },
           procesos: { text: 'procesos' },
@@ -1040,6 +1048,7 @@ EIA.data.videos = [
           uso: { text: '~9 de 10 usan IA', cifras: ['adop-7'] },
           escala: { text: '44% escala a toda la empresa (38% un año antes, según esa edición)', cifras: ['adop-7'] },
           impacto: { text: '37% algún impacto en EBIT', cifras: ['adop-7'] },
+          curso: { text: 'El curso usa la edición 2025 del informe base.' },
           nota: { text: 'No se compara directamente' }
         },
         lines: [
@@ -1084,6 +1093,12 @@ EIA.data.videos = [
         rotulos: {
           ensayo: { text: 'Desarrolladores experimentados: +19% de tiempo', cifras: ['prod-3'] },
           nota: { text: 'METR lo marca hoy como desactualizado' },
+          seguimientoTitulo: { text: 'Seguimiento de METR' },
+          seguimientoFecha: { text: 'Febrero de 2026', cifras: ['prod-4'] },
+          intervaloNombre: { text: 'IC 95%', cifras: ['prod-4'] },
+          intervaloBajo: { text: '−38%', cifras: ['prod-4'] },
+          intervaloAlto: { text: '+9%', cifras: ['prod-4'] },
+          intervaloPunto: { text: '−18% de tiempo', cifras: ['prod-4'] },
           seguimiento: { text: 'No concluyente' }
         },
         lines: [
@@ -1107,6 +1122,7 @@ EIA.data.videos = [
         rotulos: {
           masExpuestas: { text: 'Industrias más expuestas a la IA: +27,0%', cifras: ['prod-5'] },
           menosExpuestas: { text: 'Menos expuestas: +8,5%', cifras: ['prod-5'] },
+          ejeIngreso: { text: 'Ingreso por empleado 2018–2024', cifras: ['prod-5'] },
           prima: { text: 'Prima salarial media por habilidades de IA: 56% (2024)', cifras: ['prod-6'] },
           cinta: { text: 'Actualización' },
           barometro: { text: 'Barómetro 2026: prima de 62%', cifras: ['prod-7'] }
@@ -1134,7 +1150,11 @@ EIA.data.videos = [
           exposicion: { text: 'Exposición a IA' },
           ingreso: { text: 'Ingreso por empleado' },
           asociacion: { text: 'asociación' },
-          sello: { text: 'Asociación no es causalidad' }
+          sello: { text: 'Asociación no es causalidad' },
+          adopciones: { text: 'adopciones escalonadas' },
+          experimentos: { text: 'experimentos de campo' },
+          discontinuidades: { text: 'discontinuidades' },
+          instrumentos: { text: 'instrumentos plausibles' }
         },
         lines: [
           {
