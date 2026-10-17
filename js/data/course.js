@@ -960,6 +960,46 @@ EIA.data.course.ui.visor = {
   imprimirTitulo: 'Láminas del curso «Estado de la IA 2026»',
   descripcion: 'Lámina D{n}. {texto}'
 };
+// Modo clase (prompt §10.11); the prompt's own words stay in ui.modoClase above.
+EIA.data.course.ui.clase = {
+  region: 'Modo clase',
+  documento: 'Modo clase · {sesion}',
+  elegir: 'Elige qué vas a proyectar',
+  elegirAyuda: 'Las flechas o Re Pág y Av Pág cambian de diapositiva; N abre las notas; Esc sale.',
+  salir: 'Salir',
+  salirAria: 'Salir del Modo clase',
+  pantallaCompleta: 'Pantalla completa',
+  salirPantalla: 'Salir de pantalla completa',
+  anterior: 'Anterior',
+  siguiente: 'Siguiente',
+  posicion: '{n} / {total}',
+  posicionAria: 'Diapositiva {n} de {total}',
+  bloque: 'Bloque {n} de {total}',
+  minutos: '{minutos} min',
+  recurso: 'Recurso: {recurso}',
+  agenda: 'Agenda',
+  reloj: 'Reloj de la sesión',
+  tiempo: '{transcurrido} de {total} min',
+  barra: 'Agenda de la sesión en {n} bloques; la aguja marca dónde debería ir la clase según el reloj.',
+  barraTaller: 'Duración total del taller; la aguja marca el tiempo transcurrido.',
+  taller: 'Taller de 4 horas',
+  largo: 'El bloque {n} («{bloque}») ya pasó su tiempo previsto. Pueden seguir o pasar al siguiente cuando les sirva.',
+  largoTaller: 'Ya pasó el tiempo total del taller.',
+  mostrarRespuesta: 'Mostrar la respuesta',
+  ocultarRespuesta: 'Ocultar la respuesta',
+  respuesta: 'Respuesta',
+  quizN: 'Quiz · pregunta {n} de {total}',
+  contenido: 'Contenido {n}',
+  sinNotas: 'Esta diapositiva no tiene notas en la base de conocimiento.',
+  claves: 'Clave de la actividad',
+  notasCerrar: 'Cerrar las notas',
+  facilitador: 'Vista del facilitador',
+  sigue: 'Sigue: {titulo}',
+  ultima: 'Es la última diapositiva.',
+  conectado: 'Conectada con la ventana de proyección.',
+  sinConexion: 'Abre esta vista con el botón «Abrir vista del facilitador» del Modo clase para seguir la proyección.',
+  ventana: 'Vista del facilitador · {sesion}'
+};
 // Completes ui.rubrica (puntaje, nota, evidencia and accion above are the prompt's words).
 (function (r) {
   var add = {
