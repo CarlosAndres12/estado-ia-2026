@@ -645,8 +645,8 @@ EIA.data.deck = [
     ideaCentral: { text: 'Menos transparencia técnica y sin tasas comparables: el conteo bruto no basta', cifras: [] },
     pie: null,
     rotulos: {
-      aguja: { text: '362', cifras: ['ries-1'], valor: 362 },
-      fantasma: { text: '233', cifras: ['ries-1'], valor: 233 }
+      aguja: { text: '362 (2025)', cifras: ['ries-1'], valor: 362 },
+      fantasma: { text: '233 (2024)', cifras: ['ries-1'], valor: 233 }
     },
     notas: { decir: '', nota: '', metafora: 'tablero de control con un indicador que sube de 233 a 362.' },
     kb: [
