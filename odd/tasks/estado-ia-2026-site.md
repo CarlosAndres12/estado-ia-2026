@@ -154,6 +154,14 @@ zero errors; 9 videos play in sync; 17 láminas render/print with corrected figu
   cached-layer fade; `fig.road` station size; snapshots sample mid-chunk instead of line midpoint.
 - V03 launched.
 
+- D01–D06 done (cherry-picked 0e44cd7..ba98033): checker 0 errors, 17 stills 0 console errors,
+  determinism ok (worker). Parent looked at the six together: coherent; fixed in the engine
+  (lamina.bigFigure) dark colour fields and coloured counters covering big digits → light field
+  peeking low-left, plain digits; gallery self-test 50/50 after the fix. More engine wishes: `barras`
+  diagram drawer; `fig.agentLoop` label size/inset; tag thread colour on navy panels; lamp loop phase;
+  doc: person `hand` is {left,right}, ink caches by position; hero iceberg vs `fig.iceberg` unify.
+- D07–D12 launched.
+
 ## Next step
 
 Merge wave 1 branches as they finish (verify each: checker, tests, headless console), then wave 2:
