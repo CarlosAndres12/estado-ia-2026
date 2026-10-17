@@ -867,5 +867,287 @@
     }
   };
 
+  // =============================================================================================
+  // S7 · «Marco de indicadores» (prompt §11): the KB's nine levels; each opens its question.
+
+  tools['s7-indicadores'] = {
+    mount: function (el, o) {
+      var a = act(o.id || 's7-indicadores');
+      if (!a || !a.niveles) return null;
+      var kit = K(), c = a.ui || {}, cols = a.columnas || [];
+      var toggles = [];
+      function set(btn, q, open) {
+        q.hidden = !open;
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        btn.lastChild.textContent = open ? c.ocultar : c.ver;
+      }
+      var list = h('ol', { class: 'ind__list' }, a.niveles.map(function (n, i) {
+        var qid = kit.uid('pregunta');
+        var q = h('p', { class: 'ind__pregunta', id: qid, hidden: true }, [
+          h('span', { class: 'ind__q-label', text: (cols[2] || '') + ': ' }), n.pregunta
+        ]);
+        var btn = h('button', { type: 'button', class: 'btn btn--small ind__toggle', 'aria-expanded': 'false', 'aria-controls': qid }, [
+          h('span', { class: 'visually-hidden', text: n.nivel + ': ' }), h('span', { text: c.ver })
+        ]);
+        btn.addEventListener('click', function () { set(btn, q, q.hidden); });
+        toggles.push({ btn: btn, q: q });
+        return h('li', { class: 'ind__row ind__row--' + n.id }, [
+          h('span', { class: 'ind__n', 'aria-hidden': 'true', text: String(i + 1) }),
+          h('div', { class: 'ind__main' }, [
+            h('p', { class: 'ind__nivel' }, [h('span', { class: 'visually-hidden', text: (cols[0] || '') + ': ' }), n.nivel]),
+            h('p', { class: 'ind__indicadores' }, [h('span', { class: 'ind__label', text: (cols[1] || '') + ': ' }), n.indicadores]),
+            q
+          ]),
+          btn
+        ]);
+      }));
+      var all = h('button', { type: 'button', class: 'btn ind__all', text: c.todas });
+      all.addEventListener('click', function () {
+        var open = toggles.some(function (x) { return x.q.hidden; });
+        toggles.forEach(function (x) { set(x.btn, x.q, open); });
+        all.textContent = open ? c.ninguna : c.todas;
+      });
+      var box = h('div', { class: 'ind' }, [
+        h('div', { class: 'ind__bar' }, [c.ayuda ? h('p', { class: 'ind__help', text: c.ayuda }) : null, all]),
+        kit.card('ind__card', [list])
+      ]);
+      el.appendChild(box);
+      return { destroy: function () { box.remove(); } };
+    }
+  };
+
+  // S7 · «Cuatro escenarios plausibles» (KB §10, contenido 7; prompt §4.4): four windows with the
+  // legend's pattern fills (dots, stripes, small stars, checks) and their KB labels.
+
+  tools['s7-escenarios'] = {
+    mount: function (el, o) {
+      var a = act(o.id || 's7-escenarios');
+      if (!a || !a.escenarios) return null;
+      var kit = K(), c = a.ui || {};
+      var wins = [];
+      var list = h('ul', { class: 'esc__list' }, a.escenarios.map(function (e, i) {
+        var canvas = kit.canvas('esc__window');
+        var M = EIA.engine.palette ? EIA.engine.palette.mundo : {};
+        wins.push({ canvas: canvas, patron: e.patron, seed: 'escenario-' + e.id, wash: [M.celeste, M.amarillo, M.verde, M.rojo][i % 4] || '#E7D3A8' });
+        return h('li', { class: 'card esc__card' }, [
+          canvas,
+          h('p', { class: 'esc__n', text: kit.fmt(c.escenario, { n: i + 1 }) }),
+          h('h4', { class: 'esc__title', text: e.titulo }),
+          h('p', { class: 'esc__text', html: kit.mi(e.texto) })
+        ]);
+      }));
+      var box = h('div', { class: 'esc' }, [c.titulo ? h('h4', { class: 'game__label', text: c.titulo }) : null, list]);
+      el.appendChild(box);
+      function draw() {
+        var E = EIA.engine;
+        if (!E.ink || !E.figures) return;
+        wins.forEach(function (w) {
+          var cw = Math.max(120, Math.floor(w.canvas.parentNode.clientWidth - 8)), ch = 96;
+          var ctx = kit.fit(w.canvas, cw, ch);
+          var m = E.palette.mundo, mix = E.palette.mix;
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(6, 6, cw - 12, ch - 12);
+          ctx.clip();
+          ctx.fillStyle = mix(w.wash, m.lienzo, 0.62);
+          ctx.fillRect(6, 6, cw - 12, ch - 12);
+          E.figures.pattern(ctx, w.patron, 6, 6, cw - 12, ch - 12, { color: mix(m.tinta, m.lienzo, 0.3), spacing: 18, seed: w.seed });
+          ctx.restore();
+          E.ink.line(ctx, [6, 6, cw - 6, 7, cw - 7, ch - 6, 6, ch - 7], { w: 3.2, closed: true, profile: 'even', seed: w.seed + '-frame' });
+          E.ink.line(ctx, [cw / 2, 8, cw / 2 + 1, ch - 8], { w: 2.4, profile: 'even', seed: w.seed + '-mullion' });
+        });
+      }
+      var stop = kit.observeSize(list, draw);
+      kit.engineReady().then(draw);
+      return { destroy: function () { stop(); box.remove(); } };
+    }
+  };
+
+  // S7 · «Presentación y defensa: 7 minutos + 3 de preguntas por equipo» (prompt §10.12): a hand-
+  // drawn two-phase timer (honest stopwatch: the elapsed share of the whole turn as an exact
+  // sector, the phase change marked) with the list of teams. An optional soft chime is generated
+  // with Web Audio when a phase ends; nothing plays unless the facilitator turns it on.
+
+  var TEAMS_KEY = 'temporizador:equipos';
+  var audio = null;
+  function chime() {
+    try {
+      var AC = root.AudioContext || root.webkitAudioContext;
+      if (!AC) return;
+      audio = audio || new AC();
+      if (audio.state === 'suspended' && audio.resume) audio.resume();
+      var t = audio.currentTime + 0.02;
+      [659.25, 987.77].forEach(function (f, i) {
+        var osc = audio.createOscillator(), g = audio.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, t + i * 0.22);
+        g.gain.exponentialRampToValueAtTime(0.16, t + i * 0.22 + 0.03);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.22 + 1.4);
+        osc.connect(g);
+        g.connect(audio.destination);
+        osc.start(t + i * 0.22);
+        osc.stop(t + i * 0.22 + 1.5);
+      });
+    } catch (err) { /* no sound: the words on screen still say it */ }
+  }
+
+  tools['s7-presentacion'] = {
+    mount: function (el, o) {
+      var a = act(o.id || 's7-presentacion');
+      if (!a || !a.fases) return null;
+      var kit = K(), c = a.ui || {}, store = EIA.util.store, clock = EIA.util.formatClock;
+      var fases = a.fases.map(function (f) { return { label: f.label, ms: f.minutos * 60000, minutos: f.minutos }; });
+      var total = fases.reduce(function (s, f) { return s + f.ms; }, 0);
+      var st = { teams: (store.get(TEAMS_KEY, []) || []).filter(function (x) { return typeof x === 'string'; }), current: 0, elapsed: 0, running: false, t0: 0, timer: 0, phase: 0, chime: false };
+      var id = kit.uid('timer');
+
+      var teamList = h('ol', { class: 'timer__teams-list' });
+      var input = h('input', { type: 'text', id: id + '-name', class: 'timer__input', maxlength: '80', autocomplete: 'off' });
+      var add = h('button', { type: 'button', class: 'btn btn--small', text: c.agregar });
+      var teamsCard = kit.card('card--thin timer__teams', [
+        h('h4', { class: 'timer__h', text: c.equipos }),
+        h('p', { class: 'timer__empty help', text: c.sinEquipos }),
+        teamList,
+        h('div', { class: 'timer__add' }, [h('label', { class: 'field-label', for: id + '-name', text: c.nombre }), h('div', { class: 'timer__add-row' }, [input, add])])
+      ]);
+      var turn = h('p', { class: 'timer__turn' });
+      var canvas = kit.canvas('timer__dial', ' ');
+      var phaseEl = h('p', { class: 'timer__phase' });
+      var digits = h('p', { class: 'timer__digits', 'aria-hidden': 'true' });
+      var left = h('p', { class: 'timer__left' });
+      var live = h('p', { class: 'visually-hidden', role: 'status', 'aria-live': 'polite' });
+      var bar = h('div', { class: 'timer__bar', 'aria-hidden': 'true' }, fases.map(function (f, i) {
+        return h('span', { class: 'timer__seg timer__seg--' + i, style: 'flex: ' + f.minutos + ' 1 0' }, [
+          h('span', { class: 'timer__seg-fill' }), h('span', { class: 'timer__seg-label', text: kit.fmt(c.fase, { fase: f.label, minutos: f.minutos }) })
+        ]);
+      }));
+      var bStart = h('button', { type: 'button', class: 'btn btn--primary', text: ui.t('modoClase.iniciar') });
+      var bReset = h('button', { type: 'button', class: 'btn', text: ui.t('modoClase.reiniciar') });
+      var bNext = h('button', { type: 'button', class: 'btn', text: c.siguiente });
+      var bell = h('input', { type: 'checkbox', id: id + '-bell' });
+      var clockCard = kit.card('timer__clock', [
+        turn,
+        h('div', { class: 'timer__face' }, [canvas, h('div', { class: 'timer__readout' }, [phaseEl, digits, left])]),
+        bar,
+        h('p', { class: 'timer__buttons' }, [bStart, bReset, bNext]),
+        h('p', { class: 'timer__bell' }, [bell, h('label', { for: id + '-bell', text: c.campana })]),
+        live
+      ]);
+      var box = h('div', { class: 'timer' }, [clockCard, teamsCard]);
+      el.appendChild(box);
+
+      function teamName(i) { return st.teams[i] || ''; }
+      function saveTeams() { store.set(TEAMS_KEY, st.teams); }
+      function renderTeams() {
+        teamList.innerHTML = '';
+        teamsCard.querySelector('.timer__empty').hidden = st.teams.length > 0;
+        st.teams.forEach(function (name, i) {
+          var pick = h('button', { type: 'button', class: 'timer__team' + (i === st.current ? ' is-current' : ''), 'aria-pressed': i === st.current ? 'true' : 'false', 'aria-label': kit.fmt(c.elegir, { equipo: name }) }, [
+            h('span', { class: 'timer__team-n', 'aria-hidden': 'true', text: String(i + 1) }), h('span', { text: name })
+          ]);
+          pick.addEventListener('click', function () { st.current = i; reset(); renderTeams(); });
+          var del = h('button', { type: 'button', class: 'timer__remove', 'aria-label': kit.fmt(c.quitar, { equipo: name }), text: '×' });
+          del.addEventListener('click', function () {
+            st.teams.splice(i, 1);
+            if (st.current >= st.teams.length) st.current = Math.max(0, st.teams.length - 1);
+            saveTeams(); renderTeams(); paint();
+          });
+          teamList.appendChild(h('li', { class: 'timer__team-row' }, [pick, del]));
+        });
+      }
+      function addTeam() {
+        var name = String(input.value || '').replace(/\s+/g, ' ').trim();
+        if (!name) { input.focus(); return; }
+        st.teams.push(name);
+        input.value = '';
+        saveTeams(); renderTeams(); paint();
+        input.focus();
+      }
+      add.addEventListener('click', addTeam);
+      input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); addTeam(); } });
+
+      function now() { return root.performance ? root.performance.now() : Date.now(); }
+      function elapsed() { return Math.min(total, st.elapsed + (st.running ? now() - st.t0 : 0)); }
+      function phaseAt(ms) {
+        var acc = 0;
+        for (var i = 0; i < fases.length; i++) { acc += fases[i].ms; if (ms < acc) return { i: i, end: acc }; }
+        return { i: fases.length - 1, end: total, done: true };
+      }
+      function paint() {
+        var e = elapsed(), ph = phaseAt(e);
+        var name = teamName(st.current);
+        turn.textContent = name ? kit.fmt(c.turno, { equipo: name }) : c.sinTurno;
+        phaseEl.textContent = kit.fmt(c.fase, { fase: fases[ph.i].label, minutos: fases[ph.i].minutos });
+        var remaining = clock(ph.done ? 0 : (ph.end - e) / 1000 + 0.999);
+        digits.textContent = remaining;
+        left.textContent = ph.done ? (name ? kit.fmt(c.cumplido, { equipo: name }) : c.cumplidoSinEquipo) : kit.fmt(c.quedan, { tiempo: remaining, fase: fases[ph.i].label });
+        canvas.setAttribute('aria-label', kit.fmt(c.reloj, { transcurrido: clock(e / 1000), total: clock(total / 1000) }));
+        var acc = 0;
+        Array.prototype.forEach.call(bar.children, function (seg, i) {
+          var share = Math.max(0, Math.min(1, (e - acc) / fases[i].ms));
+          seg.firstChild.style.width = (share * 100).toFixed(3) + '%';
+          acc += fases[i].ms;
+        });
+        bStart.textContent = st.running ? ui.t('modoClase.pausar') : ui.t('modoClase.iniciar');
+        drawDial(e);
+        if (ph.i !== st.phase || ph.done) {
+          if (ph.done && st.running) {
+            st.elapsed = total; st.running = false; root.clearInterval(st.timer);
+            bStart.textContent = ui.t('modoClase.iniciar');
+            live.textContent = left.textContent;
+            if (st.chime) chime();
+          } else if (ph.i !== st.phase && st.running) {
+            live.textContent = kit.fmt(c.empieza, { fase: fases[ph.i].label });
+            if (st.chime) chime();
+          }
+          st.phase = ph.i;
+        }
+      }
+      var dialSize = 0;
+      function drawDial(e) {
+        var E = EIA.engine;
+        if (!E.figures || !E.figures.stopwatch) return;
+        var size = dialSize || 180;
+        var ctx = kit.fit(canvas, size, size);
+        var k = size / 150, cx = size / 2, cy = size / 2 + 8 * k;
+        var mark = fases[0].ms / total;
+        E.figures.stopwatch(ctx, cx, cy, k, { elapsed: e / total, mark: Math.min(mark, e / total), wedge: E.palette.mundo.amarillo, extra: E.palette.mundo.celeste });
+        // The phase change, drawn on the dial at its exact angle.
+        var ang = -Math.PI / 2 + mark * Math.PI * 2, r0 = 9 * k, r1 = 64 * k;
+        E.ink.line(ctx, [cx + Math.cos(ang) * r0, cy + Math.sin(ang) * r0, cx + Math.cos(ang) * r1, cy + Math.sin(ang) * r1], { w: 3, profile: 'even', seed: 'timer-mark', dot: true });
+      }
+
+      function tick() { paint(); }
+      function start() {
+        if (st.running) {
+          st.elapsed = elapsed(); st.running = false; root.clearInterval(st.timer);
+        } else {
+          if (elapsed() >= total) st.elapsed = 0;
+          st.running = true; st.t0 = now(); st.phase = phaseAt(st.elapsed).i;
+          st.timer = root.setInterval(tick, 250);
+        }
+        paint();
+      }
+      function reset() {
+        st.running = false; root.clearInterval(st.timer); st.elapsed = 0; st.phase = 0; live.textContent = '';
+        paint();
+      }
+      bStart.addEventListener('click', start);
+      bReset.addEventListener('click', reset);
+      bNext.addEventListener('click', function () {
+        if (st.teams.length) st.current = (st.current + 1) % st.teams.length;
+        reset(); renderTeams();
+      });
+      bell.addEventListener('change', function () { st.chime = bell.checked; });
+
+      var stop = kit.observeSize(clockCard, function (w) { dialSize = Math.round(Math.max(150, Math.min(230, w * 0.32))); paint(); });
+      kit.engineReady().then(paint);
+      renderTeams();
+      paint();
+      return { destroy: function () { root.clearInterval(st.timer); stop(); box.remove(); } };
+    }
+  };
+
   ui.games = { sorter: sorter, pasos: pasos };
 })(typeof window !== 'undefined' ? window : globalThis);

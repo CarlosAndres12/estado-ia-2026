@@ -1777,4 +1777,109 @@ html:not(.has-decor) .feedback--casi .feedback__sign { border-style: dotted; }
 @media (max-width: 940px) {
   .cal__scroll-hint { display: block; }
 }
+
+/* ---- «Marco de indicadores» (S7) ------------------------------------------------------------ */
+
+.ind__bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-2) var(--sp-4); margin-bottom: var(--sp-3); }
+.ind__help { margin: 0; }
+.ind__card { padding: var(--sp-3) var(--sp-4); }
+.ind__list { list-style: none; margin: 0; padding: 0; }
+.ind__row {
+  display: grid;
+  grid-template-columns: 2.6rem minmax(0, 1fr) auto;
+  gap: var(--sp-2) var(--sp-3);
+  align-items: start;
+  margin: 0;
+  padding: var(--sp-3) 0;
+  border-bottom: 1.5px solid var(--line-soft);
+}
+.ind__row:last-child { border-bottom: 0; }
+.ind__n {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.3rem;
+  height: 2.3rem;
+  font-weight: var(--fw-bold);
+  border: 2px solid var(--tinta);
+  border-radius: 50%;
+}
+.ind__nivel { margin: 0; font-family: var(--font-display); font-weight: var(--fw-black); font-size: 1.3rem; }
+.ind__indicadores { margin: 0.15rem 0 0; }
+.ind__label { font-weight: var(--fw-bold); color: var(--ink-muted); }
+.ind__pregunta {
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-2) var(--sp-3);
+  font-size: 1.2rem;
+  font-style: italic;
+  background: var(--wash-amarillo);
+  border-left: 4px solid var(--tinta);
+  border-radius: 0 12px 12px 0;
+}
+.ind__q-label { font-style: normal; font-weight: var(--fw-bold); }
+@media (max-width: 600px) {
+  .ind__row { grid-template-columns: 2.6rem minmax(0, 1fr); }
+  .ind__toggle { grid-column: 2; justify-self: start; }
+}
+
+/* ---- Four scenarios as windows with pattern fills (S7) ------------------------------------- */
+
+.esc__list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: var(--sp-5); }
+.esc__card { margin: 0; padding: var(--sp-4); }
+.esc__window { display: block; margin: 0 0 var(--sp-3); }
+.esc__n { margin: 0; font-size: 0.9rem; font-weight: var(--fw-bold); letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-muted); }
+.esc__title { margin: 0.1rem 0 var(--sp-2); font-size: 1.3rem; }
+.esc__text { margin: 0; }
+
+/* ---- Presentation timer (S7, prompt §10.12) ------------------------------------------------ */
+
+.timer { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: var(--sp-5); align-items: start; }
+.timer__clock { padding: var(--sp-4) var(--sp-5); }
+.timer__turn { margin: 0 0 var(--sp-2); font-family: var(--font-display); font-weight: var(--fw-black); font-size: clamp(1.3rem, 1.1rem + 0.8vw, 1.7rem); }
+.timer__face { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3) var(--sp-5); }
+.timer__dial { display: block; flex: none; }
+.timer__readout { flex: 1 1 14rem; }
+.timer__phase { margin: 0; font-weight: var(--fw-bold); font-size: 1.15rem; }
+.timer__digits { margin: 0.1rem 0 0; font-family: var(--font-display); font-weight: var(--fw-black); font-size: clamp(2.6rem, 2rem + 3vw, 4.2rem); line-height: 1; font-variant-numeric: tabular-nums; }
+.timer__left { margin: 0.3rem 0 0; font-size: 1.05rem; color: var(--ink-muted); }
+.timer__bar { display: flex; gap: 6px; margin: var(--sp-4) 0 var(--sp-3); }
+.timer__seg { position: relative; display: block; min-width: 0; height: 2.6rem; overflow: hidden; background: var(--papel); border: 2.5px solid var(--tinta); border-radius: 8px 12px 9px 13px; }
+.timer__seg-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--amarillo); }
+.timer__seg--1 .timer__seg-fill { background: var(--celeste); }
+.timer__seg-label { position: relative; display: block; padding: 0.45rem 0.6rem; overflow: hidden; font-weight: var(--fw-bold); font-size: 0.92rem; white-space: nowrap; text-overflow: ellipsis; }
+.timer__buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 var(--sp-2); }
+.timer__bell { display: flex; align-items: center; gap: 0.5rem; margin: 0; min-height: 44px; }
+.timer__bell input { width: 1.3rem; height: 1.3rem; accent-color: var(--tinta); }
+.timer__h { font-size: 1.25rem; margin-bottom: var(--sp-2); }
+.timer__teams-list { list-style: none; margin: 0 0 var(--sp-3); padding: 0; display: grid; gap: 0.4rem; }
+.timer__team-row { display: flex; align-items: center; gap: 0.4rem; margin: 0; }
+.timer__team {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 44px;
+  padding: 0.3rem 0.7rem;
+  text-align: left;
+  background: var(--papel);
+  border: 2px solid var(--tinta);
+  border-radius: 8px 12px 9px 13px;
+}
+.timer__team.is-current { font-weight: var(--fw-bold); background: var(--wash-amarillo); border-width: 3px; }
+.timer__team-n { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 1.8rem; height: 1.8rem; font-weight: var(--fw-bold); border: 2px solid var(--tinta); border-radius: 50%; }
+.timer__remove { flex: none; width: 44px; height: 44px; font-size: 1.5rem; line-height: 1; background: none; border: 2px dashed var(--tinta); border-radius: 50%; }
+.timer__remove:hover { background: var(--wash-ocre); }
+.timer__add-row { display: flex; gap: 0.5rem; }
+.timer__input, .sheet-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.4rem 0.7rem;
+  font-size: 1.05rem;
+  background: var(--papel);
+  border: 2px solid var(--tinta);
+  border-radius: 10px 14px 9px 15px / 14px 9px 15px 10px;
+}
+@media (max-width: 860px) {
+  .timer { grid-template-columns: 1fr; }
+}
 /* ==== [/interactions] ==== */

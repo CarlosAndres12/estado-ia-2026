@@ -604,7 +604,15 @@ EIA.data.actividades = {
         indicadores: 'Evaluaciones, auditorías, responsables, reparación',
         pregunta: '¿Existe rendición de cuentas efectiva?'
       }
-    ]
+    ],
+    // Tool copy (prompt §11, sesión 7), not KB text.
+    ui: {
+      ayuda: 'Abre cada nivel para ver su pregunta evaluativa.',
+      ver: 'Ver la pregunta',
+      ocultar: 'Ocultar la pregunta',
+      todas: 'Ver todas las preguntas',
+      ninguna: 'Ocultar todas las preguntas'
+    }
   },
   's7-escenarios': {
     id: 's7-escenarios',
@@ -637,7 +645,12 @@ EIA.data.actividades = {
         texto: 'incidentes o impactos distributivos aceleran las obligaciones de evaluación, transparencia y responsabilidad, con la Ley de IA europea como referencia ([calendario][aisd]).',
         patron: 'cuadros'
       }
-    ]
+    ],
+    // Tool copy (prompt §4.4, §11), not KB text.
+    ui: {
+      titulo: 'Los cuatro escenarios, como ventanas',
+      escenario: 'Escenario {n}'
+    }
   },
   's7-plan': {
     id: 's7-plan',
@@ -656,7 +669,26 @@ EIA.data.actividades = {
     fases: [
       { id: 'presentacion', label: 'Presentación y defensa', minutos: 7 },
       { id: 'preguntas', label: 'Preguntas', minutos: 3 }
-    ]
+    ],
+    // Tool copy (prompt §10.12), not KB text.
+    ui: {
+      equipos: 'Equipos',
+      nombre: 'Nombre del equipo',
+      agregar: 'Agregar equipo',
+      quitar: 'Quitar a {equipo}',
+      elegir: 'Le toca a {equipo}',
+      sinEquipos: 'Agreguen los equipos en el orden en que van a presentar.',
+      turno: 'Turno de {equipo}',
+      sinTurno: 'Elijan el equipo que presenta.',
+      fase: '{fase} · {minutos} min',
+      quedan: 'Quedan {tiempo} de «{fase}»',
+      empieza: 'Empieza: {fase}.',
+      cumplido: 'Tiempo cumplido para {equipo}.',
+      cumplidoSinEquipo: 'Tiempo cumplido.',
+      siguiente: 'Siguiente equipo',
+      campana: 'Campana suave al cambiar de fase',
+      reloj: 'Reloj de la presentación: {transcurrido} de {total}'
+    }
   }
 };
 
