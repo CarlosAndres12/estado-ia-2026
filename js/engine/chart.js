@@ -52,7 +52,7 @@
     var before = s.slice(Math.max(0, m.index - 14), m.index).toLowerCase();
     var tail = before.replace(/\s+$/, '');
     var v = toNum(m[1], m[2]);
-    var out = { value: v, lo: null, hi: null, approx: false, bound: null, unit: (m[7] || '').trim(), raw: m[0], index: m.index, negative: false };
+    var out = { value: v, lo: null, hi: null, approx: false, bound: null, unit: (m[6] || '').trim(), raw: m[0], index: m.index, negative: false };
     var lastCh = tail.charAt(tail.length - 1);
     if (lastCh === '−' || lastCh === '-') { out.negative = true; out.value = -v; tail = tail.slice(0, -1).replace(/\s+$/, ''); }
     else if (lastCh === '+') tail = tail.slice(0, -1).replace(/\s+$/, '');

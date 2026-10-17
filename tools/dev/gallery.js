@@ -355,6 +355,182 @@
   });
 
   // ---------------------------------------------------------------------------------------------
+  // Self-test (?test=1): writes PASS/FAIL lines into #results.
+
+  function freshCanvas() {
+    var c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    return c;
+  }
+  function pixels(c) { return c.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, W, H).data; }
+  function sameImage(a, b) {
+    if (a.length !== b.length) return false;
+    for (var i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+    return true;
+  }
+  function clearCaches() {
+    if (E.ink.clearLayers) E.ink.clearLayers();
+    if (E.figures.clearCache) E.figures.clearCache();
+    if (E.lamina.reset) E.lamina.reset();
+  }
+  function isInk(d, i) { return d[i] < 70 && d[i + 1] < 70 && d[i + 2] < 70 && d[i + 3] > 200; }
+
+  // Center of the run of ink pixels on row y between x0 and x1 (or null).
+  function inkRunCenter(d, y, x0, x1) {
+    var first = -1, last = -1;
+    for (var x = Math.max(0, Math.floor(x0)); x <= Math.min(W - 1, Math.ceil(x1)); x++) {
+      var i = (Math.round(y) * W + x) * 4;
+      if (isInk(d, i)) { if (first < 0) first = x; last = x; }
+    }
+    return first < 0 ? null : (first + last + 1) / 2;
+  }
+
+  function runs(d, y) {
+    var outR = [], start = -1;
+    for (var x = 0; x < W; x++) {
+      var ink = isInk(d, (Math.round(y) * W + x) * 4);
+      if (ink && start < 0) start = x;
+      if (!ink && start >= 0) { outR.push(start + '-' + (x - 1)); start = -1; }
+    }
+    return outR.join(' ');
+  }
+
+  EIA.dev.runTests = function () {
+    var out = [], pass = 0, fail = 0, errors = [];
+    function log(ok, msg) { out.push((ok ? 'PASS ' : 'FAIL ') + msg); if (ok) pass++; else fail++; }
+    function info(msg) { out.push('INFO ' + msg); }
+    window.addEventListener('error', function (e) { errors.push(e.message); });
+    var origError = console.error;
+    console.error = function () { errors.push([].slice.call(arguments).join(' ')); origError.apply(console, arguments); };
+
+    // 1–2. Every sheet renders without exceptions, and twice (caches cleared) to identical pixels.
+    order.forEach(function (name) {
+      for (var page = 1; page <= sections[name].pages; page++) {
+        var label = name + (sections[name].pages > 1 ? ' p' + page : '');
+        try {
+          var a = freshCanvas(), b = freshCanvas();
+          renderSection(a.getContext('2d'), name, { p: 1, t: 2.5, page: page });
+          renderSection(a.getContext('2d'), name, { p: 0.5, t: 2.5, page: page });
+          var pa = pixels(a);
+          clearCaches();
+          renderSection(b.getContext('2d'), name, { p: 1, t: 2.5, page: page });
+          renderSection(b.getContext('2d'), name, { p: 0.5, t: 2.5, page: page });
+          log(sameImage(pa, pixels(b)), 'determinism ' + label + ' (draw-on p=0.5 at t=2.5, caches cleared between renders)');
+        } catch (err) {
+          log(false, 'no exceptions ' + label + ': ' + (err && err.message));
+        }
+      }
+    });
+
+    // 3. Honest charts, measured in pixels on a blank canvas.
+    var chart = E.chart, c = freshCanvas(), ctx = c.getContext('2d');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+    var X0 = 100, LEN = 500, BAR_H = 30, GAP = 40, TOP = 60;
+    var geo = chart.bars(ctx, D7_ITEMS, { x: X0, y: TOP, len: LEN, h: BAR_H, gap: GAP, labels: false });
+    var d = pixels(c);
+    var base = inkRunCenter(d, TOP - 4, X0 - 10, X0 + 10);
+    log(base != null && Math.abs(base - X0) <= 1, 'zero baseline at x=' + X0 + ' (measured ' + base + ')');
+    geo.forEach(function (g, i) {
+      var expected = chart.parseValue(D7_ITEMS[i].text).value / 100 * LEN;
+      var midY = g.y0 + BAR_H / 2;
+      var end = inkRunCenter(d, midY, X0 + expected - 6, X0 + expected + 6);
+      var ok = end != null && Math.abs(end - (X0 + expected)) <= 1 && base != null && Math.abs((end - base) - expected) <= 1;
+      var pi = (Math.round(midY) * W + Math.round(X0 + expected)) * 4;
+      log(ok, 'bar ' + (i + 1) + ' "' + D7_ITEMS[i].text.slice(0, 18) + '…" end at ' + (end == null ? '?' : end.toFixed(1)) +
+        ' px, expected ' + (X0 + expected).toFixed(1) + ' (length ' + expected.toFixed(1) + ' px ±1)' + (ok ? '' : ' rgb at expected: ' + d[pi] + ',' + d[pi + 1] + ',' + d[pi + 2] + ' y=' + midY + ' inkRuns: ' + runs(d, midY)));
+    });
+    log(geo[2].cap === 'approx', 'the "~1/3" bar carries the approximate (dotted, ≈) cap');
+
+    // Unit grid: 23 of 100, and 3,3% of 1.000 = 33 lit dots, counted by sampling every dot center.
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+    var ug = chart.unitGrid(ctx, { x: 100, y: 300, w: 300, total: 100, value: 23, litColor: '#D7261E', seed: 't23' });
+    var ug2 = chart.unitGrid(ctx, { x: 500, y: 300, w: 600, total: 1000, percent: chart.parseValue('3,3%').value, litColor: '#15120F', seed: 't33' });
+    var dt = chart.dots(ctx, { x: 300, y: 620, count: 44, pitch: 15, seed: 't44' });
+    d = pixels(c);
+    function countAt(centers, test) {
+      var n = 0;
+      for (var k = 0; k < centers.length; k += 2) {
+        var i = (Math.round(centers[k + 1]) * W + Math.round(centers[k])) * 4;
+        if (test(d, i)) n++;
+      }
+      return n;
+    }
+    var red = function (dd, i) { return dd[i] > 150 && dd[i + 1] < 90 && dd[i + 2] < 90; };
+    log(countAt(ug.centers, red) === 23, 'unit grid 100: ' + countAt(ug.centers, red) + ' lit dots counted, expected 23');
+    log(countAt(ug2.centers, isInk) === 33, 'unit grid 1.000 for "3,3%": ' + countAt(ug2.centers, isInk) + ' lit dots counted, expected 33');
+    log(countAt(dt.centers, isInk) === 44, 'dot count: ' + countAt(dt.centers, isInk) + ' dots counted, expected 44');
+
+    // Gauge: the needle sits at the exact angle for 362 on a 0–400 dial (ghost at 233).
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+    var gv = chart.parseValue('362 (2025)').value, gg = chart.gauge(ctx, { x: 640, y: 360, r: 150, max: 400, value: gv, ticks: 0 });
+    d = pixels(c);
+    var expectA = Math.PI * 5 / 6 + gv / 400 * Math.PI * 4 / 3, hits = 0;
+    for (var rr = 20; rr <= 90; rr += 10) {
+      var px = 640 + Math.cos(expectA) * rr, py = 360 + Math.sin(expectA) * rr;
+      if (isInk(d, (Math.round(py) * W + Math.round(px)) * 4)) hits++;
+    }
+    log(Math.abs(gg.angle - expectA) < 1e-9 && hits === 8, 'gauge needle at ' + ((gg.angle * 180 / Math.PI) % 360).toFixed(2) + '° for 362/400 (' + hits + '/8 samples on the needle body)');
+
+    // Funnel, timeline, ruled ladder and compute block: exact geometry.
+    var fun = chart.funnel(ctx, { x: 0, y: 0, w: 400, items: D7_ITEMS, labels: false, tags: false });
+    var funOk = fun.every(function (g, i) { return Math.abs((g.x1 - g.x0) - chart.parseValue(D7_ITEMS[i].text).value / 100 * 400) < 1e-6; });
+    log(funOk, 'funnel bar widths exactly proportional on one zero-based scale');
+    var pins = chart.geom.timeline({ x: 0, w: 1000, from: '1 de enero de 2024', to: '1 de enero de 2029', items: [{ text: '1 de agosto de 2024' }, { text: '2 de agosto de 2025' }, { text: '2 de agosto de 2028' }] });
+    var dd1 = chart.parseDate('1 de agosto de 2024'), dd2 = chart.parseDate('2 de agosto de 2025'), dd3 = chart.parseDate('2 de agosto de 2028');
+    log(Math.abs((pins[1].x - pins[0].x) / (pins[2].x - pins[0].x) - (dd2 - dd1) / (dd3 - dd1)) < 1e-9, 'timeline pins proportional to dates');
+    var lad = E.figures.ruledLadder(ctx, 200, 600, 1, { max: 100, h: 360, rungs: [{ value: 12 }, { value: 66.3 }], panel: false });
+    log(Math.abs(lad.rungs[1] - (600 - 0.663 * 360)) < 1e-9, 'ruled ladder rung for 66,3 at exact height');
+    var cb = E.figures.computeBlock(ctx, 0, 0, 1, { fraction: 0.096 });
+    log(Math.abs(cb.litW - 0.096 * cb.w) < 1e-9, 'compute block lit slice exactly 9,6% of the block');
+
+    // 4. Parsing Spanish figures from data strings.
+    [['66,3%', 66.3, null, '%'], ['344.700 millones de dólares', 344700, null, ''], ['~1/3 escala', 100 / 3, 'approx', '%'], ['Hasta −83% de tiempo', -83, 'max', '%'],
+      ['+14–15%', 15, 'range', '%'], ['<20%', 20, 'less', '%'], ['Más de 90% (91,2%)', 90, 'more', '%'], ['−18%', -18, null, '%'], ['1.993 participantes', 1993, null, ''],
+      ['29,6 GW', 29.6, null, 'GW'], ['23×', 23, null, '×']].forEach(function (cse) {
+      var pv = chart.parseValue(cse[0]);
+      var ok = pv && Math.abs(pv.value - cse[1]) < 1e-9 && pv.unit === cse[3] &&
+        (cse[2] === null ? !pv.approx && !pv.bound : cse[2] === 'approx' ? pv.approx : cse[2] === 'range' ? pv.lo === 14 && pv.hi === 15 : pv.bound === cse[2]);
+      log(!!ok, 'parseValue("' + cse[0] + '") -> ' + (pv ? pv.value + (pv.unit ? ' ' + pv.unit : '') + (pv.approx ? ' ≈' : '') + (pv.bound ? ' ' + pv.bound : '') : 'null'));
+    });
+
+    // 5. Legend rules: the five evidence colors belong only to the evidence types.
+    var ev = E.palette.evidencia, decorUsesEv = E.palette.decor.some(function (col) { return Object.keys(ev).some(function (k) { return ev[k] === col; }); });
+    log(!decorUsesEv, 'decorative palette excludes the five evidence colors');
+
+    // 6. Frame time (informational; software rendering in headless is slower than a GPU).
+    var pc = freshCanvas().getContext('2d'), t0 = performance.now(), N = 12;
+    for (var f = 0; f < N; f++) E.lamina.render(pc, 'd07', { t: f / 24 });
+    var lam = (performance.now() - t0) / N;
+    t0 = performance.now();
+    for (f = 0; f < N; f++) renderSection(pc, 'people', { p: 1, t: f / 24, page: 2 });
+    var ppl = (performance.now() - t0) / N;
+    info('frame time: lámina d07 ' + lam.toFixed(1) + ' ms, people sheet (20 people) ' + ppl.toFixed(1) + ' ms (24 fps budget 41.7 ms)');
+    log(lam < 41.7, 'lámina d07 renders within the 24 fps frame budget (' + lam.toFixed(1) + ' ms)');
+
+    // 7. mountRender (index.html?lamina=<id> code path) last, because it replaces the page body.
+    var summaryLines = out.slice();
+    E.lamina.mountRender('d07', {}).then(function () {
+      var cv = document.querySelector('canvas'), k2 = cv.getContext('2d', { willReadFrequently: true });
+      window.renderFrame(3.25);
+      var A = k2.getImageData(0, 0, cv.width, cv.height).data;
+      window.renderFrame(0.5);
+      window.renderFrame(3.25);
+      var B = k2.getImageData(0, 0, cv.width, cv.height).data;
+      var ok = sameImage(A, B) && typeof window.renderFrame === 'function';
+      summaryLines.push((ok ? 'PASS ' : 'FAIL ') + 'mountRender d07: renderReady resolved, renderFrame(3.25) deterministic');
+      if (ok) pass++; else fail++;
+      if (errors.length) { summaryLines.push('FAIL no exceptions: ' + errors.join(' | ')); fail++; }
+      else { summaryLines.push('PASS no exceptions or console errors during the run'); pass++; }
+      summaryLines.push('SUMMARY ' + pass + ' passed, ' + fail + ' failed');
+      var pre = document.createElement('pre');
+      pre.id = 'results';
+      pre.textContent = summaryLines.join('\n');
+      document.body.appendChild(pre);
+      document.title = fail ? 'TEST FAIL' : 'TEST PASS';
+    });
+  };
+
+  // ---------------------------------------------------------------------------------------------
   // Runner
 
   var stage = document.getElementById('stage');
