@@ -688,3 +688,174 @@ EIA.data.course = EIA.data.course || {}; EIA.data.course.ui = EIA.data.course.ui
     archivoCapitulo: 'capitulo-{n}'
   }
 };
+
+/* [page] Copy of the page shell: router, markup, views, nav, hero, chips and popovers, banco, glossary,
+ * references, assistant and footer (js/core/router.js, js/core/markup.js, js/ui/*.js). Owner: T07.
+ * Words in {braces} are filled in by the page. Strings already in EIA.data.course.ui.<view> are reused
+ * from there; only the missing chrome lives here. */
+EIA.data.course = EIA.data.course || {}; EIA.data.course.ui = EIA.data.course.ui || {}; EIA.data.course.ui.page = {
+  documento: '{vista} · {sitio}',
+  vivo: 'Avisos del sitio',
+  markup: {
+    fuente: 'Fuente:',
+    tabla: 'Tabla',
+    nuevaPestana: 'se abre en una pestaña nueva'
+  },
+  nav: {
+    principal: 'Navegación principal',
+    irInicio: 'Estado de la IA 2026: ir al inicio',
+    menu: 'Menú',
+    cerrarMenu: 'Cerrar el menú',
+    sesionesMenu: 'Sesiones del curso',
+    vecinos: 'Recorrido del curso',
+    anterior: 'Anterior: {titulo}',
+    siguiente: 'Siguiente: {titulo}',
+    sesion: 'Sesión {n} · {titulo}'
+  },
+  buscar: {
+    abrir: 'Buscar en el curso',
+    etiqueta: 'Buscar en el curso',
+    ayuda: 'Busca en las sesiones, el banco de cifras, el glosario y las preguntas frecuentes. No importan las tildes ni las mayúsculas.',
+    resultados: '{n} resultados',
+    unResultado: '1 resultado',
+    sinResultados: 'No hay resultados para «{q}».',
+    minimo: 'Escribe al menos dos letras.',
+    cerrar: 'Cerrar la búsqueda',
+    tipos: {
+      sesion: 'Sesión {n}',
+      cifra: 'Banco de cifras',
+      glosario: 'Glosario',
+      pregunta: 'Preguntas frecuentes',
+      vista: 'Sitio'
+    }
+  },
+  popover: {
+    cerrar: 'Cerrar',
+    cifra: 'Cifra',
+    alcance: 'Alcance',
+    fuente: 'Fuente',
+    fuentes: 'Fuentes',
+    estado: 'Estado',
+    tipo: 'Tipo de evidencia',
+    referencia: 'Referencia',
+    contexto: 'Esta cifra está en el texto de la sesión; no es una fila del banco de cifras.',
+    dialogoCifra: 'Ficha de la cifra {texto}',
+    dialogoFuente: 'Fuente: {fuente}',
+    dialogoTermino: 'Glosario: {termino}',
+    verEnReferencias: 'Ver en las referencias'
+  },
+  copia: {
+    error: 'No se pudo copiar. Selecciona el texto y cópialo a mano.'
+  },
+  chips: {
+    tipo: 'Tipo de evidencia:',
+    estado: 'Estado:'
+  },
+  hero: {
+    region: 'Presentación del curso',
+    lienzo: 'Ilustración animada: un iceberg en un mar nocturno. En la punta luminosa, iluminada por una pequeña lámpara de IA: «{punta}». En la masa sumergida: «{masa}».',
+    pausar: 'Pausar la animación',
+    reanudar: 'Reanudar la animación'
+  },
+  inicio: {
+    video: 'En video'
+  },
+  mapa: {
+    camino: 'Camino del curso: siete estaciones, una por sesión.',
+    irSesion: 'Ir a la sesión {n}',
+    caso: 'Caso del equipo',
+    casoTexto: 'Cada sesión deja un producto en el cuaderno del equipo:',
+    sello: 'Sello de la sesión {n}',
+    rutaLamina: 'Abrir la lámina D{n}: {titulo}',
+    fechas: {
+      titulo: 'Fechas del curso semestral',
+      inicio: 'Fecha de la primera sesión',
+      ayuda: 'Elige la fecha de la primera sesión: las demás quedan cada dos semanas.',
+      sesion: 'Sesión {n}: {fecha}'
+    }
+  },
+  evidencia: {
+    video: 'En video',
+    sello: 'Advertencia {n}: {texto}'
+  },
+  sesion: {
+    bloques: 'En esta sesión',
+    agendaColumnas: ['Minutos', 'Bloque', 'Recurso'],
+    regla: 'Regla de 120 minutos con {n} bloques, cada uno del largo de su duración.',
+    minutos: 'min',
+    lamina: 'D{n} · {titulo}',
+    abrirLamina: 'Abrir la lámina D{n}: {titulo}',
+    laminas: 'Láminas de la sesión',
+    herramientaPendiente: 'La herramienta interactiva de esta actividad todavía se está preparando. Mientras tanto, trabajen con la consigna.',
+    quizPendiente: 'El quiz interactivo todavía se está preparando. Estas son sus preguntas:',
+    anotado: 'Pregunta anotada en el cuaderno del equipo.',
+    cuadernoPendiente: 'El cuaderno del equipo todavía no está disponible en esta versión del sitio.',
+    nota: 'Nota',
+    claves: 'Claves de las actividades',
+    quizRespuestas: 'Quiz con respuestas',
+    respuesta: 'Respuesta: {letra}) {opcion}',
+    agenda: 'Agenda',
+    imprimirGuia: 'Imprimir guía de la sesión',
+    lecturaEvidencia: 'El bloque de lectura de esta sesión es la vista «Cómo leer la evidencia sobre IA».',
+    irEvidencia: 'Ir a «Cómo leer la evidencia sobre IA»'
+  },
+  video: {
+    cargar: 'Cargar el video «{titulo}»'
+  },
+  banco: {
+    intro: 'Introducción al banco',
+    buscar: 'Buscar en el banco',
+    buscarAyuda: 'Busca en la cifra, el alcance y la fuente. No importan las tildes ni las mayúsculas.',
+    filtros: 'Filtros del banco',
+    limpiar: 'Quitar los filtros',
+    vista: 'Vista',
+    tarjetas: 'Tarjetas',
+    tabla: 'Tabla',
+    columnas: ['Cifra', 'Alcance', 'Tipo de evidencia', 'Estado', 'Fuente', 'Sesiones', 'Cita'],
+    alcance: 'Alcance',
+    fuente: 'Fuente',
+    fuentes: 'Fuentes',
+    sesiones: 'Sesiones',
+    sesionN: 'Sesión {n}',
+    irSesion: 'Ir a la sesión {n}',
+    sinResultados: 'Ninguna cifra coincide con la búsqueda y los filtros.',
+    abrirFuente: 'Abrir la fuente: {fuente}',
+    cifrasRelacionadas: 'Cifras del banco',
+    hoja: {
+      titulo: 'Banco de cifras · selección para citar',
+      nota: 'Base de conocimiento del curso «Estado de la IA 2026», versión {version} ({fecha}).',
+      tipo: 'Tipo de evidencia',
+      estado: 'Estado',
+      url: 'Fuente'
+    }
+  },
+  proyecto: {
+    hojas: 'Hojas del cuaderno que la alimentan:',
+    cuadernoPendiente: 'El cuaderno del equipo todavía se está preparando: aquí podrán llenar la hoja de cada sesión.',
+    rubricaPendiente: 'La rúbrica interactiva todavía se está preparando. Esta es la rúbrica del curso:'
+  },
+  glosario: {
+    buscar: 'Buscar en el glosario',
+    contador: '{n} términos',
+    unTermino: '1 término',
+    sinResultados: 'Ningún término coincide con la búsqueda.',
+    letras: 'Índice alfabético'
+  },
+  referencias: {
+    abrirFuenteDe: 'Abrir fuente: {fuente}',
+    cifrasN: 'Cifras de esta fuente ({n})'
+  },
+  asistente: {
+    abrirBase: 'Abrir la base de conocimiento del curso',
+    blanco: 'Espacio para: {blanco}',
+    ayuda: 'Completa los espacios en blanco y copia la instrucción. Lo que dejes vacío se copia entre corchetes.'
+  },
+  clase: {
+    elegir: 'Elige qué vas a proyectar',
+    pendiente: 'El Modo clase todavía se está preparando. Mientras tanto, abre la sesión y proyecta sus láminas y su video desde allí.',
+    abrirSesion: 'Abrir la sesión {n}'
+  },
+  footer: {
+    region: 'Créditos del sitio'
+  }
+};
