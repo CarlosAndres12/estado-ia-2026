@@ -113,7 +113,18 @@ EIA.data.actividades = {
         cifras: ['ries-1']
       }
     ],
-    clave: { titulo: 'Clave para el docente', columnas: ['Cifra', 'Fuente', 'Clave para el docente'] }
+    clave: { titulo: 'Clave para el docente', columnas: ['Cifra', 'Fuente', 'Clave para el docente'] },
+    // Tool copy (prompt §10.3), not KB text.
+    ui: {
+      instrucciones: 'Arrastra cada tarjeta hasta su tipo de evidencia. Sin mouse, toca o elige con el teclado una tarjeta y luego su tipo.',
+      tarjetas: 'Cifras por clasificar',
+      tipos: 'Tipos de evidencia',
+      elegida: 'Elegiste «{cifra}». Ahora elige su tipo de evidencia.',
+      soltar: 'Llevar «{cifra}» a {tipo}',
+      clasificadas: 'Cifras clasificadas como {tipo}',
+      progreso: 'Clasificadas: {n} de {total}',
+      fin: 'Clasificaste todas las cifras. Esta es la clave completa:'
+    }
   },
   's1-ficha-caso': {
     id: 's1-ficha-caso',

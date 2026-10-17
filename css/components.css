@@ -1338,4 +1338,118 @@ html:not(.has-decor) .feedback--casi .feedback__sign { border-style: dotted; }
 .quiz__done { margin-bottom: var(--sp-2); }
 .quiz__score { font-family: var(--font-display); font-weight: var(--fw-black); font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2.1rem); }
 .quiz__score:focus { outline: none; }
+
+/* ---- Sorting games: «¿Qué mide esta cifra?» (S1) and the evidence ladder (S5) --------------- */
+
+.game { position: relative; }
+.game__help { max-width: var(--text-max); }
+.game__progress { margin: 0 0 var(--sp-2); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+.game__label {
+  margin: var(--sp-5) 0 var(--sp-3);
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+.game.is-dragging, .game.is-dragging * { user-select: none; -webkit-user-select: none; }
+.game__deck { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 215px), 1fr)); gap: var(--sp-3); }
+.game-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 104px;
+  margin: 0;
+  padding: 0.7rem 0.9rem 0.65rem;
+  text-align: left;
+  background: var(--papel);
+  border: 2.5px solid var(--tinta);
+  border-radius: var(--radius-hand);
+  cursor: grab;
+  touch-action: manipulation;
+  transition: transform 140ms ease-out, box-shadow 140ms ease-out, background-color 140ms ease-out;
+}
+.game-card:hover { transform: rotate(-0.8deg) translateY(-2px); }
+.game-card[aria-pressed="true"] {
+  background: var(--wash-amarillo);
+  border-width: 3.5px;
+  box-shadow: 4px 5px 0 var(--tinta);
+  transform: rotate(-1.4deg) translateY(-3px);
+}
+.game-card__cifra { font-weight: var(--fw-bold); font-size: 1.12rem; line-height: 1.25; }
+.game-card__fuente {
+  position: relative;
+  padding: 0.05rem 0.5rem 0.05rem 1.2rem;
+  font-size: 0.9rem;
+  border: 1.5px solid var(--tinta);
+  border-radius: 3px 9px 9px 3px;
+}
+.game-card__fuente::before {
+  content: "";
+  position: absolute;
+  left: 0.35rem;
+  top: 50%;
+  width: 0.42rem;
+  height: 0.42rem;
+  margin-top: -0.21rem;
+  border: 1.5px solid var(--tinta);
+  border-radius: 50%;
+}
+.game-card.is-lifted { opacity: 0.35; }
+.game-card.is-ghost {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 95;
+  pointer-events: none;
+  background: var(--wash-amarillo);
+  box-shadow: 7px 9px 0 rgba(21, 18, 15, 0.85);
+}
+.game__bins { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: var(--sp-3); }
+.game-bin {
+  display: flex;
+  flex-direction: column;
+  min-height: 150px;
+  background: var(--wash-ocre);
+  border: 2.5px dashed var(--tinta);
+  border-radius: var(--radius-hand-2);
+  transition: background-color 140ms ease-out;
+}
+.game.has-selection .game-bin { border-style: solid; background: var(--papel); }
+.game-bin__target {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 66px;
+  padding: 0.55rem 0.75rem;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid var(--line-soft);
+  border-radius: 14px 18px 0 0;
+}
+.game-bin__target .chip { font-size: 1.05rem; }
+.game-bin__target .chip__sign { width: 2.1em; height: 2.1em; }
+.game-bin__target:hover, .game-bin__target.is-over { background: var(--wash-amarillo); }
+.game-bin__target.is-over { box-shadow: inset 0 0 0 3px var(--tinta); }
+.game-bin__list { list-style: none; margin: 0; padding: 0.45rem 0.6rem 0.6rem; display: grid; gap: 0.35rem; }
+.game-bin__item {
+  margin: 0;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.95rem;
+  line-height: 1.3;
+  background: var(--papel);
+  border: 1.5px solid var(--tinta);
+  border-radius: 8px 12px 9px 13px;
+}
+.game__end { margin-top: var(--sp-5); }
+.game__done { font-weight: var(--fw-bold); }
+.game__end-title { font-size: 1.3rem; }
+.game__end-title:focus { outline: none; }
+.game__key { min-width: 36rem; }
+.game__key th .fig { text-align: left; }
+.game__again { margin-top: var(--sp-3); }
 /* ==== [/interactions] ==== */
