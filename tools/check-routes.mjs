@@ -14,6 +14,13 @@
 //   --only s3,cifras/adop-1                      a subset (hashes without "#")
 //   --reduced-motion                             emulates prefers-reduced-motion: reduce
 //   --no-scroll                                  skips the top-to-bottom scroll of each fresh load
+//   node tools/check-routes.mjs --interact       instead of the routes, drives the interactive tools in
+//                                                one page (prompt §10): every tool of the 7 sessions
+//                                                mounts, one quiz question answered, each game touched,
+//                                                the notebook and the rubric, the láminas viewer and
+//                                                Modo clase of sesión 3 walked through, and both print
+//                                                sheets printed to PDF (page count, canvases not blank)
+//                                                -> review/interact/*.pdf (--out to change the folder)
 //
 // Each route reports its console errors and exceptions; a route also fails when its view does not
 // render (no visible .view[data-route] with an h1) or a deep link has no target. Exit code 1 on any
@@ -35,10 +42,11 @@ export const DEEP_LINKS = ['s1/actividad', 's3/actividad', 's3/contenido-4', 's5
   'proyecto/hoja-s1-ficha', 'clase/3', 'clase/taller'];
 
 function parseArgs(argv) {
-  const out = { shots: false, full: false, pages: 0, width: 1280, height: 800, maxHeight: 9000, only: null, reduced: false, scroll: true, out: 'review/routes' };
+  const out = { shots: false, full: false, pages: 0, width: 1280, height: 800, maxHeight: 9000, only: null, reduced: false, scroll: true, out: null, interact: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--shots') out.shots = true;
+    else if (a === '--interact') out.interact = true;
     else if (a === '--full') out.full = true;
     else if (a === '--pages') out.pages = Math.max(1, Math.min(40, Number(argv[++i]) || 1));
     else if (a === '--width') out.width = Number(argv[++i]);
@@ -49,24 +57,29 @@ function parseArgs(argv) {
     else if (a === '--no-scroll') out.scroll = false;
     else if (a === '--out') out.out = argv[++i];
     else if (a === '--help' || a === '-h') {
-      console.log('node tools/check-routes.mjs [--shots [--full] [--max-height N]] [--width W] [--height H] [--only a,b/c] [--reduced-motion] [--no-scroll] [--out dir]');
+      console.log('node tools/check-routes.mjs [--shots [--full] [--max-height N]] [--width W] [--height H] [--only a,b/c] [--reduced-motion] [--no-scroll] [--out dir]\n' +
+        'node tools/check-routes.mjs --interact [--width W] [--height H] [--out dir]');
       process.exit(0);
     } else throw new Error(`unknown option ${a}`);
   }
   if (!(out.width >= 320 && out.width <= 3840)) throw new Error('--width must be between 320 and 3840');
+  out.out = out.out || (out.interact ? 'review/interact' : 'review/routes');
   return out;
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // What the page says about the current route: the visible view, its h1 and the deep-link target.
+// Modo clase (js/ui/presenter.js) covers the page with its own dialog and leaves the view underneath
+// as it was, so an open Modo clase counts as the #clase route.
 function inspectExpr(hash) {
   const [route, block] = hash.split('/');
   return `(() => {
     const v = document.querySelector('.view:not([hidden])');
+    const modo = document.querySelector('.clase[role="dialog"]');
     const target = ${JSON.stringify(block || '')} ? document.getElementById(${JSON.stringify(route + '--' + (block || ''))}) : null;
     return {
-      route: v ? v.getAttribute('data-route') : null,
+      route: modo ? 'clase' : (v ? v.getAttribute('data-route') : null),
       h1: v && v.querySelector('h1') ? v.querySelector('h1').textContent.trim().slice(0, 80) : '',
       target: !!target,
       height: document.documentElement.scrollHeight,
@@ -127,8 +140,231 @@ async function shoot(b, opts, name, restoreScrollExpr) {
   return path.relative(ROOT, file);
 }
 
+// -------------------------------------------------------------------------------------------------
+// --interact: the interactive tools of prompt §10, driven in one page. Each step is an expression
+// evaluated in the page that resolves to { ok, detail }; page-side helpers live in window.__chk.
+
+const HELPERS = `(() => {
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  window.__chk = {
+    wait,
+    $: (sel, el) => (el || document).querySelector(sel),
+    $$: (sel, el) => Array.prototype.slice.call((el || document).querySelectorAll(sel)),
+    key: (k) => document.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true })),
+    input: (el, v) => { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); },
+    go: (hash) => new Promise((resolve) => {
+      if (location.hash === '#' + hash) { resolve(); return; }
+      const done = () => { window.removeEventListener('eia:route', done); setTimeout(resolve, 500); };
+      window.addEventListener('eia:route', done);
+      location.hash = '#' + hash;
+      setTimeout(resolve, 6000);
+    }),
+    // Distinct colors on an 8×8 grid of samples: a blank canvas has one or two.
+    colors: (c) => {
+      const ctx = c.getContext('2d'), seen = new Set();
+      for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) {
+        seen.add(ctx.getImageData(Math.floor((x + 0.5) * c.width / 8), Math.floor((y + 0.5) * c.height / 8), 1, 1).data.join(','));
+      }
+      return seen.size;
+    }
+  };
+  return true;
+})()`;
+
+const INTERACT_STEPS = [
+  {
+    name: 'every tool of the 7 sessions mounts (and the quiz of sesiones 1–6)',
+    expr: `(async () => {
+      const missing = [];
+      for (let n = 1; n <= 7; n++) {
+        await __chk.go('s' + n);
+        const view = __chk.$('.view[data-route="s' + n + '"]');
+        const mounts = __chk.$$('.tool-mount', view);
+        mounts.forEach((m) => { if (!m.children.length || __chk.$('.placeholder', m)) missing.push('s' + n + ':' + m.getAttribute('data-tool')); });
+        if (n <= 6 && !__chk.$('#s' + n + '--quiz .quiz', view)) missing.push('s' + n + ':quiz');
+      }
+      return { ok: !missing.length, detail: missing.length ? 'not mounted: ' + missing.join(', ') : 'all mounted' };
+    })()`
+  },
+  {
+    name: 'quiz of sesión 1: a wrong try, then the right answer',
+    expr: `(async () => {
+      await __chk.go('s1/quiz');
+      const q = EIA.data.sesiones[1].quiz[0];
+      const box = __chk.$('#s1--quiz .quiz');
+      const wrong = q.respuesta === 0 ? 1 : 0;
+      __chk.$('.quiz__option[data-i="' + wrong + '"]', box).click();
+      const casi = __chk.$('.feedback', box).className.includes('feedback--casi');
+      __chk.$('.quiz__option[data-i="' + q.respuesta + '"]', box).click();
+      const bien = __chk.$('.feedback', box).className.includes('feedback--bien');
+      return { ok: casi && bien, detail: 'casi=' + casi + ' bien=' + bien };
+    })()`
+  },
+  {
+    name: 'games: S1 card, S2 preset, S3 panel and popover, S5 claim, S6 layer, S7 indicators and timer',
+    expr: `(async () => {
+      const out = [];
+      await __chk.go('s1/actividad');
+      let g = __chk.$('#s1--s1-que-mide .game');
+      __chk.$('[data-card="mckinsey-88"]', g).click(); __chk.$('[data-bin="uso"]', g).click();
+      out.push('s1=' + __chk.$$('.game-bin__item', g).length);
+      await __chk.go('s2/actividad');
+      const calc = __chk.$('#s2--s2-pasos');
+      __chk.$$('.calc__presets .btn', calc)[1].click();
+      out.push('s2=' + (__chk.$('.calc__result', calc).textContent === EIA.data.actividades['s2-pasos'].presets[1].resultado));
+      await __chk.go('s3/actividad');
+      const fun = __chk.$('#s3--s3-embudo');
+      __chk.$('.funnel__toggle', fun).click();
+      __chk.$('.funnel__bar', fun).click();
+      out.push('s3=' + (!__chk.$('.funnel__panel', fun).hidden && !!__chk.$('#eia-pop:not([hidden])')));
+      if (EIA.ui.popover) EIA.ui.popover.close();
+      await __chk.go('s5/actividad');
+      g = __chk.$('#s5--s5-escalera .game');
+      __chk.$('[data-claim="notas-clinicas"]', g).click(); __chk.$('[data-rung="3"]', g).click();
+      out.push('s5=' + __chk.$$('.ladder__tag', g).length);
+      await __chk.go('s6/actividad');
+      const cal = __chk.$('#s6--s6-calendario');
+      __chk.$('.cal__layer--omnibus', cal).click();
+      out.push('s6=' + __chk.$$('.cal__pin', cal).length + '/' + __chk.$$('.cal__card', cal).length);
+      await __chk.go('s7/actividad');
+      const ind = __chk.$('#s7--s7-indicadores');
+      __chk.$('.ind__all', ind).click();
+      out.push('s7ind=' + __chk.$$('.ind__pregunta:not([hidden])', ind).length);
+      const tm = __chk.$('#s7--s7-presentacion');
+      __chk.input(__chk.$('.timer__input', tm), 'Equipo de prueba');
+      __chk.$('.timer__add-row .btn', tm).click();
+      __chk.$('.timer__buttons .btn--primary', tm).click();
+      await __chk.wait(1300);
+      __chk.$('.timer__buttons .btn--primary', tm).click();
+      out.push('s7timer=' + __chk.$('.timer__digits', tm).textContent);
+      // S6: one pin per layer and date, one card per KB milestone, both layers on.
+      const hitos = EIA.data.actividades['s6-calendario'].hitos;
+      const s6 = new Set(hitos.map((x) => x.capa + x.iso)).size + '/' + hitos.length;
+      const ok = out.join(' ') === 's1=1 s2=true s3=true s5=1 s6=' + s6 + ' s7ind=9 s7timer=6:59';
+      return { ok, detail: out.join(' ') };
+    })()`
+  },
+  {
+    name: 'team notebook: a sheet field, a noted question, the rubric score',
+    expr: `(async () => {
+      await __chk.go('s1/discusion');
+      __chk.$('#s1--discusion .btn--note').click();
+      await __chk.go('proyecto/cuaderno');
+      const sheet = __chk.$('#proyecto--hoja-s1-ficha');
+      __chk.input(__chk.$('textarea', sheet), 'La IA propone; una persona decide.');
+      const notes = __chk.$$('#proyecto--hoja-notas .sheet-note').length;
+      const stored = EIA.ui.cuaderno.model.get(['hojas', 's1-ficha', 'ficha', 'tarea']);
+      const rb = __chk.$('.rubric');
+      __chk.$$('.rubric__row')[0].querySelector('.rubric__radio').click();
+      await __chk.wait(200);
+      const score = __chk.$('.rubric__score', rb).textContent;
+      const ok = !!sheet && notes === 1 && stored === 'La IA propone; una persona decide.' && score === 'Puntaje de la rúbrica: 20/100';
+      return { ok, detail: 'sheet=' + !!sheet + ' notes=' + notes + ' stored=' + JSON.stringify(stored) + ' «' + score + '»' };
+    })()`
+  },
+  {
+    name: 'láminas viewer of sesión 3: open, next, notes, close',
+    expr: `(async () => {
+      await __chk.go('s3/laminas');
+      __chk.$('#s3--laminas .lamina-thumb').click();
+      await __chk.wait(500);
+      const opened = !!__chk.$('.visor');
+      __chk.key('ArrowRight');
+      const count = __chk.$('.visor__count').textContent;
+      __chk.key('n');
+      const notes = !__chk.$('.visor__notes').hidden;
+      const blank = __chk.colors(__chk.$('.visor__canvas')) < 5;
+      __chk.key('Escape');
+      await __chk.wait(200);
+      const closed = !__chk.$('.visor');
+      return { ok: opened && count === '2 de 3' && notes && !blank && closed, detail: 'opened=' + opened + ' «' + count + '» notes=' + notes + ' canvasBlank=' + blank + ' closed=' + closed };
+    })()`
+  },
+  {
+    name: 'Modo clase of sesión 3: every slide, notes drawer, clock, exit',
+    expr: `(async () => {
+      await __chk.go('clase/3');
+      await __chk.wait(600);
+      const opened = !!__chk.$('.clase');
+      const total = Number((__chk.$('.clase__count').textContent.split('/')[1] || '').trim());
+      for (let i = 1; i < total; i++) { __chk.key('ArrowRight'); await __chk.wait(120); }
+      const last = __chk.$('.clase__count').textContent;
+      __chk.key('n');
+      const drawer = !__chk.$('.clase__drawer').hidden;
+      const start = __chk.$('.clase__clock .btn--primary');
+      start.click(); await __chk.wait(1300); start.click();
+      const time = __chk.$('.clase__time').textContent;
+      __chk.key('Escape'); __chk.key('Escape');
+      await __chk.wait(700);
+      const closed = !__chk.$('.clase') && !location.hash.startsWith('#clase');
+      const ok = opened && total > 10 && last === total + ' / ' + total && drawer && !/^0:00 /.test(time) && closed;
+      return { ok, detail: 'slides=' + total + ' last=«' + last + '» drawer=' + drawer + ' clock=«' + time + '» closed=' + closed };
+    })()`
+  }
+];
+
+// Page count of a PDF (its /Type /Page objects).
+function pdfPages(buf) {
+  return (buf.toString('latin1').match(/\/Type\s*\/Page(?![a-zA-Z])/g) || []).length;
+}
+
+async function printSheet(b, opts, name, prepareExpr, canvasSelector) {
+  const from = b.errors.length;
+  const info = await b.evaluate(`(async () => {
+    window.__cleanup = ${prepareExpr};
+    await __chk.wait(300);
+    const canvases = __chk.$$(${JSON.stringify(canvasSelector || 'canvas.none')});
+    return { canvases: canvases.length, blank: canvases.filter((c) => __chk.colors(c) < 5).length };
+  })()`, 30000);
+  const r = await b.cdp('Page.printToPDF', { preferCSSPageSize: true, printBackground: true });
+  await b.evaluate('window.__cleanup && window.__cleanup(); true');
+  const buf = Buffer.from(r.data, 'base64');
+  const file = path.join(ROOT, opts.out, name + '.pdf');
+  writeFileSync(file, buf);
+  return { pages: pdfPages(buf), canvases: info.canvases, blank: info.blank, file: path.relative(ROOT, file), errors: b.errors.slice(from) };
+}
+
+async function runInteract(b, opts) {
+  mkdirSync(path.join(ROOT, opts.out), { recursive: true });
+  const failures = [];
+  await b.open(`${SITE}?check=interact#inicio`);
+  await waitReady(b);
+  await b.evaluate(HELPERS);
+  console.log(`Interactive tools (${INTERACT_STEPS.length} steps + 2 print sheets) at ${opts.width}×${opts.height}:`);
+  for (const step of INTERACT_STEPS) {
+    const from = b.errors.length;
+    let res;
+    try { res = await b.evaluate(step.expr, 90000); } catch (err) { res = { ok: false, detail: String(err.message || err).split('\n')[0] }; }
+    const problems = b.errors.slice(from);
+    const ok = res && res.ok && !problems.length;
+    console.log(`  ${ok ? 'ok  ' : 'FAIL'} ${step.name}\n         ${res ? res.detail : ''}`);
+    for (const p of problems) console.log(`         ${String(p).split('\n')[0].slice(0, 240)}`);
+    if (!ok) failures.push(step.name);
+  }
+  const sheets = [
+    { name: 'laminas-s3', label: '«Imprimir láminas» (sesión 3, two per page)', expr: "EIA.ui.laminasViewer.preparePrint(['d06', 'd07', 'd08'])", canvases: '#print-laminas canvas', pages: 2 },
+    { name: 'cuaderno', label: '«Imprimir cuaderno» (notebook, decision log, rubric)', expr: 'EIA.ui.cuaderno.preparePrint()', canvases: null, pages: 0 }
+  ];
+  for (const s of sheets) {
+    let r;
+    try { r = await printSheet(b, opts, s.name, s.expr, s.canvases); } catch (err) { r = { pages: 0, canvases: 0, blank: 0, file: '', errors: [String(err.message || err)] }; }
+    const ok = r.pages > 0 && (!s.pages || r.pages === s.pages) && !r.blank && !r.errors.length;
+    console.log(`  ${ok ? 'ok  ' : 'FAIL'} ${s.label}\n         ${r.pages} page(s), ${r.canvases} canvas(es), ${r.blank} blank  ${r.file}`);
+    for (const p of r.errors) console.log(`         ${String(p).split('\n')[0].slice(0, 240)}`);
+    if (!ok) failures.push(s.label);
+  }
+  console.log(`\nResult: ${INTERACT_STEPS.length + sheets.length} interaction checks, ${failures.length} with problems.`);
+  return failures.length;
+}
+
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
+  if (opts.interact) {
+    const b = await launchBrowser({ width: opts.width, height: opts.height, timeout: 10 * 60 * 1000 });
+    let failed = 1;
+    try { failed = await runInteract(b, opts); } finally { await b.close(); }
+    process.exit(failed ? 1 : 0);
+  }
   const list = opts.only || [...ROUTES, ...DEEP_LINKS];
   if (opts.shots) mkdirSync(path.join(ROOT, opts.out), { recursive: true });
   const b = await launchBrowser({ width: opts.width, height: opts.height, timeout: 15 * 60 * 1000 });
