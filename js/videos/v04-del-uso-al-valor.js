@@ -54,7 +54,7 @@
   // the subtitle chunk holding them appears (a figure must be on screen by then).
 
   var CUES = {
-    capital: { inversion: [0, '344.700', 'chunk'], generativa: [1, 'La IA generativa', 'word'], corporativa: [1, '581.700', 'chunk'] },
+    capital: { inversion: [0, '344.700', 'chunk'], corporativa: [1, '581.700', 'chunk'] },
     paises: { pilas: [0, '23 veces', 'chunk'], nota: [0, 'subestimada', 'chunk'],
       l0: [1, 'publicaciones', 'word'], l1: [1, 'citaciones', 'word'], l2: [1, 'patentes', 'word'], l3: [1, 'robots', 'word'] },
     cadena: { s0: [0, 'capital,', 'word'], s1: [0, 'cómputo', 'word'], s2: [0, 'modelos', 'word'], s3: [0, 'productos', 'word'] },
@@ -62,24 +62,20 @@
       barreras: [1, 'Mirar solo', 'chunk'] },
     energia: { medidor: [0, '29,6', 'chunk'], rebote: [0, 'Si la demanda', 'chunk'], europa: [1, 'Entre 2018', 'chunk'],
       tres: [1, 'de 3 a', 'word'], cuarenta: [1, 'a 44', 'word'], resto: [1, 'China tiene 85', 'chunk'] },
-    embudo: { uso: [0, '88%', 'chunk'], agentes: [0, '62%', 'chunk'], escala: [1, 'cerca de un tercio', 'chunk'], impacto: [1, '39%', 'chunk'],
-      patron: [3, 'El embudo muestra', 'chunk'] },
+    embudo: { uso: [0, '88%', 'chunk'], agentes: [0, '62%', 'chunk'], escala: [1, 'cerca de un tercio', 'chunk'], impacto: [1, '39%', 'chunk'] },
     puente: { tecnologia: [0, 'la tecnología', 'word'], procesos: [0, 'rediseñar', 'word'], liderazgo: [0, 'liderazgo', 'word'],
       metricas: [0, 'métricas', 'word'], transformacion: [0, 'transformación', 'word'] },
     etapas: { e0: [0, 'acceso', 'word'], e1: [0, 'experimentación,', 'word'], e2: [0, 'integración,', 'word'], e3: [0, 'rediseño', 'word'],
       e4: [0, 'escala', 'word'], e5: [0, 'transformación', 'word'], mayoria: [0, 'La mayoría', 'chunk'] },
-    actualizacion: { uso: [0, 'cerca de nueve', 'chunk'], escala: [0, 'el 44%', 'chunk'], curso: [1, 'El curso', 'chunk'],
-      series: [1, 'Y no mezclamos', 'chunk'] },
-    productividad: { heterogenea: [0, 'Es real', 'chunk'], soporte: [0, '14 a 15%', 'chunk'], software: [0, '26%', 'chunk'],
-      marketing: [0, '50%', 'chunk'], experimento: [1, '4.867', 'chunk'] },
-    metr: { ensayo: [0, '19%', 'chunk'], nota: [1, 'METR marca', 'chunk'], seguimiento: [1, 'Su seguimiento', 'chunk'],
-      intervalo: [1, '18% menos', 'chunk'] },
+    actualizacion: { uso: [0, 'cerca de nueve', 'chunk'], escala: [0, 'el 44%', 'chunk'], series: [1, 'Y no mezclamos', 'chunk'] },
+    // 26% and 50% share one subtitle chunk: both weights land by it.
+    productividad: { soporte: [0, '14 a 15%', 'chunk'], software: [0, '26%', 'chunk'], experimento: [1, '4.867', 'chunk'] },
+    metr: { ensayo: [0, '19%', 'chunk'], seguimiento: [1, 'Su seguimiento', 'chunk'], intervalo: [1, '18% menos', 'chunk'] },
     pwc: { torres: [0, '27,0%', 'chunk'], prima: [0, '56%', 'chunk'], barometro: [1, '62%', 'chunk'] },
-    causalidad: { nube: [0, 'más capital', 'word'], datos: [0, 'datos, capacidad', 'chunk'], sello: [0, 'Asociación no es', 'word'],
+    causalidad: { datos: [0, 'datos, capacidad', 'chunk'], sello: [0, 'Asociación no es', 'word'],
       m0: [1, 'adopciones', 'word'], m1: [1, 'experimentos', 'word'], m2: [1, 'discontinuidades', 'word'], m3: [1, 'instrumentos', 'word'] },
     intencion: { integrar: [0, 'el 81%', 'chunk'], contratar: [0, 'el 32%', 'chunk'], expectativas: [0, 'Son expectativas', 'chunk'] },
-    'linea-base': { pregunta: [0, '¿cuál es', 'chunk'], base: [0, 'la línea base', 'word'], costo: [0, 'el costo total', 'word'],
-      verifica: [0, 'quién verifica', 'word'], todo: [1, 'todo cuenta', 'chunk'] },
+    'linea-base': { base: [0, 'la línea base', 'word'], costo: [0, 'el costo total', 'word'], verifica: [0, 'quién verifica', 'word'] },
     cierre: { construye: [0, 'Se construye', 'chunk'] }
   };
 
@@ -417,7 +413,7 @@
   };
 
   function paises(ctx, s, env) {
-    var C = cuesOf(s, 'paises'), st = s.state.paises, ink = env.ink, fig = env.fig, m = env.pal.mundo, P = PAISES;
+    var C = cuesOf(s, 'paises'), st = s.state.paises, ink = env.ink, fig = env.fig, P = PAISES;
     bg(ctx, s, env);
     var intro = out3(s.intro);
     floaters(ctx, s, env, [['pajaro', 330, 70, 58]], intro);
@@ -570,7 +566,7 @@
   };
 
   function costoOculto(ctx, s, env) {
-    var C = cuesOf(s, 'costo-oculto'), st = s.state.costo, ink = env.ink, fig = env.fig, m = env.pal.mundo, q = env.pal.maquina;
+    var C = cuesOf(s, 'costo-oculto'), ink = env.ink, fig = env.fig, m = env.pal.mundo, q = env.pal.maquina;
     var P = COSTO.panel, B = COSTO.block, bw = B.cols * B.cell, bh = B.rows * B.cell;
     bg(ctx, s, env);
     floaters(ctx, s, env, [['estrella', 1150, 470, 40], ['espiral', 1196, 62, 36]], out3(s.intro));
@@ -692,21 +688,23 @@
       var count = nums.length ? nums[0].value : 0;
       var dp = i === 0 ? beat(a1, Math.max(winE[0], C.cuarenta - 0.04), Math.max(winE[1], C.cuarenta + 0.04)) : beat(a1, winR[0] + (i - 1) * 0.02, winR[1]);
       if (dp > 0) chart.dots(ctx, { x: I.x, y: y + 4, count: count, pitch: E.pitch, color: m.tinta, p: dp, seed: 'v04:isla' + i });
-      // Europe in 2018: three hollow dots (the label says it: «eran 3 en 2018»).
-      if (i === 0 && nums.length > 1) {
-        var hp = beat(a1, C.tres - 0.03, C.tres + 0.03);
-        for (var h = 0; h < Math.round(nums[1].value) && hp > 0; h++) {
-          ctx.save();
-          ctx.globalAlpha *= hp;
-          ctx.strokeStyle = m.tinta;
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.arc(I.x + E.hollow.dx + h * E.hollow.gap, y + E.hollow.dy, E.pitch * 0.3, 0, TAU);
-          ctx.stroke();
-          ctx.restore();
+      // Europe in 2018: as many hollow dots as its label says («eran 3 en 2018»), beside its 44.
+      var hp = i === 0 && nums.length > 1 ? beat(a1, C.tres - 0.03, C.tres + 0.03) : 0;
+      if (hp > 0) {
+        ctx.save();
+        ctx.globalAlpha *= hp;
+        ctx.strokeStyle = m.tinta;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (var h = 0; h < Math.round(nums[1].value); h++) {
+          var hx = I.x + E.hollow.dx + h * E.hollow.gap, r0 = E.pitch * 0.3;
+          ctx.moveTo(hx + r0, y + E.hollow.dy);
+          ctx.arc(hx, y + E.hollow.dy, r0, 0, TAU);
         }
+        ctx.stroke();
+        ctx.restore();
       }
-      var lp = i === 0 ? seg(dp, 0.9, 1) : seg(dp, 0.9, 1);
+      var lp = seg(dp, 0.9, 1);
       if (lp > 0) ink.text(ctx, rot(s, I.key), I.x, E.label.y, { size: E.label.size, weight: 700, align: 'center', maxWidth: E.label.w, lineHeight: 1.15, p: lp });
     }
     // One tag for the four counts (eco-7), tied to the first island that gets its dots.
@@ -760,14 +758,14 @@
     cx: 430, w: 540, h: 44,
     rows: [{ key: 'uso', y: 66 }, { key: 'agentes', y: 162 }, { key: 'escala', y: 258 }, { key: 'impacto', y: 354 }],
     barDy: 34, labelSize: 22,
-    tagScale: 0.86,
+    tagScale: 0.94,
     neck: { size: 21, aprox: { dx: 24, dy: 4, size: 30 }, tagDx: 66 },
     lectora: { x: 1110, y: 712, k: 2.95 },
     cautela: { y: 478, size: 25, w: 820 }
   };
 
   function embudo(ctx, s, env) {
-    var C = cuesOf(s, 'embudo'), st = s.state.embudo, ink = env.ink, chart = env.chart, m = env.pal.mundo, F = EMBUDO;
+    var C = cuesOf(s, 'embudo'), st = s.state.embudo, ink = env.ink, chart = env.chart, F = EMBUDO;
     bg(ctx, s, env, 'datos');
     var a0 = s.at(0), a1 = s.at(1), a3 = s.at(3);
     var wins = [landWindow(C.uso), landWindow(C.agentes), landWindow(C.escala), landWindow(C.impacto)];
@@ -988,10 +986,9 @@
     dev: { x: 1176, y: 610, k: 1.9 }
   };
 
-  // The balance (fig.balance) and its pans in screen coordinates.
+  // The balance of lámina D8, level (it weighs no data): returns its pans in screen coordinates.
   function balance(ctx, env, x, p) {
-    var a = env.fig.balance(ctx, x, BAL.y, BAL.k, { tilt: 0, p: p, seed: 'v04:balanza' });
-    return a;
+    return env.fig.balance(ctx, x, BAL.y, BAL.k, { tilt: 0, p: p, seed: 'v04:balanza' });
   }
 
   // The three weights of the left pan: honest bars on one scale, standing on the pan. vals are the
@@ -1003,7 +1000,7 @@
     for (var i = 0; i < PROD.weights.length; i++) {
       var Wt = PROD.weights[i], pv = vals[i];
       var x = pan.x + Wt.dx - PROD.ww / 2, p = rp[i];
-      out.push({ x: x + PROD.ww / 2, top: pan.y - (pv ? pv.value : 0) * PROD.px, lo: pv && pv.lo != null ? pan.y - pv.lo * PROD.px : null });
+      out.push({ x: x + PROD.ww / 2, top: pan.y - (pv ? pv.value : 0) * PROD.px });
       if (!pv || p <= 0) continue;
       ctx.save();
       ctx.globalAlpha *= alpha;
@@ -1026,7 +1023,7 @@
   }
 
   function productividad(ctx, s, env) {
-    var C = cuesOf(s, 'productividad'), st = s.state.prod, ink = env.ink, m = env.pal.mundo;
+    var C = cuesOf(s, 'productividad'), st = s.state.prod, ink = env.ink;
     bg(ctx, s, env);
     var intro = out3(s.intro), a0 = s.at(0), a1 = s.at(1);
     floaters(ctx, s, env, [['estrella', 820, 470, 36], ['espiral', 1180, 470, 36]], intro);
@@ -1037,20 +1034,18 @@
     var rp = [beat(a0, wS[0], wS[1]), beat(a0, wW[0], wW[1]), beat(a0, wW[0] + 0.03, wW[1] + 0.03)];
     var vals = PROD.weights.map(function (Wt) { return env.chart.parseValue(rot(s, Wt.key)); });
     var tops = weights(ctx, env, pan, vals, rp, 1);
-    // Labels in a staircase above the weights, each with a dotted leader down to its weight.
-    var L0 = null;
+    // Labels in a staircase above the weights (each starts right of the leaders before it), each
+    // with a dotted leader down to its weight.
     for (var i = 0; i < PROD.weights.length; i++) {
       var lp = seg(rp[i], 0.85, 1);
       if (lp <= 0) continue;
       var lx = tops[i].x - PROD.ww / 2, ly = PROD.labels.y0 + i * PROD.labels.dy;
-      var Lb = ink.text(ctx, rot(s, PROD.weights[i].key), lx, ly, { size: PROD.labels.size, weight: 700, p: lp });
-      if (i === 0) L0 = Lb;
+      ink.text(ctx, rot(s, PROD.weights[i].key), lx, ly, { size: PROD.labels.size, weight: 700, p: lp });
       ink.dotted(ctx, st.leaders[i], { r: 1.7, gap: 8, seed: 'v04:guia-pesa' + i, p: lp });
     }
     // One tag for the three weights (prod-1), under the pan; its thread rises to the first weight.
     var tp = seg(rp[0], 0.85, 1);
     if (tp > 0) env.tags.sourceTag(ctx, 'prod-1', { x: PROD.tag.x, y: PROD.tag.y, anchor: { x: tops[0].x - PROD.ww / 2 + 2, y: pan.y - 4 }, p: tp, scale: 1.04 });
-    // «Es real, pero heterogénea»: the weights differ — the beam stays level, the evidence varies.
     // Line 2: the field experiment, on a separate card with a warm developer beside it.
     var cp = beat(a1, 0, 0.1);
     if (cp > 0) {
@@ -1072,19 +1067,19 @@
   // and unlabeled (their numbers belong to the previous scene).
 
   var METR = {
-    from: BAL.x, to: 400,
+    from: BAL.x, to: 380,
     hourglassK: 0.46,
     label: { x: 548, y: 42, size: 25, w: 520 },
     tag3: { x: 556, y: 122 },
     note: { x: 990, y: 146, w: 250, h: 104 },
-    card: { x: 700, y: 268, w: 540, h: 282 },
-    domain: [-50, 20], line: { x: 812, len: 400, y: 440 },
-    tag4: { x: 1022, y: 280 },
+    card: { x: 714, y: 268, w: 526, h: 282 },
+    domain: [-50, 20], line: { x: 826, len: 392, y: 440 },
+    tag4: { x: 1022, y: 288 },
     lectora: { x: 126, y: 704, k: 2.9 }
   };
 
   function metr(ctx, s, env) {
-    var C = cuesOf(s, 'metr'), ink = env.ink, chart = env.chart, m = env.pal.mundo, M = METR;
+    var C = cuesOf(s, 'metr'), ink = env.ink, chart = env.chart, M = METR;
     bg(ctx, s, env);
     var a0 = s.at(0), a1 = s.at(1), a2 = s.at(2);
     var bx = lerp(M.from, M.to, inOut3(seg(s.t, 0.2, 1.6)));
@@ -1166,7 +1161,7 @@
       tops.push(top);
       if (tp <= 0) continue;
       var g = chart.bar(ctx, { value: v, scale: sc, x: T.x, baseY: P.base, h: P.tw, orient: 'v', color: m[T.color], labels: false, seed: 'v04:torre' + i, p: tp });
-      towerWindows(ctx, env, T.x, P.base, P.tw, g.y0, i);
+      towerWindows(ctx, env, T.x, P.base, P.tw, g.y0);
       var lp = seg(tp, 0.9, 1);
       if (lp > 0) {
         var to = { size: 23, weight: 700, maxWidth: T.label.w, lineHeight: 1.12 };
@@ -1206,7 +1201,7 @@
   }
 
   // Windows on a tower, below its exact top edge (they never reach the value-carrying edge).
-  function towerWindows(ctx, env, x, base, w, top, i) {
+  function towerWindows(ctx, env, x, base, w, top) {
     var m = env.pal.mundo, rows = Math.floor((base - top - 18) / 30);
     ctx.save();
     ctx.fillStyle = env.pal.rgba(m.lienzo, 0.85);
@@ -1471,7 +1466,6 @@
     var pr = samplePath(ink, PAISES.river, 4);
     var pb = ink.drawing('v04:rio-orillas', { w: 3.6, jitter: 0.6 });
     pb.shape(bandPoints(pr, 10, 46, 40), { fill: m.celeste, w: 3.4 });
-    pb.stroke(ink.wavePoints(560, 640, 720, 3, 60, 0.3), { w: 2, profile: 'hair', color: m.lienzo });
     var seal = ink.drawing('v04:sello-patente', { w: 2.6, jitter: 0.3 });
     seal.stroke([-6, 8, -12, 26], { w: 3.4, profile: 'blunt', color: m.rojo });
     seal.stroke([6, 8, 12, 26], { w: 3.4, profile: 'blunt', color: m.rojo });
@@ -1487,9 +1481,6 @@
       path: pr, river: pb.done(), seal: seal.done(), gear: gear.done(),
       noteThread: [PAISES.cn.x, PAISES.note.y + PAISES.note.h - 4, PAISES.cn.x + 4, PAISES.base - PAISES.unit - 4]
     };
-
-    // costo-oculto: nothing beyond the constants.
-    st.costo = {};
 
     // energia: the cable, the bolt and the islands (one shape each, filled with a decor color).
     var Mt = ENERGIA.meter, T = ENERGIA.tower, towerTop = T.y - 300 * T.k;
