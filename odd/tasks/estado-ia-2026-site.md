@@ -195,6 +195,10 @@ zero errors; 9 videos play in sync; 17 láminas render/print with corrected figu
   `poly:true` still rounds corners; fill jitter distorts value bands; funnel per-bar progress; scene
   warm-up hook (first frame 50–100 ms).
 
+- V05 done (cherry-picked b370117..452c31a): 9 scenes, est. 3:42 (target 3:00–4:30), determinism ok,
+  checker 0 errors (462 numbers). Wishes: round unitGrid + approx cap; negative bars; lamp size in px;
+  props expose natural size/centre; thread avoids text; `fig.youngLadder` vs D9 ladder.
+
 ## Next step
 
 Merge wave 1 branches as they finish (verify each: checker, tests, headless console), then wave 2:
