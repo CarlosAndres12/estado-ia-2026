@@ -547,7 +547,7 @@
     stations: [[178, 452], [372, 372], [566, 444], [760, 352], [954, 410], [1112, 300]],
     labelSide: [1, -1, 1, -1, 1, -1],          // 1 below the station, −1 above it
     r: 30, label: { size: 23, w: 210 },
-    compass: { x: 1110, y: 142, size: 120 },
+    compass: { x: 1004, y: 136, size: 112 },
     panel: { x: 112, y: 96, w: 214, h: 134 },   // controlled conditions, top left
     world: { x: 604, y: 262, w: 300 }            // the real world, top centre: left end of its ground line
   };
@@ -608,8 +608,8 @@
       ctx.rect(Pn.x - 2, Pn.y - 2, Pn.w + 4, (Pn.h + 4) * inOut3(pc));
       ctx.clip();
       fig.panel(ctx, Pn.x, Pn.y, Pn.w, Pn.h, { cell: 12 });
-      ctx.restore();
       fig.lamp(ctx, Pn.x + Pn.w / 2, Pn.y + Pn.h / 2, 0.62, { t: s.t, p: seg(pc, 0.4, 1) });
+      ctx.restore();
     }
     var pw = beat(a1, C.real - 0.03, C.real + 0.12);
     if (pw > 0) {
@@ -629,7 +629,7 @@
   var CASO = {
     road: { x: 47, y: -170, k: 0.92 },         // the road of ruta, a little smaller, along the top of the page
     team: { x: 640, y: 612, k: 1.0 },
-    card: { x: 640, y: 346, w: 320, h: 164 },
+    card: { x: 640, y: 354, w: 320, h: 164 },
     small: 0.56,                                // the card's scale on the road
     below: 70                                   // px below the station it visits
   };
