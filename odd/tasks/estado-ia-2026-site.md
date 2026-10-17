@@ -189,6 +189,12 @@ zero errors; 9 videos play in sync; 17 láminas render/print with corrected figu
   tarjetas/linea drawers ignore cifras/signo/hitos; sourceTag maxWidth × scale; suspensionBridge label
   width; faro one-sided beam; thread crosses big-figure label.
 
+- V04 done (cherry-picked d49300c..64730fb): 16 scenes, est. 7:36 (target 6:30–8:00), determinism ok,
+  checker 0 errors. Engine bugs/wishes: `DRAW.causal` reads the dotted label from items[3] but the deck
+  stores `diagrama.enlace` (D08 draws it locally); `chart.parseValue` returns the first number (years);
+  `poly:true` still rounds corners; fill jitter distorts value bands; funnel per-bar progress; scene
+  warm-up hook (first frame 50–100 ms).
+
 ## Next step
 
 Merge wave 1 branches as they finish (verify each: checker, tests, headless console), then wave 2:
