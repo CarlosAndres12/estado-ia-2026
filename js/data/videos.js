@@ -352,7 +352,13 @@ EIA.data.videos = [
         id: 'cinco-tipos',
         min: 14,
         seVe: 'Los cinco distintivos se acomodan en fila como una leyenda, cada uno con su color, su signo y su nombre; la barra, el bocadillo, el cronómetro, el catalejo y el cometa vuelan cada uno hacia su distintivo.',
-        rotulos: {},
+        rotulos: {
+          queCapacidad: { text: 'Desempeño en evaluaciones controladas (benchmarks)' },
+          queUso: { text: 'Lo que personas u organizaciones dicen hacer' },
+          queResultado: { text: 'Cambio medido en tiempo, costo, calidad o empleo' },
+          queExpectativa: { text: 'Intenciones declaradas' },
+          queProyeccion: { text: 'Estimación a futuro' }
+        },
         lines: [
           {
             voice: 'narrador',

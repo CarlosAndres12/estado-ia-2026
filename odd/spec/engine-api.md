@@ -141,7 +141,7 @@ CSS mirror (`css/tokens.css`): `--lienzo`, `--lienzo-ocre`, `--tinta`, `--rojo`,
 | `letter(ctx, text, x, y, o)` → layout | brush lettering written glyph by glyph: `size` 56, `font` display, `maxWidth`, `maxLines` 2, `fit`, `align`, `p`, `seed`, `counters` (0.4 share of filled counters), `stars`, `underline` (wavy, ends in a dot), `color` |
 | `measureLetter(ctx, text, o)` | `{ w, h, size, lines, … }` for layout before drawing |
 | `wrap(ctx, text, maxWidth, font)` · `font(o)` · `FONTS` | helpers; fonts are "EIA Sans" (400/700/italic) and "EIA Display" (700/900) |
-| `card(ctx, x, y, w, h, o)` | paper card, thick irregular outline: `weight` 4, `radius` 12, `peek` (color behind a corner), `peekCorner`, `dashed`, `fill`, `p` |
+| `card(ctx, x, y, w, h, o)` | paper card, thick irregular outline (always closed: it may loop a little past its start, never leaves a gap): `weight` 4, `radius` 12, `peek` (color behind a corner), `peekCorner`, `dashed`, `fill`, `p` |
 
 ### Drawings (how figures are built)
 
@@ -156,6 +156,11 @@ Builder methods: `stroke`, `shape`, `fill`, `blob`, `ellipse`, `circle`, `dot`, 
 `rcircle`, `rrect`, `rfill`, `rdisc`, `overlap(a, b, color)` (intersection in black or a third color),
 `glow`, `custom(fn)`, `done()`. Low level: `strokeGeom`, `shapeGeom`, `fillStroke`, `strokeRange`,
 `smoothPath`, `blobPoints`, `weightFor`, `deviceScale`, `makeCanvas`, `LRU`.
+
+Closed outlines (`closed: true`, shapes, cards) start at a seeded point and either loop a little past
+it or stop just short. The length of that loop or gap is capped (`maxOvershoot`, default 15 w + 20;
+`maxGap`, default max(4, 2 w), in the points' units), so a large outline never opens a wide notch
+on one edge; `maxGap: 0` turns any gap into a short overlap (cards use it).
 
 ## `EIA.engine.chart` — honest marks
 
@@ -181,8 +186,9 @@ label fades in only after it lands. Example: `chart.bars(ctx, items, { x: 120, y
 
 | Call | Notes |
 |---|---|
-| `sourceTag(ctx, idOrIds, o)` → `{ x, y, w, h, hole }` | cream paper tag + thread: chip, short source label, scope when it fits, estado sign (ribbon for "Actualización"). `x, y` or `near: { x, y, side, gap }`; `anchor`; `p`; `scale`; `maxWidth` 300; `scope` auto \| true \| false; `mono` |
+| `sourceTag(ctx, idOrIds, o)` → `{ x, y, w, h, hole }` | cream paper tag + thread: chip, short source label, scope when it fits, estado sign (ribbon for "Actualización"). `x, y` or `near: { x, y, side, gap }`; `anchor`; `p`; `scale`; `maxWidth` 300; `scope` auto \| true \| false; `mono`; `chip` (false leaves the evidence chip out, only while a quiz asks for that type). The whole tag follows the caller's `globalAlpha` |
 | `measureTag(ctx, id, o)` | `{ w, h }` |
+| `labelTag(ctx, text, o)` → `{ x, y, w, h, hole }` | the same paper tag holding free text from data (a template such as «Fuente · Alcance · Tipo de evidencia»); never stands in for a figure's real tag. `x, y` or `near`, `anchor`, `p`, `scale`, `size` 17, `maxWidth` 300, `tilt`, `seed` |
 | `chip(ctx, clase, label, o)` | sign + verbatim label; `size` 15, `mono`, `pill`, `x`, `y`, `p` |
 | `estadoSign(ctx, key, x, y, size)` | center; tinta |
 | `warningStamp(ctx, n, x, y, size, p, o)` | round ink stamp, center; `o.text`, `o.number` |
@@ -236,9 +242,13 @@ Fit any stage into a zone with `fig.inRect(ctx, rect, function (x, y, k) { … }
 
 ### Props (anchors returned in screen coordinates)
 
-`notebookPage(ctx, x, y, w, h, o)`, `headline`, `sheet`, `coin`, `coinPile` (`height` px, exact top),
+`notebookPage(ctx, x, y, w, h, o)`, `headline` (`masthead`: a flat color field under the title
+scribble), `sheet`, `coin`, `coinPile` (`height` px, exact top),
 `bridge` (`built`, `labels: { left, right }`, 560 px), `suspensionBridge`, `plank` (`label`), `balance`
-(`tilt` → pans), `hourglass` (`level`), `stopwatch` (`turn`), `telescope`, `microscope`, `magnifier`,
+(`tilt` → pans), `hourglass` (`level`), `stopwatch` (`turn`, decorative and rounded to 0.01; for data
+pass `elapsed` 0..1 of a turn: an exact flat sector from 12 o'clock and the hand at that exact angle,
+`mark` splits the sector so the part after it takes the `extra` color, `wedge`/`extra` colors; two
+watches compared on one scale = same share of a turn per unit of time), `telescope`, `microscope`, `magnifier`,
 `spyglass`, `flask`, `compass`, `chair`, `trafficLight` (`lit` → `lights`), `stamp`, `folder`,
 `envelope`, `key`, `keyRing`, `lock`, `mailbox`, `phone`, `calendar` (`marked`), `drawer` (`cards`),
 `bucket`, `chain` (`crack`), `doorway`, `roadSign` (`text`), `lever`, `steppingStones` (`n`),
@@ -261,6 +271,24 @@ Module contract: `EIA.laminas.dNN = { setup(env), draw(ctx, s, env), drawAfter?(
 figures → titular → session sign → Idea central → pie → `drawAfter`. `layout` may move or hide a
 zone (`{ cifras: false }`, `{ diagrama: rect }`, `{ drawDiagram: false }`, `{ ilustracion: rect }`).
 
+## Video modules and the player's overlays (T05 runtime, conventions fixed by V02 in T06)
+
+Contract: `EIA.videos.vNN = { setup(env), layers?: { [sceneId](env) }, scenes: { [sceneId](ctx, s, env) },
+drawsWarnings?: { [sceneId]: true } }` (header of `js/engine/player.js`). `s.state` is what `setup`
+returned, `s.layers` what `layers[sceneId](env)` returned (build full-frame grounds there with
+`env.canvas(W, H)`); `env.id` is the video id, so `setup` may read its own entry of `EIA.data.videos`.
+
+The player draws over every scene — leave these areas free while they show:
+
+| Overlay | Where (logical px) | When |
+|---|---|---|
+| Subtitles | bottom band, up to y ≈ 582–694 for two lines | while a line plays: keep numbers, tags and faces above y ≈ 570 |
+| Chapter title | lettered card at top-left, (28, 24) up to ~650 × 66 | 2 s at each chapter start |
+| Glossary note | card at x 894–1254, y 214 to ~410 | the line that first says a KB §12 term (e.g. «benchmarks», «agentes», «uso declarado», «exposición») |
+| Warning stamps | 168 px stamps at the top-right corner (centers 1170 / 988, 110) | 3 s per `advertencia`, unless the module declares `drawsWarnings` for that scene and presses the stamps itself |
+| "Ejemplo ilustrativo" | top-right, left of any stamp | the whole beat of an `ilustrativo` line |
+| Linear checkpoint card | centered 1000 px card; it now carries the source tag of a checkpoint's `cifras` (chip hidden while asking) | the 6 s checkpoint segment |
+
 ## Checks
 
 | Command | Expect |
@@ -268,5 +296,6 @@ zone (`{ cifras: false }`, `{ diagrama: rect }`, `{ drawDiagram: false }`, `{ il
 | `tools/dev/gallery.html?test=1` (headless `--dump-dom`) | every line `PASS`; `SUMMARY n passed, 0 failed` |
 | `tools/dev/gallery.html?section=<signs\|people\|places\|machine\|props\|charts\|tags\|lettering\|lamina\|backgrounds>&page=N&p=0.5&t=2` | sheet to review by eye against prompt §3 |
 | `tools/dev/gallery.html?mount=d07` | the `index.html?lamina=` path with the dev fixture deck |
+| `node tools/snapshots.mjs --only vNN` · `--only vNN --determinism` · `--laminas` | review frames + contact sheet in `review/` · identical pixels · 0 console errors |
 
 Launch headless Chromium only through `tools/dev/chromium-safe.sh`, one browser at a time.

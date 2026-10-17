@@ -362,7 +362,9 @@
     b.stroke([-10, 12, 0, 16, 10, 12], { w: 4, profile: 'blunt' });
   }, { colors: function () { return { a: M().oro }; }, jitter: 0.4 });
 
-  function deskInto(b, y0, k, fill) {
+  // The small desk of the warning signs. (Its own name: the places' deskInto further down is a
+  // different function, and two hoisted declarations of one name silently keep only the last.)
+  function signDeskInto(b, y0, k, fill) {
     b.shape(box(-44 * k, y0, 44 * k, y0 + 10 * k, 0.04), { fill: fill || '@a', w: 5 * k });
     b.stroke([-36 * k, y0 + 10 * k, -38 * k, y0 + 44 * k], { w: 5 * k, profile: 'blunt' });
     b.stroke([36 * k, y0 + 10 * k, 38 * k, y0 + 44 * k], { w: 5 * k, profile: 'blunt' });
@@ -372,17 +374,18 @@
     b.stroke([-20, -17, 0, -18], { w: 2.2, profile: 'blunt' });
     b.stroke([-20, -11, -4, -12], { w: 2.2, profile: 'blunt' });
     b.shape(box(14, -26, 30, -6, 0.2), { fill: '@b', w: 3.5 });
-    deskInto(b, -6, 1);
+    signDeskInto(b, -6, 1);
   }, { colors: function () { return { a: M().madera, b: M().rojo }; }, jitter: 0.5 });
 
+  // The sun disc keeps a thin outline so it still reads in the tinta-only stamps.
   defSign('sol-escritorio', function (b) {
     var r = b.r;
-    b.circle(0, -28, 14, { fill: '@b', line: false, irr: 0.03 });
+    b.circle(0, -28, 14, { fill: '@b', w: 3, irr: 0.03 });
     for (var i = 0; i < 9; i++) {
       var a = i / 9 * TAU + 0.2;
       b.stroke([Math.cos(a) * 19, -28 + Math.sin(a) * 19, Math.cos(a) * r.range(24, 27), -28 + Math.sin(a) * r.range(24, 27)], { w: 3.6, profile: 'lift' });
     }
-    deskInto(b, 4, 0.92);
+    signDeskInto(b, 4, 0.92);
   }, { colors: function () { return { a: M().madera, b: M().rojo }; }, jitter: 0.5 });
 
   defSign('silla-vacia', function (b) {

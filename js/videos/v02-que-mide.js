@@ -49,7 +49,7 @@
     expectativa: { plazo: [0, '12 a 18', 'chunk'] },
     proyeccion: { cifra: [0, '39%', 'chunk'] },
     'cinco-tipos': { t0: [0, 'Capacidad técnica', 'word'], t1: [0, 'uso declarado', 'word'], t2: [0, 'resultado observado', 'word'],
-      t3: [0, 'expectativa', 'word'], t4: [0, 'proyección', 'word'] },
+      t3: [0, 'expectativa', 'word'], t4: [0, 'proyección', 'word'], cada: [0, 'Cada tipo', 'chunk'] },
     fuentes: { lim0: [0, 'pero muchas', 'word'], lim1: [1, 'pero miden', 'word'], mck: [1, 'McKinsey', 'word'], lim2: [1, 'con autoinforme', 'word'],
       lim3: [2, 'y muestra', 'word'], bench: [2, 'Y los benchmarks', 'word'], lim4: [2, 'se saturan', 'word'] },
     muestra: { censo: [0, 'no un censo', 'word'], cobertura: [0, 'Una cobertura', 'chunk'] },
@@ -90,10 +90,11 @@
     return out;
   }
 
-  // A figure grows over a short window that ends just after its subtitle chunk appears.
+  // A figure grows over a short window that ends when its subtitle chunk appears (or early in the
+  // line when the number is in its first chunk); its value label then fades in.
   function landWindow(cs) {
     var a = Math.max(0.02, cs - 0.1);
-    return [a, Math.max(a + 0.08, cs + 0.02)];
+    return [a, Math.max(a + 0.07, cs)];
   }
 
   function findVideo(id) {
@@ -419,17 +420,17 @@
       var pop = out3(seg(e, 0, 0.18));
       smallBubble(ctx, env, Q1.x + Math.sin(s.t * 1.3 + k) * 6 * (1 - ee), Q1.y, lerp(1, 0.5, ee) * (0.6 + 0.4 * pop), 1 - seg(e, 0.86, 1), 'v02:sb' + (k % 3), pop, true);
     }
-    var be = out3(seg(a, merge - 0.02, win[1] - 0.02));
+    var be = out3(seg(a, merge - 0.02, win[1] - 0.04));
     if (be > 0) {
       ctx.save();
       ctx.translate(B.x, B.y);
       ctx.scale(0.55 + 0.45 * be, 0.55 + 0.45 * be);
       fig.bubble(ctx, -B.w / 2, -B.h / 2, B.w, B.h, { seed: 'v02:grande', p: be, w: 4.6 });
       ctx.restore();
-      var np = seg(a, win[1] - 0.03, win[1] + 0.03);
+      var np = seg(a, win[1] - 0.05, win[1]);
       hero(ctx, env, rot(s, 'cifra'), B.x, B.y - 104, 112, { align: 'center', seed: 'v02:88', p: np });
-      ink.text(ctx, rot(s, 'etiqueta'), B.x, B.y + 30, { size: 23, weight: 700, maxWidth: 300, align: 'center', lineHeight: 1.12, p: seg(a, win[1], win[1] + 0.06) });
-      env.tags.sourceTag(ctx, 'adop-1', { x: USO.tag.x, y: USO.tag.y, anchor: { x: B.x + 150, y: B.y - 52 }, p: seg(a, win[1] - 0.02, win[1] + 0.08), scale: 1.08 });
+      ink.text(ctx, rot(s, 'etiqueta'), B.x, B.y + 30, { size: 23, weight: 700, maxWidth: 300, align: 'center', lineHeight: 1.12, p: seg(a, win[1] - 0.02, win[1] + 0.04) });
+      env.tags.sourceTag(ctx, 'adop-1', { x: USO.tag.x, y: USO.tag.y, anchor: { x: B.x + 150, y: B.y - 52 }, p: seg(a, win[1] - 0.04, win[1] + 0.05), scale: 1.08 });
     }
   }
 
@@ -585,7 +586,11 @@
   // 7 · cinco-tipos — the five chips settle into a legend row; the bar, the bubble, the stopwatch,
   // the spyglass and the comet each fly to their chip as it is named; then a headline mixes them.
 
-  var CINCO = { chip: 20, gap: 18, y: 262, iconY: 172, headline: { x: 560, y: 478, k: 1.2 }, lectora: { x: 1132, y: 574, k: 2.1 } };
+  var CINCO = {
+    chip: 20, gap: 18, y: 236, iconY: 148, que: { size: 18, gap: 10 },
+    keys: ['queCapacidad', 'queUso', 'queResultado', 'queExpectativa', 'queProyeccion'],
+    headline: { x: 560, y: 494, k: 1.12 }, lectora: { x: 1136, y: 576, k: 2.05 }
+  };
   var CINCO_FROM = [[-160, 120], [640, -140], [1440, 120], [-160, 520], [1440, 520]];
 
   function cincoIcon(ctx, env, k) {
@@ -614,7 +619,7 @@
   function cincoTipos(ctx, s, env) {
     var C = s.state.cues['cinco-tipos'], st = s.state.cinco, ink = env.ink, fig = env.fig;
     bg(ctx, s, env);
-    floaters(ctx, s, env, [['estrella', 1186, 92, 42], ['espiral', 96, 104, 40], ['luna', 196, 470, 40]], { mono: true, p: out3(s.intro) });
+    floaters(ctx, s, env, [['estrella', 990, 500, 40], ['espiral', 96, 104, 40], ['luna', 196, 470, 40]], { mono: true, p: out3(s.intro) });
     var a0 = s.at(0), a1 = s.at(1);
     var cue = [C.t0, C.t1, C.t2, C.t3, C.t4];
     // Chips fly from where each type scene wrote them into the legend row, one by one.
@@ -635,6 +640,12 @@
       ctx.rotate((1 - f) * (i % 2 ? 0.8 : -0.8));
       cincoIcon(ctx, env, i);
       ctx.restore();
+    }
+    // "Cada tipo responde a una pregunta distinta": under each chip, what it measures (KB §3.1).
+    for (i = 0; i < st.row.length; i++) {
+      var qp = beat(a0, C.cada + i * 0.04, C.cada + 0.1 + i * 0.04);
+      if (qp > 0) ink.text(ctx, rot(s, CINCO.keys[i]), st.row[i].cx, st.row[i].y + st.row[i].h + CINCO.que.gap,
+        { size: CINCO.que.size, italic: true, maxWidth: st.row[i].qw, lineHeight: 1.18, align: 'center', p: qp });
     }
     // The lectora: headlines mix them as if they were the same — five threads into one «%».
     var lp = out3(seg(a1, 0, 0.22));
@@ -688,8 +699,14 @@
       fig.panel(ctx, -w / 2, -h / 2, w, h, { cell: 12, construction: false });
       ink.rRect(ctx, -w / 2, -h / 2, w, h, { color: q.linea, w: 1.6 });
     } else {
-      ink.card(ctx, -w / 2, -h / 2, w, h, { seed: 'v02:fuente' + i, weight: 4, radius: 12, p: out3(s.intro),
-        peek: m[FUE.peeks[i][0]], peekCorner: FUE.peeks[i][1] });
+      // The flat shape behind a corner blooms once the card has opened (stacked cards show none).
+      var pk = FUE.peeks[i], right = pk[1].charAt(1) === 'r', bottom = pk[1].charAt(0) === 'b', pr = 64;
+      var bp = seg(e, 0.6, 1);
+      if (bp > 0) {
+        ink.blob(ctx, (right ? 1 : -1) * (w / 2 - 6 + pr * 0.35), (bottom ? 1 : -1) * (h / 2 - 4 + pr * 0.3), pr, pr * 0.8,
+          { fill: m[pk[0]], line: false, seed: 'v02:asoma' + i, irr: 0.22, n: 8, p: bp });
+      }
+      ink.card(ctx, -w / 2, -h / 2, w, h, { seed: 'v02:fuente' + i, weight: 4, radius: 12, p: out3(s.intro) });
     }
     var col = navy ? m.lienzo : m.tinta;
     var np = seg(e, 0.35, 1);
@@ -887,14 +904,21 @@
       total += m.w;
     });
     total += CINCO.gap * (row.length - 1);
-    var x = W / 2 - total / 2;
-    row.forEach(function (c) { c.x = x; c.y = CINCO.y; c.cx = x + c.w / 2; x += c.w + CINCO.gap; });
+    var x = W / 2 - total / 2, scene = null;
+    ((video && video.scenes) || []).forEach(function (sc) { if (sc.id === 'cinco-tipos') scene = sc; });
+    row.forEach(function (c, k) {
+      c.x = x; c.y = CINCO.y; c.cx = x + c.w / 2; x += c.w + CINCO.gap;
+      // What each type measures is written under its chip; the threads start below that text.
+      var r = scene && scene.rotulos[CINCO.keys[k]];
+      c.qw = Math.max(c.w, 200);
+      c.qh = r ? ink.measureText(mctx, r.text, { size: CINCO.que.size, italic: true, maxWidth: c.qw, lineHeight: 1.18 }).h : 0;
+    });
     var Hd = CINCO.headline, hx = Hd.x + 43 * Hd.k, hy = Hd.y + 8 * Hd.k;
     st.cinco = {
       row: row,
       threads: row.map(function (c, k) {
-        var x0 = c.cx, y0 = c.y + c.h + 8;
-        return [x0, y0, lerp(x0, hx, 0.45) + (k - 2) * 14, lerp(y0, hy, 0.5) + 30, hx, hy];
+        var x0 = c.cx, y0 = c.y + c.h + CINCO.que.gap + c.qh + 10;
+        return [x0, y0, lerp(x0, hx, 0.45) + (k - 2) * 14, lerp(y0, hy, 0.5) + 24, hx, hy];
       })
     };
 
