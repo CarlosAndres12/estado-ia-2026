@@ -502,7 +502,7 @@
       if (answer && !right) ctx.globalAlpha = alpha * 0.45;
       var mx = cx + 20, my = cy + L.oLh / 2;
       if (right) {
-        drawSign(ctx, 'estrella-exito', mx, my, 44, { env: opts.env, seed: 'checkpoint-right' });
+        drawSign(ctx, 'estrella-exito', mx, my, 58, { env: opts.env, seed: 'checkpoint-right' });
       } else {
         ctx.beginPath();
         ctx.arc(mx, my, 11, 0, Math.PI * 2);

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Banco de pruebas del reproductor · Estado de la IA 2026</title>
+  <!-- Dev-only page (never linked from the site).
+         player.html                    the test video, V02 (real data) and the 15-minute timeline
+         player.html?render=<id>        the bare render mode, fixtures included (tools/snapshots.mjs)
+         player.html?perf=<id>          a muted, linear player with frame statistics (snapshots --perf) -->
+  <link rel="stylesheet" href="../../css/fonts.css">
+  <link rel="stylesheet" href="../../css/tokens.css">
+  <link rel="stylesheet" href="../../css/base.css">
+  <link rel="stylesheet" href="../../css/layout.css">
+  <link rel="stylesheet" href="../../css/components.css">
+  <style>
+    body { margin: 0; padding: 1rem; background: #F4EEDF; color: #15120F; font-family: "EIA Sans", sans-serif; }
+    main { max-width: 1280px; margin: 0 auto; }
+    h1, h2 { font-family: "EIA Display", Georgia, serif; }
+  </style>
+</head>
+<body>
+  <main id="main">
+    <h1>Banco de pruebas del reproductor</h1>
+  </main>
+
+  <script src="../../js/core/namespace.js"></script>
+  <script src="../../js/data/course.js"></script>
+  <script src="../../js/data/cifras.js"></script>
+  <script src="../../js/data/fuentes.js"></script>
+  <script src="../../js/data/glosario.js"></script>
+  <script src="../../js/data/deck.js"></script>
+  <script src="../../js/data/videos.js"></script>
+  <script src="../../assets/audio/manifest.js"></script>
+  <script src="../../assets/video/index.js"></script>
+  <script src="../../js/engine/rng.js"></script>
+  <script src="../../js/engine/easing.js"></script>
+  <script src="../../js/engine/palette.js"></script>
+  <script src="../../js/engine/ink.js"></script>
+  <script src="../../js/engine/chart.js"></script>
+  <script src="../../js/engine/tags.js"></script>
+  <script src="../../js/engine/figures.js"></script>
+  <script src="../../js/engine/lamina.js"></script>
+  <script src="../../js/engine/timeline.js"></script>
+  <script src="../../js/engine/captions.js"></script>
+  <script src="../../js/engine/narrator.js"></script>
+  <script src="../../js/engine/player.js"></script>
+  <script src="../../js/engine/recorder.js"></script>
+  <script src="../../js/videos/v01-iceberg.js"></script>
+  <script src="../../js/videos/v02-que-mide.js"></script>
+  <script src="../../js/videos/v03-frontera.js"></script>
+  <script src="../../js/videos/v04-del-uso-al-valor.js"></script>
+  <script src="../../js/videos/v05-tareas.js"></script>
+  <script src="../../js/videos/v06-aprendizaje.js"></script>
+  <script src="../../js/videos/v07-del-benchmark-al-ensayo.js"></script>
+  <script src="../../js/videos/v08-gobernanza.js"></script>
+  <script src="../../js/videos/v09-de-consumir-a-construir.js"></script>
+  <script src="fixture-video.js"></script>
+  <script>
+    (function (EIA) {
+      'use strict';
+      var q = EIA.util.query();
+      var player = EIA.engine.player;
+      if (q.render) {
+        player.mountRender(q.render, q);
+        return;
+      }
+      var main = document.getElementById('main');
+      function section(id) {
+        var info = player.info(id);
+        var box = document.createElement('section');
+        var h = document.createElement('h2');
+        h.textContent = info ? info.title + ' · ' + EIA.util.formatClock(info.duration) : id;
+        box.appendChild(h);
+        main.appendChild(box);
+        return box;
+      }
+      if (q.perf) {
+        // Muted (no speech) and linear (no checkpoint pauses): only frames are measured.
+        var p = player.create(section(q.perf), q.perf, { interactive: false, stats: true });
+        p.setOption('voz', false);
+        window.perfPlayer = p;
+        window.perfStart = function (from) {
+          return p.ready().then(function () { p.seek(Number(from) || 0); return p.play(); }).then(function () { return p.isPlaying(); });
+        };
+        window.perfReset = function () { p.resetStats(); return p.time(); };
+        window.perfStats = function () {
+          var s = p.stats() || {};
+          s.t = p.time();
+          s.playing = p.isPlaying();
+          s.duration = p.duration;
+          return s;
+        };
+        return;
+      }
+      ['vtest', 'v02', 'vlong'].forEach(function (id) {
+        window['player_' + id] = player.create(section(id), id, {});
+      });
+    })(window.EIA);
+  </script>
+</body>
+</html>

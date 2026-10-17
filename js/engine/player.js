@@ -1440,6 +1440,7 @@
       setOption: setOption,
       ready: function () { return init(); },
       stats: function () { return stats ? summarize(stats) : null; },
+      resetStats: function () { if (stats) { stats.times = []; stats.drops = 0; stats.last = -1; } },
       destroy: function () {
         st.destroyed = true;
         if (st.raf) root.cancelAnimationFrame(st.raf);
