@@ -43,8 +43,8 @@ exceeds it. Slicing into PRs is left to the user (each task commit is a candidat
 | T02 | Data layer + content checker: `kb-parse`, `load-data`, all `js/data/*` except `videos.js`, `check-content.mjs` | delegated writer (2+ non-trivial files, KB reading prepares the write) | done (cherry-picked 414d2f2, 57b861d, 1e20899) |
 | T03 | Video scripts as data: `js/data/videos.js` (9 videos, prompt §13) | delegated writer (large transcription) | done (84e78b8) |
 | T04 | Drawing engine: rng, easing, palette + tokens.css, ink, chart, tags, figures, lamina layout, API doc | delegated writer (many non-trivial files) | done (cherry-picked 0149682..a019a98 → 73f2246) |
-| T05 | Video runtime: timeline, captions, narrator, player, recorder, render mode, CDP browser lib, snapshots | delegated writer (many non-trivial files) | running (wave 1, worktree) |
-| T06 | V02 end to end + art review against prompt §3 | delegated writer | pending |
+| T05 | Video runtime: timeline, captions, narrator, player, recorder, render mode, CDP browser lib, snapshots | delegated writer (many non-trivial files) | done (fast-forward to 58a2c61) |
+| T06 | V02 end to end + art review against prompt §3 | delegated writer | running (worktree) |
 | T07 | Page shell: router, markup, views, nav, hero, chips, citations/popovers, banco, glossary, FAQ, references, asistente, footer, CSS | delegated writer | pending |
 | T08 | Interactions: quizzes, games, calculator, embudo, cuaderno, rubric, Ley de IA timeline, indicadores, timer, láminas viewer, Modo clase, print | delegated writer | pending |
 | T09 | Láminas D01–D17 | delegated writers (parallel, worktrees) | pending |
@@ -113,6 +113,14 @@ zero errors; 9 videos play in sync; 17 láminas render/print with corrected figu
   sparse places, stylized landmass. Scene objects without helpers (compose from primitives): service-window
   counter, threat map, V07 star/weather/molecule charts, ruled manuscript.
 - T05 resumed after merge of the feature branch into its worktree (TEMP fallbacks → real engine).
+
+- T05 done (fast-forward to 58a2c61): timeline, captions (pure, 50 chars × 2 lines chunking; manifest chunks
+  used as-is), narrator, player (+ render mode), recorder, browser.mjs (CDP, defaults to chromium-safe.sh),
+  snapshots.mjs, dev fixtures. Parent re-run: `node --test tools/test/` 65/65; checker 0 errors;
+  `snapshots.mjs --only v02 --determinism` identical, no console errors. Worker: perf 60 s sample of a
+  15:19 video → 24 fps, p95 2.0 ms, heap 1.9→2.3 MB. Untested: speechSynthesis, audio-track playback,
+  MediaRecorder, fullscreen. Contract additions: `s.state`, `s.layers`, `env.scale`, `env.canvas(w,h)`.
+- T06 launched (V02 + art review gate) alongside T11.
 
 ## Next step
 
