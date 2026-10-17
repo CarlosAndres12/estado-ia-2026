@@ -163,7 +163,9 @@
    *   'even' | 'hair'), seed, closed (closed loop drawn by hand: overshoots or leaves a small gap),
    *   dot (end dot: true or radius factor; 'detached' floats it just beyond the end), startDot,
    *   second (true or probability: a thin second stroke beside part of this one), step, taperMax,
-   *   press / rough (override the profile's pressure and edge roughness). */
+   *   press / rough (override the profile's pressure and edge roughness), maxGap / maxOvershoot
+   *   (longest gap or loop of a closed outline, in the points' units; default max(4, 2 w) and
+   *   15 w + 20, so a big card never opens a wide gap nor trails a long second edge). */
   function strokeGeom(points, o) {
     o = o || {};
     var seed = o.seed != null ? String(o.seed) : 'stroke';
@@ -174,11 +176,20 @@
     var base = (o.w || 3) / 2;
     var pr = PROFILES[o.profile || (o.closed ? 'outline' : 'swell')] || PROFILES.swell;
 
-    // A closed outline starts at a seeded point and either overshoots (a loop) or stops short.
+    // A closed outline starts at a seeded point and either overshoots (a loop) or stops short. The
+    // share of the perimeter is seeded; its length is capped so big outlines stay closed and tidy.
     if (o.closed && n > 8) {
       var m = n - 1;
       var k0 = Math.floor(r() * m);
       var over = o.overshoot === false ? 0 : (r() < 0.72 ? Math.round(m * r.range(0.05, 0.11)) : -Math.round(m * r.range(0.015, 0.035)));
+      if (over !== 0) {
+        var per = 0;
+        for (var pi = 1; pi < n; pi++) per += Math.sqrt(d2(x[pi - 1], y[pi - 1], x[pi], y[pi]));
+        var spacing = per / m || 1;
+        var capLen = over < 0 ? (o.maxGap != null ? o.maxGap : Math.max(4, base * 4)) : (o.maxOvershoot != null ? o.maxOvershoot : base * 30 + 20);
+        var capPts = Math.max(1, Math.round(capLen / spacing));
+        if (Math.abs(over) > capPts) over = over < 0 ? -capPts : capPts;
+      }
       var total = m + over;
       var nx0 = new Float32Array(total + 1), ny0 = new Float32Array(total + 1);
       for (var q = 0; q <= total; q++) {

@@ -6,6 +6,7 @@
  *
  *   tags.sourceTag(ctx, cifraId | [ids], opts)  -> { x, y, w, h, hole } paper tag tied to a number
  *   tags.measureTag(ctx, cifraId, opts)        -> { w, h } without drawing
+ *   tags.labelTag(ctx, text, opts)             -> { x, y, w, h, hole } same paper tag, free text from data
  *   tags.chip(ctx, clase, label, opts)         -> { x, y, w, h } evidence / neutral chip
  *   tags.measureChip(ctx, clase, label, opts)  -> { w, h }
  *   tags.estadoSign(ctx, estadoKey, x, y, size)
@@ -268,6 +269,65 @@
       if (thp > 0) {
         var c = Math.cos(tilt), s = Math.sin(tilt);
         var hxW = x + hx * c - hy * s, hyW = y + hx * s + hy * c;
+        var dx = hxW - anchor.x, dy = hyW - anchor.y, dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        var sag = Math.min(26 * k, dist * 0.18);
+        var pts = [anchor.x, anchor.y, anchor.x + dx * 0.5 + (-dy / dist) * sag * 0.3, anchor.y + dy * 0.5 + sag, hxW, hyW];
+        ink.line(ctx, pts, { w: 2 * k, profile: 'hair', seed: seed + 'th', p: thp, color: m.tinta, dot: 1.6 });
+      }
+    }
+    return { x: x, y: y, w: w, h: h, hole: hole };
+  };
+
+  /* tags.labelTag(ctx, text, opts) -> { x, y, w, h, hole }: a paper tag in the source-tag style
+   * (cream paper, thick irregular outline, punched hole, thread to opts.anchor) holding free text
+   * from data instead of a figure's source — e.g. the template «Fuente · Alcance · Tipo de
+   * evidencia». It never stands in for a figure's real tag. opts: x, y (top-left) or near (as
+   * sourceTag), anchor, p, scale (1), size (text px at scale 1, 17), maxWidth (300), tilt, seed. */
+  tags.labelTag = function (ctx, text, o) {
+    o = o || {};
+    var k = o.scale || 1, ink = I(), m = M();
+    var size = (o.size || 17) * k, padL = 32 * k, padR = 16 * k, padT = 11 * k, padB = 12 * k;
+    var L = ink.measureText(ctx, String(text == null ? '' : text), { size: size, weight: 700, maxWidth: (o.maxWidth || 300) * k - padL - padR, lineHeight: 1.22 });
+    var w = padL + L.w + padR, h = padT + L.h + padB;
+    var x = o.x || 0, y = o.y || 0;
+    if (o.near) {
+      var gapN = o.near.gap == null ? 22 * k : o.near.gap, side = o.near.side || 'right';
+      if (side === 'right') { x = o.near.x + gapN; y = o.near.y - h / 2; }
+      else if (side === 'left') { x = o.near.x - gapN - w; y = o.near.y - h / 2; }
+      else if (side === 'below') { x = o.near.x - 24 * k; y = o.near.y + gapN; }
+      else { x = o.near.x - 24 * k; y = o.near.y - gapN - h; }
+    }
+    var anchor = o.anchor || (o.near ? { x: o.near.x, y: o.near.y } : null);
+    var p = o.p == null ? 1 : o.p, hx = 15 * k, hy = h / 2;
+    var hole = { x: x + hx, y: y + hy };
+    if (p <= 0) return { x: x, y: y, w: w, h: h, hole: hole };
+    var seed = 'label-tag:' + (o.seed || text);
+    var tilt = o.tilt == null ? E.rng.create(seed).jitter(0.018) : o.tilt;
+    var shape = tagShape(w, h, k);
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(tilt);
+    var pf = seg(p, 0, 0.25);
+    ink.shape(ctx, shape, { fill: m.lienzo, line: false, tex: false, edge: false, offset: 0, fillScale: 0, fillJitter: 0, seed: seed + 'f', p: pf, exact: true });
+    ctx.save();
+    ctx.globalAlpha *= pf * 0.55;
+    ctx.fillStyle = ink.grainPattern(ctx);
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+    ink.shape(ctx, shape, { line: true, w: 3.2 * k, seed: seed + 'o' + Math.round(w) + 'x' + Math.round(h), p: seg(p, 0, 0.55), fillScale: 0 });
+    ctx.globalAlpha = seg(p, 0.2, 0.4);
+    ctx.fillStyle = m.lienzoOcre;
+    ctx.beginPath(); ctx.arc(hx, hy, 4.6 * k, 0, TAU); ctx.fill();
+    ctx.strokeStyle = m.tinta; ctx.lineWidth = 1.4 * k;
+    ctx.beginPath(); ctx.arc(hx, hy, 6.4 * k, 0, TAU); ctx.stroke();
+    ctx.globalAlpha = 1;
+    ink.text(ctx, String(text == null ? '' : text), padL, padT, { size: size, weight: 700, maxWidth: (o.maxWidth || 300) * k - padL - padR, lineHeight: 1.22, p: seg(p, 0.3, 0.8) });
+    ctx.restore();
+    if (anchor) {
+      var thp = seg(p, 0.45, 1);
+      if (thp > 0) {
+        var c = Math.cos(tilt), sn = Math.sin(tilt);
+        var hxW = x + hx * c - hy * sn, hyW = y + hx * sn + hy * c;
         var dx = hxW - anchor.x, dy = hyW - anchor.y, dist = Math.sqrt(dx * dx + dy * dy) || 1;
         var sag = Math.min(26 * k, dist * 0.18);
         var pts = [anchor.x, anchor.y, anchor.x + dx * 0.5 + (-dy / dist) * sag * 0.3, anchor.y + dy * 0.5 + sag, hxW, hyW];

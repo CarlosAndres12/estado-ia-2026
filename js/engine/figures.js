@@ -2094,8 +2094,8 @@
   }, { variant: function (o) { return q01(o.level == null ? 0.5 : o.level); } });
 
   /* fig.stopwatch(ctx, x, y, scale, opts): (x, y) = center of the dial; 120 px at scale 1.
-   * opts.turn (0..1: hand position as a share of a full turn — pass a value from data when it
-   * encodes one), p. */
+   * opts.turn (0..1: hand position as a share of a full turn, drawn from a cached drawing — rounded
+   * to 0.01, for decoration), p. For data use opts.elapsed instead (see stopwatchExact below). */
   defProp('stopwatch', function (b, o) {
     var m = M(), a = -Math.PI / 2 + TAU * clamp(o.turn || 0, 0, 1);
     b.shape(box(-10, -76, 10, -62, 0.2), { fill: m.rojo, w: 3 });
@@ -2107,6 +2107,62 @@
     b.stroke([0, 0, Math.cos(a) * 40, Math.sin(a) * 40], { w: 4.6, profile: 'lift' });
     b.circle(0, 0, 5, { fill: m.rojo, w: 2 });
   }, { variant: function (o) { return q01(o.turn); } });
+
+  /* Honest stopwatch (opts.elapsed given): the elapsed time is a flat sector from 12 o'clock whose
+   * angle is exactly elapsed × a full turn (no rounding), and the hand points at that exact angle.
+   * opts: elapsed (0..1 share of a turn: compare two watches on the same scale), mark (0..elapsed:
+   * the sector after `mark` takes the `extra` color — e.g. the extra time of a slower run), wedge
+   * (sector color, amarillo), extra (rojo), seed, p. Angles are computed per frame; only the face,
+   * the ticks, the hand stroke and the hub are cached drawings. */
+  var stopwatchCached = fig.stopwatch;
+  function stopwatchPart(name, build) {
+    return cached('stopwatch-exact|' + name, function () {
+      var b = I().drawing('prop:stopwatch:' + name, { w: 4, jitter: 0.8 });
+      build(b, M());
+      return b.done();
+    });
+  }
+  function stopwatchExact(ctx, x, y, scale, o) {
+    var s = scale || 1, p = o.p == null ? 1 : o.p, m = M();
+    var face = stopwatchPart('face', function (b) {
+      b.shape(box(-10, -76, 10, -62, 0.2), { fill: m.rojo, w: 3 });
+      b.circle(0, 0, 58, { fill: '@paper', w: 5 });
+    });
+    var ticks = stopwatchPart('ticks', function (b) {
+      for (var i = 0; i < 12; i++) {
+        var ta = i / 12 * TAU;
+        b.stroke([Math.cos(ta) * 44, Math.sin(ta) * 44, Math.cos(ta) * (i % 3 ? 50 : 52), Math.sin(ta) * (i % 3 ? 50 : 52)], { w: i % 3 ? 2 : 3.6, profile: 'even' });
+      }
+    });
+    var hand = stopwatchPart('hand', function (b) { b.stroke([0, 0, 0, -40], { w: 4.6, profile: 'lift' }); });
+    var hub = stopwatchPart('hub', function (b) { b.circle(0, 0, 5, { fill: m.rojo, w: 2 }); });
+    var colors = { paper: m.lienzo };
+    I().draw(ctx, face, x, y, s, { p: seg(p, 0, 0.7), colors: colors, mono: o.mono });
+    var e = clamp(o.elapsed, 0, 1), mk = o.mark == null ? e : clamp(o.mark, 0, e), a0 = -Math.PI / 2, R = 47 * s;
+    var sp = seg(p, 0.55, 0.9);
+    if (sp > 0 && e > 0) {
+      ctx.save();
+      ctx.globalAlpha *= sp;
+      [[0, mk, o.wedge || m.amarillo], [mk, e, o.extra || m.rojo]].forEach(function (w) {
+        if (w[1] <= w[0]) return;
+        ctx.fillStyle = o.mono ? P().mix(m.tinta, m.lienzo, 0.7) : w[2];
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.arc(x, y, R, a0 + TAU * w[0], a0 + TAU * w[1]);
+        ctx.closePath();
+        ctx.fill();
+      });
+      ctx.restore();
+    }
+    I().draw(ctx, ticks, x, y, s, { p: seg(p, 0.3, 0.9), mono: o.mono });
+    if (p >= 0.6) I().draw(ctx, hand, x, y, s, { p: seg(p, 0.6, 1), rot: TAU * e, mono: o.mono });
+    I().draw(ctx, hub, x, y, s, { p: seg(p, 0.7, 1), mono: o.mono });
+    return { center: { x: x, y: y }, r: 58 * s, angle: a0 + TAU * e };
+  }
+  fig.stopwatch = function (ctx, x, y, scale, o) {
+    if (o && o.elapsed != null) return stopwatchExact(ctx, x, y, scale, o);
+    return stopwatchCached(ctx, x, y, scale, o);
+  };
 
   /* fig.telescope(ctx, x, y, scale, opts): a telescope on a tripod. (x, y) = feet center; ~260 px
    * tall at scale 1. opts.angle (tube elevation, radians, 0.5), p. */

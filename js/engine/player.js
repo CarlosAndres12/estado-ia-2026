@@ -10,7 +10,7 @@
  *   EIA.engine.player.Renderer      the deterministic frame renderer used by both
  *
  * Module contract (contracts §3): EIA.videos[id] = { setup(env), layers?: { [sceneId](env) },
- * scenes: { [sceneId](ctx, s, env) } }. The engine adds to `env`: env.scale (backing scale) and
+ * scenes: { [sceneId](ctx, s, env) }, drawsWarnings?: { [sceneId]: true } }. The engine adds to `env`: env.scale (backing scale) and
  * env.canvas(w, h) (an offscreen canvas at that scale whose context already draws in logical
  * units). `s` is timeline.state() (prompt §5.6) plus s.layers: what layers[sceneId](env)
  * returned, built lazily and kept in an LRU of current + next scene, the next one prefetched while
@@ -19,7 +19,10 @@
  *
  * The player draws, over every scene: subtitles, the lettered chapter title, warning stamps for
  * `advertencia` lines, the "Ejemplo ilustrativo" stamp for `ilustrativo` lines, the glossary
- * margin note and the linear checkpoint card. Scene code must not draw those again.
+ * margin note and the linear checkpoint card. Scene code must not draw those again. One opt-out:
+ * a module may declare drawsWarnings: { [sceneId]: true } for a scene whose subject IS the warning
+ * stamps (it presses them on the page itself, on the words that name them); the player then
+ * skips the corner stamps of that scene's lines, so the same stamp is never shown twice.
  * All chrome text comes from EIA.data.course.ui.player (js/data/course.js). */
 (function (root) {
   'use strict';
@@ -381,8 +384,10 @@
 
   Renderer.prototype.drawOverlays = function (ctx, t) {
     var ov = this.tl.overlays, env = this.env, i, slots = 0;
+    var own = this.mod && this.mod.drawsWarnings;
     for (i = 0; i < ov.warnings.length; i++) {
       var w = ov.warnings[i];
+      if (own && own[this.tl.lines[w.line].sceneId]) continue;   // the scene presses them itself
       if (t >= w.start && t < w.end) {
         drawWarning(ctx, env, w, t - w.start);
         slots = Math.max(slots, w.slot + 1);
