@@ -141,12 +141,12 @@
     var tc = tagContent(ids);
     if (!tc) return null;
     var k = o.scale || 1, maxW = (o.maxWidth || 300) * k;
-    var key = tc.key + '|' + k + '|' + maxW + '|' + o.scope + '|' + (o.mono ? 1 : 0);
+    var key = tc.key + '|' + k + '|' + maxW + '|' + o.scope + '|' + (o.mono ? 1 : 0) + '|' + (o.chip === false ? 0 : 1);
     var hit = tagLayoutCache.get(key);
     if (hit) return hit;
     var padL = 32 * k, padR = 14 * k, padT = 9 * k, padB = 10 * k;
     var chipSize = 13 * k, labelSize = 15.5 * k, scopeSize = 13 * k;
-    var chip = chipLayout(ctx, tc.chip.clase, tc.chip.label, { size: chipSize });
+    var chip = o.chip === false ? { w: 0, h: 0 } : chipLayout(ctx, tc.chip.clase, tc.chip.label, { size: chipSize });
     ctx.font = fontSans(labelSize, 700);
     var labelW = ctx.measureText(tc.label).width;
     var contentW = Math.min(Math.max(chip.w, labelW), maxW - padL - padR);
@@ -192,7 +192,8 @@
    * opts: x, y (top-left), or near: { x, y, side: 'right' | 'left' | 'below' | 'above', gap } to place
    *   it beside a number; anchor: { x, y } the number the thread ties to (defaults to near);
    *   p (0→1), scale (1), maxWidth (300), scope ('auto' ≤ 2 lines | true | false), mono (chip in
-   *   tinta, for frames that already carry a color legend), tilt (radians), ribbon (true). */
+   *   tinta, for frames that already carry a color legend), tilt (radians), ribbon (true),
+   *   chip (true; false leaves the evidence chip out — only while a quiz asks for that very type). */
   tags.sourceTag = function (ctx, ids, o) {
     o = o || {};
     var l = tagLayout(ctx, ids, o);
@@ -216,6 +217,7 @@
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(tilt);
+    var a0 = ctx.globalAlpha;   // a caller's fade (e.g. a card fading in) applies to the whole tag
     // Paper and outline.
     var shape = tagShape(w, h, k);
     var pf = seg(p, 0, 0.25);
@@ -228,12 +230,12 @@
     ink.shape(ctx, shape, { line: true, w: 3.2 * k, seed: seed + 'o' + Math.round(w) + 'x' + Math.round(h), p: seg(p, 0, 0.55), fillScale: 0 });
     // Punched hole with a reinforcement ring.
     var hx = 15 * k, hy = h / 2;
-    ctx.globalAlpha = seg(p, 0.2, 0.4);
+    ctx.globalAlpha = a0 * seg(p, 0.2, 0.4);
     ctx.fillStyle = m.lienzoOcre;
     ctx.beginPath(); ctx.arc(hx, hy, 4.6 * k, 0, TAU); ctx.fill();
     ctx.strokeStyle = m.tinta; ctx.lineWidth = 1.4 * k;
     ctx.beginPath(); ctx.arc(hx, hy, 6.4 * k, 0, TAU); ctx.stroke();
-    ctx.globalAlpha = 1;
+    ctx.globalAlpha = a0;
     // Content.
     var tp = seg(p, 0.3, 0.8), cy = l.padT;
     if (tp > 0) {
@@ -241,7 +243,7 @@
         tags.chip(ctx, l.tc.chip.clase, l.tc.chip.label, { x: l.padL, y: cy, size: l.chipSize, mono: !!o.mono, p: tp });
         cy += l.chip.h + 3 * k;
       }
-      ctx.globalAlpha = tp;
+      ctx.globalAlpha = a0 * tp;
       ctx.fillStyle = m.tinta;
       ctx.textBaseline = 'alphabetic';
       ctx.font = fontSans(l.labelSize, 700);
@@ -253,7 +255,7 @@
         ctx.fillStyle = P().mix(m.tinta, m.lienzo, 0.18);
         for (var i = 0; i < l.scopeLines.length; i++) ctx.fillText(l.scopeLines[i], l.padL, cy + l.scopeSize * 0.95 + i * l.scopeSize * 1.25);
       }
-      ctx.globalAlpha = 1;
+      ctx.globalAlpha = a0;
     }
     // Estado: corner sign, or the "Actualización" ribbon.
     var ep = seg(p, 0.55, 0.95);
@@ -307,6 +309,7 @@
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(tilt);
+    var a0 = ctx.globalAlpha;
     var pf = seg(p, 0, 0.25);
     ink.shape(ctx, shape, { fill: m.lienzo, line: false, tex: false, edge: false, offset: 0, fillScale: 0, fillJitter: 0, seed: seed + 'f', p: pf, exact: true });
     ctx.save();
@@ -315,12 +318,12 @@
     ctx.fillRect(0, 0, w, h);
     ctx.restore();
     ink.shape(ctx, shape, { line: true, w: 3.2 * k, seed: seed + 'o' + Math.round(w) + 'x' + Math.round(h), p: seg(p, 0, 0.55), fillScale: 0 });
-    ctx.globalAlpha = seg(p, 0.2, 0.4);
+    ctx.globalAlpha = a0 * seg(p, 0.2, 0.4);
     ctx.fillStyle = m.lienzoOcre;
     ctx.beginPath(); ctx.arc(hx, hy, 4.6 * k, 0, TAU); ctx.fill();
     ctx.strokeStyle = m.tinta; ctx.lineWidth = 1.4 * k;
     ctx.beginPath(); ctx.arc(hx, hy, 6.4 * k, 0, TAU); ctx.stroke();
-    ctx.globalAlpha = 1;
+    ctx.globalAlpha = a0;
     ink.text(ctx, String(text == null ? '' : text), padL, padT, { size: size, weight: 700, maxWidth: (o.maxWidth || 300) * k - padL - padR, lineHeight: 1.22, p: seg(p, 0.3, 0.8) });
     ctx.restore();
     if (anchor) {

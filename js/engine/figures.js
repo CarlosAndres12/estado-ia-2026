@@ -1953,16 +1953,18 @@
     return { x: x + 60, y: y + 44, w: w - 80, h: h - 60 };
   };
 
-  // Newspaper headline as scribbles with a big "%" and no readable numbers.
-  defProp('headline', function (b) {
+  // Newspaper headline as scribbles with a big "%" and no readable numbers. opts.masthead (a color,
+  // optional): a flat field under the title stroke, offset like the other gouache fields.
+  defProp('headline', function (b, o) {
     var r = b.r;
     b.shape(box(-80, -56, 80, 56, 0.03), { fill: '@paper', w: 3.4 });
+    if (o.masthead) b.fill(box(-70, -50, 70, -24, 0.08), { fill: o.masthead, fillScale: 0 });
     b.stroke([-66, -36, -10, -40, 20, -34, 64, -38], { w: 7, profile: 'blunt' });
     for (var i = 0; i < 4; i++) b.stroke(I().wavePoints(-66, -12 + i * 14, i === 3 ? -6 : 10, 2, 18 + r() * 6, r() * 3), { w: 2.2, profile: 'even' });
     b.stroke([24, 34, 62, -14], { w: 5, profile: 'blunt' });
     b.stroke(arc(28, -6, 8, 0, TAU, 10), { w: 4, profile: 'even', closed: true });
     b.stroke(arc(58, 26, 8, 0, TAU, 10), { w: 4, profile: 'even', closed: true });
-  }, { w: 3 });
+  }, { w: 3, variant: function (o) { return o.masthead || ''; } });
 
   // A sheet of paper (flies like a bird in some scenes).
   defProp('sheet', function (b) {

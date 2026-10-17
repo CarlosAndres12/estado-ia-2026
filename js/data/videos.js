@@ -259,6 +259,7 @@ EIA.data.videos = [
         min: 14,
         seVe: 'Un panel azul marino reglado de prueba; una pequeña lámpara de IA recorre una hoja de examen; una barra reglada crece desde su marca «~12%» hasta «66,3%»; el distintivo «Capacidad técnica» (un matraz) se escribe con su etiqueta de fuente.',
         rotulos: {
+          etiqueta: { text: 'Agentes en OSWorld' },
           inicio: { text: '~12%', cifras: ['cap-1'] },
           final: { text: '66,3%', cifras: ['cap-1'] },
           chip: { text: 'Capacidad técnica' }
@@ -281,6 +282,7 @@ EIA.data.videos = [
         seVe: 'Una oficina cálida; las personas hablan en bocadillos que suben y se funden en un gran bocadillo «88%»; aparece el distintivo «Uso declarado» (un bocadillo).',
         rotulos: {
           cifra: { text: '88%', cifras: ['adop-1'] },
+          etiqueta: { text: 'de organizaciones usa IA en al menos una función' },
           chip: { text: 'Uso declarado' }
         },
         lines: [
@@ -333,6 +335,8 @@ EIA.data.videos = [
         min: 12,
         seVe: 'Un cometa con cola de puntos cruza el cielo hacia una pequeña señal de camino «2030»; el distintivo «Proyección» (un cometa).',
         rotulos: {
+          cifra: { text: '39%', cifras: ['trab-5'] },
+          etiqueta: { text: 'de las competencias centrales cambiará hacia 2030' },
           senal: { text: '2030' },
           chip: { text: 'Proyección' }
         },
@@ -363,10 +367,15 @@ EIA.data.videos = [
         seVe: 'Cinco tarjetas de papel se abren en abanico, cada una con su familia de fuentes, «Stanford AI Index», «OIT y CEPAL», «McKinsey y Microsoft», «PwC» y «Benchmarks», y debajo su límite, que se va escribiendo.',
         rotulos: {
           stanford: { text: 'Stanford AI Index' },
+          limiteStanford: { text: 'Muchas cifras son de laboratorio o de un solo país' },
           oitCepal: { text: 'OIT y CEPAL' },
+          limiteOitCepal: { text: 'Miden exposición o un índice compuesto, no impacto' },
           mckinseyMicrosoft: { text: 'McKinsey y Microsoft' },
+          limiteMckinseyMicrosoft: { text: 'Autoinforme, sesgo de selección e interés comercial' },
           pwc: { text: 'PwC' },
-          benchmarks: { text: 'Benchmarks' }
+          limitePwc: { text: 'Asociaciones sectoriales, no causalidad' },
+          benchmarks: { text: 'Benchmarks' },
+          limiteBenchmarks: { text: 'Saturación y distancia del trabajo real' }
         },
         lines: [
           {
@@ -417,6 +426,7 @@ EIA.data.videos = [
         min: 10,
         seVe: 'La lectora ata una etiqueta de fuente a un gran número en la página de la libreta; la etiqueta dice «Fuente · Alcance · Tipo de evidencia»; título final «Toda cifra va con su fuente.»',
         rotulos: {
+          signo: { text: '%' },
           etiqueta: { text: 'Fuente · Alcance · Tipo de evidencia' },
           titulo: { text: 'Toda cifra va con su fuente.' }
         },

@@ -186,9 +186,13 @@
         var per = 0;
         for (var pi = 1; pi < n; pi++) per += Math.sqrt(d2(x[pi - 1], y[pi - 1], x[pi], y[pi]));
         var spacing = per / m || 1;
-        var capLen = over < 0 ? (o.maxGap != null ? o.maxGap : Math.max(4, base * 4)) : (o.maxOvershoot != null ? o.maxOvershoot : base * 30 + 20);
-        var capPts = Math.max(1, Math.round(capLen / spacing));
-        if (Math.abs(over) > capPts) over = over < 0 ? -capPts : capPts;
+        var overPts = Math.max(1, Math.round((o.maxOvershoot != null ? o.maxOvershoot : base * 30 + 20) / spacing));
+        var gapPts = Math.round((o.maxGap != null ? o.maxGap : Math.max(4, base * 4)) / spacing);
+        // maxGap 0: the outline never opens; a seeded gap becomes a short overlap instead, so the
+        // tapered start and end never meet as a thin notch.
+        if (over < 0 && gapPts <= 0) over = Math.min(overPts, Math.max(2, Math.round(-over * 1.5)));
+        else if (over < 0) over = -Math.min(-over, gapPts);
+        else over = Math.min(over, overPts);
       }
       var total = m + over;
       var nx0 = new Float32Array(total + 1), ny0 = new Float32Array(total + 1);
@@ -1891,7 +1895,8 @@
     edge(0, h - R, 0, R); corner(R, R, Math.PI);
     var sp = smoothPath(pts, true, 2);
     var fill = toPath2D(sp.x, sp.y, sp.n, true);
-    var outline = strokeGeom(pts, { closed: true, w: o.weight || 4, seed: 'card-o:' + (o.seed || '') + w + 'x' + h, profile: 'outline', press: 0.22, step: 1.6 });
+    // A card is a closed page edge: its outline may loop a little past its start, never stop short.
+    var outline = strokeGeom(pts, { closed: true, w: o.weight || 4, seed: 'card-o:' + (o.seed || '') + w + 'x' + h, profile: 'outline', press: 0.22, step: 1.6, maxGap: 0 });
     var peek = null;
     if (o.peek) {
       var corners = { tr: [w - 6, 4], tl: [6, 4], br: [w - 6, h - 4], bl: [6, h - 4] };

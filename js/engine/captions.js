@@ -490,6 +490,20 @@
     ctx.textBaseline = 'middle';
     ctx.font = L.headFont;
     ctx.fillText(answer ? (copy.respuesta || '') : (copy.lineal || ''), cx, cy + L.head / 2);
+    // The figure the question quotes keeps its source tag on the card (prompt §3.8), in the header
+    // row left of the countdown. While the question asks, the tag leaves out its evidence chip:
+    // the type may be the very answer.
+    var tagApi = engine(opts.env, 'tags');
+    if (cp.cifras && cp.cifras.length && tagApi && tagApi.sourceTag) {
+      var to = { scale: 0.92, scope: false, chip: answer };
+      var tm = tagApi.measureTag(ctx, cp.cifras, to);
+      to.x = x + L.CW - L.PAD - 96 - tm.w;
+      to.y = y + 14;
+      tagApi.sourceTag(ctx, cp.cifras, to);
+      ctx.fillStyle = col.tinta;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+    }
     cy += L.head + 18;
 
     ctx.font = L.qFont;
