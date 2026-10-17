@@ -1,0 +1,11 @@
+# Dev-only tooling
+tools/node_modules/
+tools/.cache/
+tools/.env
+# Review output of tools/snapshots.mjs
+review/
+# Large optional exports (regenerate with tools/render-videos.mjs)
+assets/video/*.mp4
+assets/video/*.webm
+# Agent worktrees
+.claude/

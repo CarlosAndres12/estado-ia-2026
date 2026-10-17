@@ -1,0 +1,15 @@
+{
+  "engine": "azure",
+  "azure": {
+    "keyEnv": "AZURE_SPEECH_KEY",
+    "regionEnv": "AZURE_SPEECH_REGION",
+    "outputFormat": "Riff24Khz16BitMonoPcm",
+    "voices": {
+      "narrador": { "name": "es-MX-JorgeNeural" },
+      "lectora":  { "name": "es-MX-DaliaNeural" }
+    },
+    "rate": { "default": "0%" },
+    "concurrency": 4
+  },
+  "mix": { "loudnessLUFS": -16, "truePeakDB": -1.5, "mp3Bitrate": "128k" }
+}
