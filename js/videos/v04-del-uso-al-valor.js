@@ -295,11 +295,11 @@
     river: [-40, 320, 90, 340, 210, 382, 330, 370, 450, 398, 560, 440, 660, 452, 760, 462],
     hw: 19,                                       // half width of the river: private investment
     pool: { cx: 924, cy: 464, rx: 196, ry: 64 },
-    // Straight walls: extra points near each corner keep the brush outline from rounding them.
-    dam: [1112, 378, 1117, 372, 1156, 370, 1162, 375, 1165, 544, 1159, 550, 1114, 552, 1108, 546],
-    gate: [1121, 450, 1125, 446, 1151, 446, 1155, 450, 1155, 500, 1151, 504, 1125, 504, 1121, 500],
+    // The dam: a wall wider at its foot (straight edges: a polygon field and one stroke per side).
+    dam: [1118, 382, 1160, 380, 1174, 544, 1104, 546],
+    gate: [1124, 452, 1154, 452, 1155, 506, 1123, 506],
     channel: [1160, 480, 1292, 478, 1292, 494, 1160, 496],
-    wheel: { x: 1138, y: 352 },
+    wheel: { x: 1139, y: 362 },
     poolCoins: [[858, 452], [926, 478], [990, 444], [1046, 474], [800, 482]]
   };
 
@@ -323,12 +323,21 @@
     b.blob(V.pool.cx, V.pool.cy, V.pool.rx, V.pool.ry, { fill: m.celeste, w: 4.2, irr: 0.06, n: 12 });
     b.stroke(ink.wavePoints(V.pool.cx - 120, V.pool.cy + 16, V.pool.cx + 40, 3, 52, 0.6), { w: 2.2, profile: 'hair', color: m.lienzo });
     b.shape(V.channel, { fill: m.celeste, w: 2.6 });
-    b.shape(V.dam, { fill: m.lienzoOcre, w: 4.4, poly: true });
-    b.shape(V.gate, { fill: m.madera, w: 3.4, poly: true });
-    b.stroke([1126, 466, 1150, 466], { w: 2, profile: 'even', color: m.lienzo });
-    b.stroke([1138, 448, 1139, V.wheel.y + 10], { w: 3.4, profile: 'blunt' });
+    polygonInto(b, V.dam, m.lienzoOcre, 4.4);
+    polygonInto(b, V.gate, m.madera, 3.2);
+    b.stroke([1128, 470, 1150, 470], { w: 2, profile: 'even', color: m.lienzo });
+    b.stroke([1139, 452, 1140, V.wheel.y + 10], { w: 3.4, profile: 'blunt' });
     b.circle(V.wheel.x, V.wheel.y, 9, { fill: m.rojo, w: 2.6 });
     return b.done();
+  }
+
+  // A straight-edged shape: a polygon field and one brush stroke per side, so corners stay sharp.
+  function polygonInto(b, pts, fill, w) {
+    b.fill(pts, { fill: fill, poly: true });
+    for (var i = 0; i < pts.length; i += 2) {
+      var j = (i + 2) % pts.length;
+      b.stroke([pts[i], pts[i + 1], pts[j], pts[j + 1]], { w: w, profile: 'blunt' });
+    }
   }
 
   // Coins resting in the reservoir, and one leaving through the gate every `period` seconds.
@@ -640,7 +649,7 @@
     hollow: { dx: -96, dy: -62, gap: 15 },
     label: { y: 404, w: 268, size: 21 },
     caption: { y: 482, size: 23 },
-    tag7: { x: 566, y: 30 }
+    tag7: { x: 300, y: 34 }
   };
 
   function energia(ctx, s, env) {
@@ -698,7 +707,8 @@
       var lp = i === 0 ? seg(dp, 0.9, 1) : seg(dp, 0.9, 1);
       if (lp > 0) ink.text(ctx, rot(s, I.key), I.x, E.label.y, { size: E.label.size, weight: 700, align: 'center', maxWidth: E.label.w, lineHeight: 1.15, p: lp });
     }
-    if (tagP > 0) env.tags.sourceTag(ctx, 'eco-7', { x: E.tag7.x, y: E.tag7.y, anchor: { x: E.islands[1].x - 20, y: E.islandY - E.ry + 10 }, p: tagP, scale: 1.04 });
+    // One tag for the four counts (eco-7), tied to the first island that gets its dots.
+    if (tagP > 0) env.tags.sourceTag(ctx, 'eco-7', { x: E.tag7.x, y: E.tag7.y, anchor: { x: E.islands[0].x + 92, y: E.islandY - E.ry + 22 }, p: tagP, scale: 1.04 });
     // What the dots count, written under the islands once the first cluster has landed.
     var cap = beat(a1, winE[1], winE[1] + 0.06);
     if (cap > 0) ink.text(ctx, rot(s, 'clusteres'), W / 2, E.caption.y, { size: E.caption.size, italic: true, align: 'center', p: cap });
@@ -726,15 +736,15 @@
     rows: [{ key: 'uso', y: 66 }, { key: 'agentes', y: 162 }, { key: 'escala', y: 258 }, { key: 'impacto', y: 354 }],
     barDy: 34, labelSize: 22,
     tagScale: 0.86,
-    neck: { size: 21 },
-    lectora: { x: 1084, y: 700, k: 3.05 },
+    neck: { size: 21, aprox: { dx: 24, dy: 4, size: 30 }, tagDx: 66 },
+    lectora: { x: 1110, y: 712, k: 2.95 },
     cautela: { y: 478, size: 25, w: 820 }
   };
 
   function embudo(ctx, s, env) {
     var C = cuesOf(s, 'embudo'), st = s.state.embudo, ink = env.ink, chart = env.chart, m = env.pal.mundo, F = EMBUDO;
     bg(ctx, s, env, 'datos');
-    var a0 = s.at(0), a1 = s.at(1), a2 = s.at(2), a3 = s.at(3);
+    var a0 = s.at(0), a1 = s.at(1), a3 = s.at(3);
     var wins = [landWindow(C.uso), landWindow(C.agentes), landWindow(C.escala), landWindow(C.impacto)];
     var ats = [a0, a0, a1, a1];
     var split = beat(a3, 0, 0.16);
@@ -755,19 +765,23 @@
       if (lp > 0) {
         ink.text(ctx, text, F.cx, R.y, { size: F.labelSize, weight: 700, align: 'center', maxWidth: 640, p: lp });
         if (neck) {
-          hero(ctx, env, rot(s, 'remateAprox'), x1 + 14, by - 30, 34, { seed: 'v04:aprox', p: lp });
+          var Ap = F.neck.aprox;
+          hero(ctx, env, rot(s, 'remateAprox'), x1 + Ap.dx, by + Ap.dy, Ap.size, { seed: 'v04:aprox', p: lp });
           ink.text(ctx, rot(s, 'cuelloDeBotella'), x0 - 30, by + F.h / 2 - F.neck.size * 0.62, { size: F.neck.size, italic: true, align: 'right', p: lp });
         }
       }
       ctx.restore();
       if (lp > 0) {
-        var tx = x1 + dx + (neck ? 44 : 20);
-        env.tags.sourceTag(ctx, (s.rotulos[R.key].cifras || [])[0], { near: { x: tx, y: by + F.h / 2, side: 'right', gap: 10 }, anchor: { x: x1 + dx + (neck ? 22 : 6), y: by + F.h / 2 + (neck ? 8 : 0) },
+        // The neck's thread leaves from under its «≈», so it never crosses the sign.
+        var tx = x1 + dx + (neck ? F.neck.tagDx : 20);
+        env.tags.sourceTag(ctx, (s.rotulos[R.key].cifras || [])[0], { near: { x: tx, y: by + F.h / 2, side: 'right', gap: 10 },
+          anchor: neck ? { x: x1 + dx + 6, y: by + F.h + 4 } : { x: x1 + dx + 6, y: by + F.h / 2 },
           p: lp, scale: F.tagScale, scope: false });
       }
     }
-    // The lectora looks at the bars, puzzled, and asks.
-    var lpL = out3(beat(a2, 0, 0.3));
+    // The lectora comes to look at the bars once they have all landed (she is whole before her
+    // question, and in the poster frame), puzzled, and asks.
+    var lpL = out3(seg(s.t, lineT(s, 1, 0.66), lineT(s, 1, 0.94)));
     if (lpL > 0) env.fig.lectora(ctx, F.lectora.x, F.lectora.y, F.lectora.k, { pose: 'asking', facing: -1, p: lpL });
     // Line 4: cut lines between the bars, and the caution of lámina D7 under the funnel.
     if (split > 0) {
@@ -938,10 +952,10 @@
   var PROD = {
     weights: [{ key: 'soporte', dx: -52, color: 'rojo' }, { key: 'software', dx: 0, color: 'azul' }, { key: 'marketing', dx: 52, color: 'amarillo' }],
     ww: 36, px: 1.7,                                  // px per percentage point, shared by the three weights
-    labels: { y0: 82, dy: 46, size: 24 },
+    labels: { y0: 60, dy: 44, size: 24 },
     tag: { x: 252, y: 404 },
-    card: { x: 884, y: 62, w: 356, h: 194 },
-    tag2: { x: 894, y: 276 },
+    card: { x: 884, y: 62, w: 356, h: 156 },
+    tag2: { x: 894, y: 236 },
     dev: { x: 1176, y: 610, k: 1.9 }
   };
 
@@ -1031,8 +1045,8 @@
   var METR = {
     from: BAL.x, to: 400,
     hourglassK: 0.46,
-    label: { x: 704, y: 50, size: 25, w: 520 },
-    tag3: { x: 706, y: 132 },
+    label: { x: 548, y: 42, size: 25, w: 520 },
+    tag3: { x: 556, y: 122 },
     note: { x: 990, y: 146, w: 250, h: 104 },
     card: { x: 700, y: 268, w: 540, h: 282 },
     domain: [-50, 20], line: { x: 812, len: 400, y: 440 },
@@ -1097,13 +1111,13 @@
     towers: [{ key: 'masExpuestas', x: 150, color: 'tierra', label: { x: 140, w: 280 } }, { key: 'menosExpuestas', x: 304, color: 'siena', label: { x: 296, w: 210 } }],
     tw: 112,
     eje: { x: 140, y: 494, size: 21 },
-    tag5: { x: 470, y: 336 },
+    tag5: { x: 470, y: 392 },
     coin: { x: 660, y: 196, k: 2.1 },
     prima: { x: 742, y: 150, w: 360, size: 24 },
     tag6: { x: 742, y: 252 },
     card: { x: 876, y: 358, w: 350, h: 104 },
     tag7: { x: 886, y: 476 },
-    lectora: { x: 640, y: 704, k: 2.5 }
+    lectora: { x: 770, y: 706, k: 2.5 }
   };
 
   function pwc(ctx, s, env) {
@@ -1364,22 +1378,21 @@
     var carry = seg(s.t, tC, tLay), cx = lerp(250, xb - 70, inOut3(carry));
     var cross = inOut3(seg(s.t, tCross, tCross + 3.4)), off = cross * (1010 - (xb - 70));
     var bob = carry > 0 && carry < 1 ? Math.abs(Math.sin(s.t * 5)) * 3 : 0;
-    // The table: a card held overhead, then laid flat into the gap as the last plank.
-    var Tw = K.table.w, Th = K.table.h;
+    // The table: the empty notebook table held overhead (one fixed drawing, moved and flattened by
+    // transforms), then, laid into the gap, the same table as the last plank.
+    var Tw = K.table.w, Th = K.table.h, gapW = xe - xb + 6, flat = seg(lay, 0, 0.7);
     var tx = lerp(cx, (xb + xe) / 2, lay), ty = lerp(deckY - 128 * K.k - bob, deckY + 2, lay);
-    var sw = lerp(Tw, xe - xb + 6, lay), shh = lerp(Th, 14, lay);
-    ink.card(ctx, tx - sw / 2, ty - shh / 2, sw, shh, { seed: 'v04:tabla-vacia', weight: 3, radius: lerp(6, 2, lay), p: intro, fill: m.lienzo });
-    if (lay < 0.6) {
+    if (lay < 1) {
       ctx.save();
-      ctx.globalAlpha *= 1 - lay / 0.6;
-      ctx.strokeStyle = m.tinta;
-      ctx.lineWidth = 1.6;
-      ctx.beginPath();
-      for (var r = 1; r < 5; r++) { ctx.moveTo(tx - sw / 2 + 6, ty - shh / 2 + r * shh / 5); ctx.lineTo(tx + sw / 2 - 6, ty - shh / 2 + r * shh / 5); }
-      for (var c = 1; c < 5; c++) { ctx.moveTo(tx - sw / 2 + c * sw / 5, ty - shh / 2 + 6); ctx.lineTo(tx - sw / 2 + c * sw / 5, ty + shh / 2 - 6); }
-      ctx.stroke();
+      ctx.translate(tx, ty);
+      ctx.scale(lerp(1, gapW / Tw, flat), lerp(1, 0.16, flat));
+      ctx.globalAlpha *= 1 - seg(lay, 0.6, 1);
+      ink.card(ctx, -Tw / 2, -Th / 2, Tw, Th, { seed: 'v04:tabla-vacia', weight: 3, radius: 6, p: intro });
+      for (var r = 0; r < s.state.cierre.grid.length; r++) ink.line(ctx, s.state.cierre.grid[r], { w: 1.8, profile: 'even', seed: 'v04:tabla-linea' + r, p: intro });
       ctx.restore();
     }
+    var pl = seg(lay, 0.5, 1);
+    if (pl > 0) ink.card(ctx, xb - 3, deckY - 8, gapW, 16, { seed: 'v04:tablon-tabla', weight: 3, radius: 3, alpha: pl });
     var walking = (carry > 0 && carry < 1) || (cross > 0 && cross < 1);
     var pose = lay < 1 ? 'carrying' : walking ? 'walking' : 'standing';
     var py = K.feet - bob;
@@ -1409,7 +1422,7 @@
     wb.shape(bandPoints(river, wideHw, wideHw, 44), { fill: pal.mix(m.celeste, m.lienzo, 0.3), line: false });
     st.capital = {
       path: river, river: riverDrawing(env, river), wide: wb.done(), wideHw: wideHw,
-      gateRing: ink.ellipsePoints(1138, 474, 34, 46, 18, 0.4),
+      gateRing: ink.ellipsePoints(1139, 479, 30, 44, 18, 0.05).concat([1169, 481, 1168, 470]),
       chainArrows: [1, 2, 3].map(function (k) {
         var x0 = CADENA.xs[k - 1] + CADENA.r + 10, x1 = CADENA.xs[k] - CADENA.r - 12, y = CADENA.y;
         return [x0, y + 2, (x0 + x1) / 2, y - 12, x1, y];
@@ -1562,6 +1575,12 @@
       ].map(function (pts) { return pts.concat(pts.slice(0, 6)); }),
       costRow: [T2.x0 + 4, cyCost + 4, gx1 - 4, cyCost + 5, gx1 - 5, cyCost + T2.rh - 4, T2.x0 + 5, cyCost + T2.rh - 5]
     };
+
+    // cierre: the lines of the small empty table carried to the bridge (its own units, centered).
+    var tw2 = CIERRE.table.w / 2, th2 = CIERRE.table.h / 2, tg = [];
+    for (i = 1; i < 5; i++) tg.push([-tw2 + 8, -th2 + i * th2 * 2 / 5, tw2 - 8, -th2 + i * th2 * 2 / 5 + 0.5]);
+    for (i = 1; i < 5; i++) tg.push([-tw2 + i * tw2 * 2 / 5, -th2 + 8, -tw2 + i * tw2 * 2 / 5 + 0.5, th2 - 8]);
+    st.cierre = { grid: tg };
     return st;
   }
 
