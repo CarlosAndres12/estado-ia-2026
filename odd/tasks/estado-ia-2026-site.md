@@ -45,11 +45,11 @@ exceeds it. Slicing into PRs is left to the user (each task commit is a candidat
 | T04 | Drawing engine: rng, easing, palette + tokens.css, ink, chart, tags, figures, lamina layout, API doc | delegated writer (many non-trivial files) | done (cherry-picked 0149682..a019a98 → 73f2246) |
 | T05 | Video runtime: timeline, captions, narrator, player, recorder, render mode, CDP browser lib, snapshots | delegated writer (many non-trivial files) | done (fast-forward to 58a2c61) |
 | T06 | V02 end to end + art review against prompt §3 | delegated writer | running (worktree) |
-| T07 | Page shell: router, markup, views, nav, hero, chips, citations/popovers, banco, glossary, FAQ, references, asistente, footer, CSS | delegated writer | pending |
+| T07 | Page shell: router, markup, views, nav, hero, chips, citations/popovers, banco, glossary, FAQ, references, asistente, footer, CSS | delegated writer | running (worktree) |
 | T08 | Interactions: quizzes, games, calculator, embudo, cuaderno, rubric, Ley de IA timeline, indicadores, timer, láminas viewer, Modo clase, print | delegated writer | pending |
 | T09 | Láminas D01–D17 | delegated writers (parallel, worktrees) | pending |
 | T10 | Videos V01, V03–V09 | delegated writers (parallel, worktrees) | pending |
-| T11 | Voice-over tooling with **Edge TTS** (user decision; Azure kept optional): normalizer, SSML, Edge bridge + adapter, alignment, generator, listening sheet | delegated writer (many non-trivial files) | running (worktree) |
+| T11 | Voice-over tooling with **Edge TTS** (user decision; Azure kept optional): normalizer, SSML, Edge bridge + adapter, alignment, generator, listening sheet | delegated writer (many non-trivial files) | done (merged; fix b91d3af) |
 | T12 | Optional MP4 export (`render-videos.mjs`) | delegated writer | pending |
 | T13 | README (Spanish), acceptance checks (prompt §16), final fixes | delegated verifier + writer | pending |
 
@@ -121,6 +121,14 @@ zero errors; 9 videos play in sync; 17 láminas render/print with corrected figu
   15:19 video → 24 fps, p95 2.0 ms, heap 1.9→2.3 MB. Untested: speechSynthesis, audio-track playback,
   MediaRecorder, fullscreen. Contract additions: `s.state`, `s.layers`, `env.scale`, `env.canvas(w,h)`.
 - T06 launched (V02 + art review gate) alongside T11.
+
+- T11 done (merged with --no-ff): Edge TTS pipeline — normalizer (0 warnings on 197 lines), Edge bridge,
+  word-boundary alignment, optional Azure adapter (only tested with a fake SDK), generator, text listening
+  sheet. Parent re-run: 131/131 tests, checker 0 errors, dry run uses js/engine captions + timeline.
+  Worker's real Edge trial (v01, scratch only): 16 clips, 160.16 s MP3 = manifest. Parent fix b91d3af:
+  trim trailing engine silence to 0.15 s after the last word (Edge pads ~0.87 s) and dry-run wps from
+  config (Edge 2.9) → estimate 39:07 total; 132/132 tests. Final narration generated at the end (after T10).
+- T07 (page shell) launched alongside T06.
 
 ## Next step
 
