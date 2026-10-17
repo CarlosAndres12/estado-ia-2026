@@ -7,7 +7,7 @@
   "engines": { "node": ">=20" },
   "scripts": {
     "check": "node check-content.mjs",
-    "test": "node --test --test-concurrency=2 test/",
+    "test": "node --test --test-concurrency=1 test/",
     "voice": "node generate-voiceover.mjs",
     "voice:dry": "node generate-voiceover.mjs --dry-run",
     "voice:check": "node check-voiceover.mjs",
