@@ -86,12 +86,12 @@
       correo: [1, 'correo', 'word'], archivos: [1, 'archivos', 'word'], sistemas: [1, 'o sistemas', 'word'] },
     tendencia: { duracion: [0, 'la duración de las tareas', 'chunk'], duplico: [0, 'Entre 2019 y 2025', 'chunk'],
       dias: [1, 'el tiempo de duplicación', 'chunk'], tendencia: [1, 'es una tendencia', 'word'] },
-    peloton: { convergen: [0, 'los modelos convergen', 'word'], brecha: [0, 'Y Stanford considera', 'chunk'],
+    peloton: { brecha: [0, 'Y Stanford considera', 'chunk'],
       w0: [1, 'al costo', 'word'], w1: [1, 'la latencia', 'word'], w2: [1, 'la confiabilidad', 'word'], w3: [1, 'la privacidad', 'word'],
       w4: [1, 'la integración', 'word'], w5: [1, 'la apertura', 'word'] },
     concentracion: { industria: [0, 'más de 90%', 'chunk'], paises: [0, 'Estados Unidos produjo 59', 'chunk'],
       parametros: [1, 'los parámetros', 'word'], datos: [1, 'los datos', 'word'], duracion: [1, 'la duración del entrenamiento', 'word'] },
-    abiertos: { proteinas: [0, '111 millones', 'chunk'], api: [1, '47 de 102', 'chunk'], pesos: [1, 'Y ojo', 'chunk'],
+    abiertos: { proteinas: [0, '111 millones', 'chunk'], pesos: [1, 'Y ojo', 'chunk'],
       codigo: [1, 'código', 'word'], datos: [1, 'datos y', 'word'], proceso: [1, 'proceso abiertos', 'word'] },
     cierre: { picos: [0, 'dónde están los picos', 'word'], valles: [0, 'dónde los valles', 'word'], error: [0, 'cuánto cuesta un error', 'word'] }
   };
@@ -549,7 +549,7 @@
     ctx.restore();
     ink.draw(ctx, st.slopes, 0, dy, 1, {});
     // The average hides the tails: a dotted mean line over the range, then the worst result.
-    var mp = beat(a1, 0, 0.18);
+    var mp = beat(a1, C.promedio, C.promedio + 0.18);
     if (mp > 0) ink.dotted(ctx, st.mean, { r: 2.8, gap: 12, p: mp, seed: 'v03:promedio', color: m.lienzo });
     var wp = beat(a1, C.peor - 0.06, C.peor + 0.06);
     if (wp > 0) {
@@ -1397,20 +1397,17 @@
       var wp = beat(a1, words[j][1] - 0.03, words[j][1] + 0.05);
       if (wp <= 0) continue;
       var cy = X.y + 2 - j * 42 + 150 * close;
-      ink.card(ctx, X.x + 18, cy - 38, X.w - 36, 36, { seed: 'v03:palabra' + j, weight: 2.6, radius: 6, p: wp });
-      ink.text(ctx, rot(s, words[j][0]), X.x + X.w / 2, cy - 32, { size: 20, weight: 700, align: 'center', p: seg(wp, 0.4, 1) });
+      ink.card(ctx, X.x + 8, cy - 38, X.w - 16, 36, { seed: 'v03:palabra' + j, weight: 2.6, radius: 6, p: wp });
+      ink.text(ctx, rot(s, words[j][0]), X.x + X.w / 2, cy - 32, { size: 19, weight: 700, align: 'center', maxWidth: X.w - 28, fit: true, p: seg(wp, 0.4, 1) });
     }
     ink.rRect(ctx, X.x, X.y, X.w, X.h, { fill: q.noche, color: q.linea, w: 1.8, p: bp });
     ctx.save();
     ctx.globalAlpha *= bp;
     for (var g = 1; g < 6; g++) ink.rLine(ctx, X.x + g * X.w / 6, X.y + 8, X.x + g * X.w / 6, X.y + X.h - 8, { color: q.rejilla, w: 1 });
     ctx.restore();
-    // The lid hovers above the open box, slightly tilted, and drops onto it.
-    ctx.save();
-    ctx.translate(X.x - 6, lerp(X.y - 150, X.y, close));
-    ctx.rotate(lerp(-0.08, 0, close));
-    ink.rRect(ctx, 0, -14, X.w + 12, 14, { fill: q.rejilla, color: q.linea, w: 1.6, p: bp });
-    ctx.restore();
+    // The lid is held level just above the words, then drops straight onto the box.
+    var hover = Math.sin(s.t * 1.2) * 1.5 * (1 - close) * calm(s);
+    ink.rRect(ctx, X.x - 6, lerp(X.y - 134, X.y, close) - 14 + hover, X.w + 12, 14, { fill: q.rejilla, color: q.linea, w: 1.6, p: bp });
   }
 
   // ---------------------------------------------------------------------------------------------
@@ -1456,7 +1453,7 @@
       ink.card(ctx, Cd.x, Cd.y, Cd.w, Cd.h, { seed: 'v03:tarea', weight: 4, radius: 10, p: seg(s.t, 0.4, 1.3),
         fill: env.pal.mix(env.pal.mix(m.lienzo, q.noche, 0.55), m.lienzo, light) });
       ink.draw(ctx, st.taskMark, Cd.x + Cd.w / 2, Cd.y + Cd.h / 2, 1, { p: seg(s.t, 0.8, 1.6), alpha: 0.35 + 0.65 * light });
-      var sp = beat(a0, 0, 0.06);
+      var w0 = landWindow(C.proteinas), sp = beat(a0, w0[0] - 0.02, w0[1]);
       if (sp > 0) {
         fig.lamp(ctx, ABI.small.x, ABI.small.y, ABI.small.k, { t: s.t, p: sp });
         var Lb = ABI.label, LT = ink.text(ctx, rot(s, 'modeloPequeno'), Lb.x, Lb.y, { size: 25, weight: 700, maxWidth: Lb.w, lineHeight: 1.12, p: sp });
@@ -1509,6 +1506,13 @@
     litCap(ctx, env, st, cam, GPQA, beat(a0, C.picos - 0.03, C.picos + 0.08));
     litCap(ctx, env, st, cam, MATE, beat(a0, C.picos - 0.01, C.picos + 0.1));
     deepen(ctx, env, cam, 0.6 * beat(a0, C.valles - 0.03, C.valles + 0.1));
+    // "cuánto cuesta un error": the worst result marked again, deep in the first valley.
+    var ep = beat(a0, C.error - 0.03, C.error + 0.07);
+    if (ep > 0) {
+      var wv = toScreen(cam, VALLEYS[0].x, VALLEYS[0].y + 60, Q1);
+      ink.circle(ctx, wv.x, wv.y, 11 + 3 * (1 - ep), { line: true, w: 2.8, seed: 'v03:peor-ocaso', p: ep, lineColor: m.rojo });
+      ink.dot(ctx, wv.x, wv.y, 4.5 * ep, m.rojo);
+    }
     // The modest peak is mapped: contour loops and a dotted path to its top.
     var g = peakGeom(MODESTO), mp = seg(s.t, 0.3, 1.6);
     ctx.save();
