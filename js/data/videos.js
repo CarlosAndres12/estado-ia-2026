@@ -1279,10 +1279,13 @@ EIA.data.videos = [
         min: 16,
         seVe: 'Un campo redondo de mil puntos, el empleo del mundo; doscientos cincuenta reciben un halo amarillo suave («alguna exposición») y treinta y tres se oscurecen («exposición más alta»); luego, dos campos más pequeños, lado a lado: «países de ingresos altos: 34%» y «países de ingresos bajos: 11%».',
         rotulos: {
+          empleoMundial: { text: 'empleo mundial' },
+          cifraAlguna: { text: '25%', cifras: ['trab-1'] },
           alguna: { text: 'alguna exposición' },
-          masAlta: { text: 'exposición más alta' },
           ingresosAltos: { text: 'países de ingresos altos: 34%', cifras: ['trab-1'] },
-          ingresosBajos: { text: 'países de ingresos bajos: 11%', cifras: ['trab-1'] }
+          ingresosBajos: { text: 'países de ingresos bajos: 11%', cifras: ['trab-1'] },
+          cifraMasAlta: { text: '3,3%', cifras: ['trab-2'] },
+          masAlta: { text: 'exposición más alta' }
         },
         lines: [
           {
