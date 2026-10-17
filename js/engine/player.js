@@ -14,8 +14,9 @@
  * env.canvas(w, h) (an offscreen canvas at that scale whose context already draws in logical
  * units). `s` is timeline.state() (prompt §5.6) plus s.layers: what layers[sceneId](env)
  * returned, built lazily and kept in an LRU of current + next scene, the next one prefetched while
- * idle; and s.state: what setup(env) returned (as láminas get it). setup runs once per player after
- * the fonts load; modules may also keep results in env.cache.
+ * idle; s.state: what setup(env) returned (as láminas get it); and s.cue(i, needle, kind): where
+ * words of line i show in the subtitles, as a share of s.at(i) (see cueFor below). setup runs once
+ * per player after the fonts load; modules may also keep results in env.cache.
  *
  * The player draws, over every scene: subtitles, the lettered chapter title, warning stamps for
  * `advertencia` lines, the "Ejemplo ilustrativo" stamp for `ilustrativo` lines, the glossary
@@ -326,9 +327,43 @@
     CAP().drawCheckpoint(ctx, seg.data, local, { env: this.env, copy: copy().checkpoint || {}, dur: seg.dur });
   };
 
+  /* s.cue(i, needle, kind) -> share (0..1) of line i at which `needle` (words of its text) shows
+   * in the subtitles: 'chunk' = when the subtitle chunk holding it appears, 'word' (default) =
+   * where the words fall inside that chunk, by characters; null when the line does not contain
+   * them. It reads the timeline's chunk times — the audio manifest's when it has them, else the
+   * same character-count estimate the subtitles use — so beats keyed to it follow the voice when
+   * it is regenerated. Pure; results are memoized per scene. Example: a number lands by
+   * s.cue(1, '66,3%', 'chunk') of s.at(1) and holds. */
+  function cueFor(seg) {
+    var memo = new Map();
+    return function (i, needle, kind) {
+      var key = i + '\u0001' + needle + '\u0001' + (kind || 'word');
+      if (memo.has(key)) return memo.get(key);
+      var L = seg.lines[i], out = null;
+      var text = L ? L.text || '' : '', at = needle ? text.indexOf(needle) : -1, dur = L ? L.end - L.start : 0;
+      if (at >= 0 && dur > 0) {
+        var chunks = L.chunks || [], from = 0;
+        for (var k = 0; k < chunks.length && out == null; k++) {
+          var ct = chunks[k].text || '', cat = text.indexOf(ct, from);
+          if (!ct || cat < 0) continue;
+          from = cat + ct.length;
+          if (at >= cat && at < cat + ct.length) {
+            var c = chunks[k];
+            var t = kind === 'chunk' ? c.start : c.start + (c.end - c.start) * (at - cat) / ct.length;
+            out = clamp01((t - L.start) / dur);
+          }
+        }
+        if (out == null) out = clamp01(at / text.length);
+      }
+      memo.set(key, out);
+      return out;
+    };
+  }
+
   Renderer.prototype.drawScene = function (ctx, si, localT) {
     var seg = this.tl.scenes[si];
     var s = this.states[si] = this.tl.state(si, localT, this.states[si]);
+    if (!s.cue) s.cue = cueFor(seg);
     s.layers = this.layers.get(si);
     s.state = this.env.cache ? this.env.cache.get('setup') : undefined;
     var fn = this.mod && this.mod.scenes && this.mod.scenes[seg.id];

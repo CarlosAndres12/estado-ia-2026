@@ -278,6 +278,13 @@ drawsWarnings?: { [sceneId]: true } }` (header of `js/engine/player.js`). `s.sta
 returned, `s.layers` what `layers[sceneId](env)` returned (build full-frame grounds there with
 `env.canvas(W, H)`); `env.id` is the video id, so `setup` may read its own entry of `EIA.data.videos`.
 
+Beats inside a long line: `s.cue(i, words, kind)` → the share of `s.at(i)` at which `words` (a
+substring of line i) show in the subtitles — `'chunk'`: when the subtitle chunk holding them
+appears; `'word'` (default): where they fall inside it. It reads the timeline's chunk times (the
+audio manifest's when present), so beats follow a regenerated voice; `null` if the line lacks the
+words. A figure should land by `s.cue(i, '66,3%', 'chunk')` and hold to the end of the scene; a
+number appears whole (fade), never glyph by glyph ("88%" written on would pass through "8").
+
 The player draws over every scene — leave these areas free while they show:
 
 | Overlay | Where (logical px) | When |

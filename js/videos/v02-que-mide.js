@@ -12,8 +12,8 @@
  * the AI is only the small ruled lamp; people and places are warm and free.
  *
  * Beats follow the voice (prompt §5.6): every change is keyed to s.at(i) of the line that brings
- * it. Inside a line, a cue places a beat where the subtitles put its words (EIA.engine.captions:
- * chunks timed by their characters), so the visuals stay in sync when the voice is regenerated. A
+ * it. Inside a line, a cue places a beat where the subtitles put its words (s.cue from the player:
+ * the chunk times of the timeline), so the visuals stay in sync when the voice is regenerated. A
  * figure lands by the time its subtitle chunk appears (prompt §6.8) and holds, exact and still,
  * to the end of the scene. No string, number or source is typed here: copy comes from s.rotulos
  * (js/data/videos.js), values from env.chart.parseValue(rótulo), sources from env.tags. Draw
@@ -57,37 +57,22 @@
     cierre: { fuente: [0, 'su fuente', 'word'], evidencia: [0, 'evidencia', 'word'], asi: [0, 'Así empieza', 'chunk'] }
   };
 
-  // Share of a line at which `needle` shows in its subtitles: chunks are timed by their characters
-  // (captions.timeChunks without word offsets), so this follows the subtitle timing.
-  function cueShare(text, needle, kind) {
-    var i = text.indexOf(needle);
-    if (i < 0 || !text.length) return null;
-    var cap = EIA.engine.captions, chunks = cap && cap.chunk ? cap.chunk(text) : [text];
-    var total = 0, acc = 0, from = 0, k;
-    for (k = 0; k < chunks.length; k++) total += chunks[k].length || 1;
-    for (k = 0; k < chunks.length; k++) {
-      var c = chunks[k], at = text.indexOf(c, from), len = c.length || 1;
-      if (at < 0) at = from;
-      if (i >= at && i < at + c.length) return kind === 'chunk' ? acc / total : (acc + (i - at)) / total;
-      from = at + c.length;
-      acc += len;
-    }
-    return i / text.length;
-  }
-
-  function resolveCues(video) {
-    var out = {};
-    Object.keys(CUES).forEach(function (sceneId) {
-      var scene = null;
-      ((video && video.scenes) || []).forEach(function (sc) { if (sc.id === sceneId) scene = sc; });
-      out[sceneId] = {};
-      Object.keys(CUES[sceneId]).forEach(function (key) {
-        var spec = CUES[sceneId][key], line = scene && scene.lines[spec[0]];
-        var v = line ? cueShare(line.text, spec[1], spec[2]) : null;
-        out[sceneId][key] = v == null ? 0.5 : v;
-      });
+  // The scene's cues as shares of their lines, read from the player's s.cue (subtitle timing: the
+  // audio manifest's chunk times when it has them, else the character estimate). Memoized per
+  // scene state object, which the player keeps for the life of its timeline (a pure cache: same
+  // timeline, same shares). Words missing from a line fall back to the middle of the line.
+  var cueMemo = new WeakMap();
+  function cuesOf(s, sceneId) {
+    var c = cueMemo.get(s);
+    if (c) return c;
+    c = {};
+    var spec = CUES[sceneId] || {};
+    Object.keys(spec).forEach(function (k) {
+      var v = s.cue ? s.cue(spec[k][0], spec[k][1], spec[k][2]) : null;
+      c[k] = v == null ? 0.5 : v;
     });
-    return out;
+    cueMemo.set(s, c);
+    return c;
   }
 
   // A figure grows over a short window that ends when its subtitle chunk appears (or early in the
@@ -138,12 +123,30 @@
     return env.tags.chip(ctx, clase, label, { x: CHIP.x, y: CHIP.y, size: CHIP.size, pill: true, p: p });
   }
 
-  // Hero numbers are lettered without colored counters or stars, so every digit reads clearly.
+  // Hero numbers are lettered without colored counters or stars, so every digit reads clearly. A
+  // number (o.fade) appears whole, fading in: written glyph by glyph, "88%" would pass through "8",
+  // an in-between number (prompt §3.7). Signs such as «%» are written like any lettering.
   function hero(ctx, env, text, x, y, size, o) {
-    return env.ink.letter(ctx, text, x, y, {
-      size: size, align: o.align || 'left', counters: 0, stars: false, underline: false, seed: o.seed, p: o.p,
-      color: o.color, maxWidth: o.maxWidth, maxLines: 1
+    var lo = { size: size, align: o.align || 'left', counters: 0, stars: false, underline: false, seed: o.seed, p: o.p,
+      color: o.color, maxWidth: o.maxWidth, maxLines: 1 };
+    if (!o.fade) return env.ink.letter(ctx, text, x, y, lo);
+    var a = o.p == null ? 1 : clamp01(o.p);
+    lo.p = 1;
+    if (a >= 1) return env.ink.letter(ctx, text, x, y, lo);
+    var L = env.ink.measureLetter(ctx, text, lo);
+    if (a <= 0) return L;
+    // Fade the finished lettering as one image (fill and brush stroke overlap: drawn with a low
+    // alpha directly, they would show as dark outlines on a pale fill).
+    var pad = Math.ceil(size * 0.4), w = Math.ceil(L.w + pad * 2), h = Math.ceil(L.h + pad * 2);
+    var cx = lo.align === 'center' ? w / 2 : lo.align === 'right' ? w - pad : pad;
+    var img = env.ink.layer(ctx, 'v02:hero|' + text + '|' + size + '|' + o.seed + '|' + (o.color || '') + '|' + lo.align, w, h, function (g) {
+      env.ink.letter(g, text, cx, pad, lo);
     });
+    ctx.save();
+    ctx.globalAlpha *= a;
+    ctx.drawImage(img, x - cx, y - pad, w, h);
+    ctx.restore();
+    return L;
   }
 
   // Point at share u of a sampled path, with its unit normal and heading.
@@ -296,7 +299,7 @@
   };
 
   function capacidad(ctx, s, env) {
-    var C = s.state.cues.capacidad, ink = env.ink, fig = env.fig, chart = env.chart, q = env.pal.maquina, m = env.pal.mundo;
+    var C = cuesOf(s, 'capacidad'), ink = env.ink, fig = env.fig, chart = env.chart, q = env.pal.maquina, m = env.pal.mundo;
     var P = CAPA.panel, S = CAPA.sheet, T = CAPA.track;
     bg(ctx, s, env);
     floaters(ctx, s, env, [['estrella', 1188, 112, 46], ['espiral', 548, 78, 40]], { mono: true, p: out3(s.intro) });
@@ -400,7 +403,7 @@
   var SCRIBBLES = [[-24, -7, -10, -10, 4, -6, 24, -9], [-24, 8, -8, 5, 10, 9, 18, 7]];
 
   function uso(ctx, s, env) {
-    var C = s.state.cues.uso, ink = env.ink, fig = env.fig;
+    var C = cuesOf(s, 'uso'), ink = env.ink, fig = env.fig;
     fig.oficina(ctx, 0, 0, 1, { seed: 'v02:oficina', p: out3(s.intro) });
     typeChip(ctx, env, 'uso', rot(s, 'chip'), out3(seg(s.at(0), C.tipo - 0.04, C.tipo + 0.08)));
     var a = s.at(0), B = USO.big, win = landWindow(C.cifra), merge = win[0];
@@ -428,7 +431,7 @@
       fig.bubble(ctx, -B.w / 2, -B.h / 2, B.w, B.h, { seed: 'v02:grande', p: be, w: 4.6 });
       ctx.restore();
       var np = seg(a, win[1] - 0.05, win[1]);
-      hero(ctx, env, rot(s, 'cifra'), B.x, B.y - 104, 112, { align: 'center', seed: 'v02:88', p: np });
+      hero(ctx, env, rot(s, 'cifra'), B.x, B.y - 104, 112, { align: 'center', seed: 'v02:88', p: np, fade: true });
       ink.text(ctx, rot(s, 'etiqueta'), B.x, B.y + 30, { size: 23, weight: 700, maxWidth: 300, align: 'center', lineHeight: 1.12, p: seg(a, win[1] - 0.02, win[1] + 0.04) });
       env.tags.sourceTag(ctx, 'adop-1', { x: USO.tag.x, y: USO.tag.y, anchor: { x: B.x + 150, y: B.y - 52 }, p: seg(a, win[1] - 0.04, win[1] + 0.05), scale: 1.08 });
     }
@@ -447,7 +450,7 @@
   };
 
   function resultado(ctx, s, env) {
-    var C = s.state.cues.resultado, ink = env.ink, fig = env.fig, m = env.pal.mundo;
+    var C = cuesOf(s, 'resultado'), ink = env.ink, fig = env.fig, m = env.pal.mundo;
     bg(ctx, s, env);
     floaters(ctx, s, env, [['espiral', 556, 104, 40], ['estrella', 1200, 520, 34]], { mono: true, p: out3(s.intro) });
     typeChip(ctx, env, 'resultado', rot(s, 'chip'), out3(seg(s.at(0), 0, 0.3)));
@@ -511,7 +514,7 @@
   };
 
   function expectativa(ctx, s, env) {
-    var C = s.state.cues.expectativa, st = s.state.expectativa, ink = env.ink, fig = env.fig, chart = env.chart, m = env.pal.mundo;
+    var C = cuesOf(s, 'expectativa'), st = s.state.expectativa, ink = env.ink, fig = env.fig, chart = env.chart, m = env.pal.mundo;
     bg(ctx, s, env, 'territorio');
     floaters(ctx, s, env, [['estrella', 1180, 92, 40], ['estrella', 980, 170, 26]], { mono: true, p: out3(s.intro) });
     typeChip(ctx, env, 'expectativa', rot(s, 'chip'), out3(seg(s.at(0), 0, 0.25)));
@@ -550,7 +553,7 @@
   };
 
   function proyeccion(ctx, s, env) {
-    var C = s.state.cues.proyeccion, st = s.state.proyeccion, ink = env.ink, fig = env.fig;
+    var C = cuesOf(s, 'proyeccion'), st = s.state.proyeccion, ink = env.ink, fig = env.fig;
     bg(ctx, s, env, 'territorio');
     floaters(ctx, s, env, [['estrella', 640, 410, 30], ['estrella', 1040, 84, 28], ['estrella', 880, 450, 22], ['estrella', 1214, 236, 24]],
       { mono: true, p: out3(s.intro) });
@@ -576,7 +579,7 @@
     var np = beat(a, win[0], win[1]);
     if (np > 0) {
       var N = PRO.number, LB = PRO.label;
-      var L = hero(ctx, env, rot(s, 'cifra'), N.x, N.y, 98, { seed: 'v02:39', p: np });
+      var L = hero(ctx, env, rot(s, 'cifra'), N.x, N.y, 98, { seed: 'v02:39', p: np, fade: true });
       ink.text(ctx, rot(s, 'etiqueta'), LB.x, LB.y, { size: 27, weight: 700, maxWidth: LB.w, lineHeight: 1.18, p: seg(np, 0.3, 1) });
       env.tags.sourceTag(ctx, 'trab-5', { x: PRO.tag.x, y: PRO.tag.y, anchor: { x: N.x + 12, y: N.y + L.h - 18 }, p: np, scale: 1.08 });
     }
@@ -617,7 +620,7 @@
   }
 
   function cincoTipos(ctx, s, env) {
-    var C = s.state.cues['cinco-tipos'], st = s.state.cinco, ink = env.ink, fig = env.fig;
+    var C = cuesOf(s, 'cinco-tipos'), st = s.state.cinco, ink = env.ink, fig = env.fig;
     bg(ctx, s, env);
     floaters(ctx, s, env, [['estrella', 990, 500, 40], ['espiral', 96, 104, 40], ['luna', 196, 470, 40]], { mono: true, p: out3(s.intro) });
     var a0 = s.at(0), a1 = s.at(1);
@@ -728,7 +731,7 @@
   }
 
   function fuentes(ctx, s, env) {
-    var C = s.state.cues.fuentes, st = s.state.fuentes;
+    var C = cuesOf(s, 'fuentes'), st = s.state.fuentes;
     bg(ctx, s, env);
     floaters(ctx, s, env, [['pajaro', 1150, 92, 64], ['estrella', 640, 76, 36], ['sol', 1214, 540, 40]], { p: out3(s.intro) });
     var tms = fuentesTimes(s, C), i;
@@ -776,7 +779,7 @@
   }
 
   function muestra(ctx, s, env) {
-    var C = s.state.cues.muestra, st = s.state.muestra, ink = env.ink, m = env.pal.mundo;
+    var C = cuesOf(s, 'muestra'), st = s.state.muestra, ink = env.ink, m = env.pal.mundo;
     bg(ctx, s, env);
     var a = s.at(0);
     var e1 = out3(seg(a, 0.03, Math.min(0.3, Math.max(0.12, C.censo)))), e2 = inOut3(seg(a, C.cobertura, C.cobertura + 0.2));
@@ -821,7 +824,7 @@
   };
 
   function advertencias(ctx, s, env) {
-    var C = s.state.cues.advertencias, st = s.state.advertencias, ink = env.ink, m = env.pal.mundo;
+    var C = cuesOf(s, 'advertencias'), st = s.state.advertencias, ink = env.ink, m = env.pal.mundo;
     bg(ctx, s, env);
     floaters(ctx, s, env, [['estrella', 1186, 96, 46], ['luna', 840, 130, 50], ['espiral', 78, 470, 40]], { p: out3(s.intro) });
     var cues = [[0, C.a1], [0, C.a2], [1, C.a3], [1, C.a4]];
@@ -853,7 +856,7 @@
   };
 
   function cierre(ctx, s, env) {
-    var C = s.state.cues.cierre, st = s.state.cierre, ink = env.ink, fig = env.fig;
+    var C = cuesOf(s, 'cierre'), st = s.state.cierre, ink = env.ink, fig = env.fig;
     bg(ctx, s, env);
     floaters(ctx, s, env, [['estrella', 1196, 176, 40], ['sol', 70, 110, 44]], { p: out3(s.intro) });
     var a = s.at(0), P = CIERRE.page;
@@ -876,7 +879,7 @@
 
   function setup(env) {
     var ink = env.ink, video = findVideo(env.id || 'v02'), i;
-    var st = { cues: resolveCues(video), titulares: setupTitulares(env) };
+    var st = { titulares: setupTitulares(env) };
 
     // resultado: a magnifier with a clear lens (the "lupa" of measured results).
     var lb = ink.drawing('v02:lupa', { w: 6, jitter: 0.4 });
