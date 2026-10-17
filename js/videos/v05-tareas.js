@@ -188,7 +188,25 @@
     ctx.restore();
   }
 
-  var Q1 = {};   // scratch point, overwritten by every call (no state across frames)
+  // Point at share u of a sampled path, with its unit normal and heading.
+  function pathAt(g, u, outp) {
+    var d = clamp01(u) * g.len, lo = 0, hi = g.n - 1;
+    while (lo < hi) {
+      var mid = (lo + hi + 1) >> 1;
+      if (g.s[mid] <= d) lo = mid; else hi = mid - 1;
+    }
+    var i = Math.min(lo, g.n - 2), sl = g.s[i + 1] - g.s[i] || 1, f = clamp01((d - g.s[i]) / sl);
+    var dx = g.x[i + 1] - g.x[i], dy = g.y[i + 1] - g.y[i], dl = Math.sqrt(dx * dx + dy * dy) || 1;
+    outp.x = g.x[i] + dx * f; outp.y = g.y[i] + dy * f;
+    outp.nx = -dy / dl; outp.ny = dx / dl; outp.a = Math.atan2(dy, dx);
+    return outp;
+  }
+  function samplePath(ink, ctrl, step) {
+    var p = ink.smoothPath(ctrl, false, step || 5), acc = new Float32Array(p.n);
+    for (var i = 1; i < p.n; i++) acc[i] = acc[i - 1] + Math.sqrt(Math.pow(p.x[i] - p.x[i - 1], 2) + Math.pow(p.y[i] - p.y[i - 1], 2));
+    return { x: p.x, y: p.y, s: acc, n: p.n, len: acc[p.n - 1] || 1 };
+  }
+  var Q1 = {}, Q2 = {};   // scratch points, overwritten by every call (no state across frames)
 
   // ---------------------------------------------------------------------------------------------
   // Exact dot fields. n dots in a disc of radius R, laid out from the centre out (phyllotaxis: the
@@ -438,14 +456,15 @@
     drawField(ctx, env, st.big, Fd.x, Fd.y, { base: seg(s.t, 0.1, 1.3), halo: nAlg * g1, dark: nMax * g2, color: col, key: 'mundo' });
     ink.text(ctx, rot(s, 'empleoMundial'), Fd.x, EXPO.caption.y, { size: EXPO.caption.size, weight: 700, align: 'center', p: seg(s.t, 0.8, 1.6) });
 
-    // Legend row 1: «25%» alguna exposición (trab-1, tied to the number).
-    var n1 = seg(a0, w1[1], w1[1] + 0.04);
-    if (n1 > 0) {
+    // Legend row 1: «25%» alguna exposición. The legend dot and the tag (trab-1, tied to the
+    // number's place) come as the halo starts to grow; the number lands with the halo.
+    var t1 = beat(a0, w1[0], w1[0] + 0.03), n1 = seg(a0, w1[1], w1[1] + 0.04);
+    if (t1 > 0) {
       var y1 = Lg.rows[0];
-      legendDot(ctx, env, Lg.dot, y1 + 34, 'halo', col, n1);
+      legendDot(ctx, env, Lg.dot, y1 + 34, 'halo', col, t1);
       var H1 = hero(ctx, env, rot(s, 'cifraAlguna'), Lg.num, y1, Lg.numSize, { seed: 'v05:25', p: n1 });
       ink.text(ctx, rot(s, 'alguna'), Lg.num, y1 + Lg.labelDy, { size: Lg.labelSize, weight: 700, p: seg(a0, w1[1] + 0.02, w1[1] + 0.07) });
-      sourceTag(ctx, env, 'trab-1', EXPO.tag1.x, EXPO.tag1.y, { x: Lg.num + H1.w + 6, y: y1 + 30 }, n1);
+      sourceTag(ctx, env, 'trab-1', EXPO.tag1.x, EXPO.tag1.y, { x: Lg.num + H1.w + 6, y: y1 + 30 }, t1);
     }
     // The two income groups: fields of 100 dots, side by side, haloed as their chunk is said.
     var Sm = EXPO.small, ws = landWindow(C.paises), keys = ['ingresosAltos', 'ingresosBajos'];
@@ -462,14 +481,15 @@
           lineHeight: 1.1, p: vp });
       }
     }
-    // Legend row 2: «3,3%» exposición más alta (trab-2), once the glossary note has gone.
-    var n2 = seg(a1, w2[1], w2[1] + 0.04);
-    if (n2 > 0) {
+    // Legend row 2: «3,3%» exposición más alta (trab-2), once the glossary note has gone; its tag
+    // comes as the dark dots start.
+    var t2 = beat(a1, w2[0], w2[0] + 0.03), n2 = seg(a1, w2[1], w2[1] + 0.04);
+    if (t2 > 0) {
       var y2 = Lg.rows[1];
-      legendDot(ctx, env, Lg.dot, y2 + 34, 'dark', col, n2);
+      legendDot(ctx, env, Lg.dot, y2 + 34, 'dark', col, t2);
       var H2 = hero(ctx, env, rot(s, 'cifraMasAlta'), Lg.num, y2, Lg.numSize, { seed: 'v05:33', p: n2 });
       ink.text(ctx, rot(s, 'masAlta'), Lg.num, y2 + Lg.labelDy, { size: Lg.labelSize, weight: 700, p: seg(a1, w2[1] + 0.02, w2[1] + 0.07) });
-      sourceTag(ctx, env, 'trab-2', EXPO.tag2.x, EXPO.tag2.y, { x: Lg.num + H2.w + 6, y: y2 + 30 }, n2);
+      sourceTag(ctx, env, 'trab-2', EXPO.tag2.x, EXPO.tag2.y, { x: Lg.num + H2.w + 6, y: y2 + 30 }, t2);
     }
   }
 
@@ -697,8 +717,9 @@
       legendDot(ctx, env, DES.legend.x, DES.legend.y + 14, 'dark', st.color, show[0]);
       ink.text(ctx, rot(s, 'masAlta'), DES.legend.x + 22, DES.legend.y, { size: 24, weight: 700, p: show[0] });
     }
-    // One tag for the figure, tied to the edge of the men's field of the first pair.
-    sourceTag(ctx, env, 'trab-3', DES.tag.x, DES.tag.y, { x: Fd.xs[1] + Fd.R * 0.72, y: Fd.y + Fd.R * 0.72 }, land[0]);
+    // One tag for the figure, tied to the edge of the men's field of the first pair, from the moment
+    // the first dark dots start.
+    sourceTag(ctx, env, 'trab-3', DES.tag.x, DES.tag.y, { x: Fd.xs[1] + Fd.R * 0.72, y: Fd.y + Fd.R * 0.72 }, beat(a1, w1[0], w1[0] + 0.03));
   }
 
   // ---------------------------------------------------------------------------------------------
@@ -877,26 +898,6 @@
       ['flexibilidad', 'cabellos', 718, 530, 'flexibilidad'], ['colaboracion', 'corazon', 981, 530, 'colaboracion']]
   };
 
-  // Point at share u of a sampled path, with its unit normal and heading.
-  function pathAt(g, u, outp) {
-    var d = clamp01(u) * g.len, lo = 0, hi = g.n - 1;
-    while (lo < hi) {
-      var mid = (lo + hi + 1) >> 1;
-      if (g.s[mid] <= d) lo = mid; else hi = mid - 1;
-    }
-    var i = Math.min(lo, g.n - 2), sl = g.s[i + 1] - g.s[i] || 1, f = clamp01((d - g.s[i]) / sl);
-    var dx = g.x[i + 1] - g.x[i], dy = g.y[i + 1] - g.y[i], dl = Math.sqrt(dx * dx + dy * dy) || 1;
-    outp.x = g.x[i] + dx * f; outp.y = g.y[i] + dy * f;
-    outp.nx = -dy / dl; outp.ny = dx / dl; outp.a = Math.atan2(dy, dx);
-    return outp;
-  }
-  function samplePath(ink, ctrl, step) {
-    var p = ink.smoothPath(ctrl, false, step || 5), acc = new Float32Array(p.n);
-    for (var i = 1; i < p.n; i++) acc[i] = acc[i - 1] + Math.sqrt(Math.pow(p.x[i] - p.x[i - 1], 2) + Math.pow(p.y[i] - p.y[i - 1], 2));
-    return { x: p.x, y: p.y, s: acc, n: p.n, len: acc[p.n - 1] || 1 };
-  }
-  var Q2 = {};
-
   // A skill's sign, about 48 px, centred at (x, y).
   function skillSign(ctx, s, env, kind, x, y, p) {
     var fig = env.fig, m = env.pal.mundo, ink = env.ink;
@@ -1044,7 +1045,7 @@
     entry: 2,                                // the task card that is an entry step
     legend: { y: 486, xs: [70, 400, 800], r: 36 },
     keys: ['apoya', 'podriaRealizarla', 'indispensable'],
-    cues: ['apoya', 'podría realizarla', 'indispensable']
+    cueKeys: ['apoya', 'podria', 'indispensable']
   };
 
   // A stamp: an ink ring with its sign — the lamp beside a person, the lamp, or a person.
@@ -1073,7 +1074,7 @@
     ground(ctx, s, env);
     var a0 = s.at(0), a1 = s.at(1), intro = out3(s.intro);
     floaters(ctx, s, env, [['estrella', 1170, 80, 40], ['sol', 96, 96, 48, { a: m.rojo }]], intro);
-    // The case card, then its split into seven task cards on «desagreguen la ocupación en tareas».
+    // The case card, then its split into seven task cards on «…la ocupación en tareas».
     var split = inOut3(beat(a0, C.desagreguen - 0.02, C.desagreguen + 0.14));
     var cardA = 1 - seg(split, 0.3, 0.8);
     if (cardA > 0) {
@@ -1103,7 +1104,7 @@
     // «¿la IA apoya, podría realizarla o la persona es indispensable?»: the legend, then the stamps.
     var Lg = K.legend, firstCue = C.apoya;
     for (i = 0; i < 3; i++) {
-      var lp = beat(a0, C[['apoya', 'podria', 'indispensable'][i]] - 0.03, C[['apoya', 'podria', 'indispensable'][i]] + 0.05);
+      var lp = beat(a0, C[K.cueKeys[i]] - 0.03, C[K.cueKeys[i]] + 0.05);
       caseStamp(ctx, s, env, i, Lg.xs[i] + Lg.r, Lg.y, Lg.r, lp);
       if (lp > 0) ink.text(ctx, rot(s, K.keys[i]), Lg.xs[i] + Lg.r * 2 + 14, Lg.y - 15, { size: 25, weight: 700, p: seg(lp, 0.3, 1) });
     }
