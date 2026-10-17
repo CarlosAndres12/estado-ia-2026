@@ -100,6 +100,11 @@ zero errors; 9 videos play in sync; 17 láminas render/print with corrected figu
   caused by the parallel workers' load. Mitigation: one worker at a time; every headless Chromium via
   `tools/dev/chromium-safe.sh` (systemd-run CPUQuota=300%, MemoryMax=6G, nice 15); no real-time perf runs.
 
+- User applied global caps (2026-10-17 07:4x): `user.slice` and `system.slice` AllowedCPUs=0-9, power
+  profile `power-saver` (platform `quiet`); verified (cpuset 0-9, Tctl 43.6 °C). Concurrency policy: at most
+  two workers, only one of them rendering with Chromium. Running: T04 (rendering), T11 (no Chromium, no
+  audio checks). T05 waits for T04.
+
 ## Next step
 
 Merge wave 1 branches as they finish (verify each: checker, tests, headless console), then wave 2:
