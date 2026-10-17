@@ -1,1 +1,132 @@
-/* Lienzo background, typography, focus styles, reduced motion. Owner: T07 (page shell). Pending. */
+/* Base: lienzo background with grain, typography, links, focus styles, reduced motion.
+ * Owner: T07 (page shell). Colors and the type scale come from css/tokens.css; the grain and the
+ * brush images are CSS custom properties drawn once at load by js/ui/decor.js (prompt §3.11).
+ * Text is tinta on lienzo (WCAG AA); body text is at least 18 px; every control shows its focus. */
+
+:root {
+  --papel: #FBF7EE;                /* card paper, a touch lighter than lienzo */
+  --header-h: 64px;                /* measured at runtime by js/ui/nav.js */
+  --gutter: clamp(16px, 4vw, 40px);
+  --page-max: 1180px;
+  --text-max: 70ch;
+  --radius-hand: 14px 18px 12px 20px / 18px 12px 20px 14px;
+  --radius-hand-2: 18px 12px 20px 14px / 12px 20px 14px 18px;
+  --ink-muted: var(--color-texto-suave, #4A4239);
+  --line-soft: rgba(21, 18, 15, 0.2);
+  --wash-ocre: rgba(231, 211, 168, 0.32);
+  --wash-amarillo: #F9E7A6;        /* amarillo toward lienzo: highlight behind tinta text */
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--header-h) + 16px);
+  background: var(--lienzo);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  line-height: var(--lh-body);
+  color: var(--tinta);
+  background-color: var(--lienzo);
+  background-image: var(--grain, none);
+  background-size: 220px 220px;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+[hidden] { display: none !important; }
+
+img, canvas, video { max-width: 100%; }
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  line-height: var(--lh-tight);
+  margin: 0 0 var(--sp-3);
+  text-wrap: balance;
+}
+h1 { font-size: var(--fs-display); font-weight: var(--fw-black); letter-spacing: -0.01em; }
+h2 { font-size: clamp(1.75rem, 1.2rem + 2vw, var(--fs-2xl)); font-weight: var(--fw-black); }
+h3 { font-size: clamp(1.3rem, 1.05rem + 1vw, var(--fs-xl)); font-weight: var(--fw-bold); }
+h4 { font-size: var(--fs-lg); font-weight: var(--fw-bold); }
+
+p, ul, ol, dl, figure, blockquote { margin: 0 0 var(--sp-4); }
+ul, ol { padding-left: 1.4em; }
+li + li { margin-top: 0.35em; }
+dd { margin-left: 0; }
+strong, b { font-weight: var(--fw-bold); }
+
+a {
+  color: var(--tinta);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.18em;
+  text-decoration-color: var(--azul);
+}
+a:hover { text-decoration-color: var(--rojo); text-decoration-thickness: 3px; }
+
+:focus { outline: none; }
+:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+/* Programmatic focus targets (headings after navigation) do not need a ring of their own. */
+[tabindex="-1"]:focus:not(:focus-visible) { outline: none; }
+
+::selection { background: rgba(245, 197, 24, 0.55); color: var(--tinta); }
+
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+caption { text-align: left; font-weight: var(--fw-bold); padding-bottom: var(--sp-2); }
+th, td {
+  text-align: left;
+  vertical-align: top;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1.5px solid var(--line-soft);
+}
+thead th { font-weight: var(--fw-bold); border-bottom: 3px solid var(--tinta); }
+tbody th { font-weight: var(--fw-bold); }
+.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--sp-3);
+  top: -200px;
+  z-index: 100;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--tinta);
+  color: var(--lienzo);
+  font-weight: var(--fw-bold);
+  border-radius: 10px;
+}
+.skip-link:focus { top: var(--sp-3); }
+
+noscript { display: block; padding: var(--sp-5); font-size: var(--fs-md); }
+
+/* Reduced motion: no animation loops; reveals become plain fades (css/components.css). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,1 +1,83 @@
-/* Print: banco, láminas, cuaderno, session guide. Owner: T07 (page shell). Pending. */
+/* Print (prompt §14): letter size, readable in black and white; chips print as sign + label.
+ * Loaded with media="print". Each section has one owner; edit only inside your own markers.
+ *   body[data-print="banco"]  "Imprimir esta selección": only the citation sheet #print-sheet (banco.js)
+ *   body[data-print="guia"]   "Imprimir guía de la sesión": agenda, láminas, discussion and the
+ *                             facilitator block (keys, quiz with answers) of .view.is-print-target */
+
+/* ==== [page-shell] base, banco citation sheet, session guide ==== */
+@page { size: letter; margin: 16mm 14mm; }
+
+html, body { background: #fff !important; color: #000 !important; }
+body { font-size: 11.5pt; line-height: 1.4; }
+h1 { font-size: 22pt; } h2 { font-size: 16pt; } h3 { font-size: 13pt; } h4 { font-size: 12pt; }
+h1, h2, h3, h4 { break-after: avoid; }
+p, li, tr { orphans: 3; widows: 3; }
+
+/* Hide navigation, videos, players, interactive chrome; keep only a few small black signs. */
+.skip-link, .site-header, .site-nav, .search, .block-index, .prevnext, .hero__art, .hero__pause,
+.video, .player, .float-sign, .overlays, .pop, .filters, .bank-bar, .lettering, .btn,
+.letters, .view-tools, .lamina-thumb:hover, .placeholder__sign { display: none !important; }
+.hero__card { position: static !important; width: auto !important; margin: 0 !important; }
+
+.reveal { opacity: 1 !important; transform: none !important; }
+.view-title::after, .block-title::after { clip-path: none !important; }
+
+.card, .pop, .update--caja, .site-nav__menu {
+  background: #fff !important;
+  border: 1.2pt solid #000 !important;
+  border-image: none !important;
+  break-inside: avoid;
+}
+.has-decor .card::after, .card--peek::before { display: none !important; }
+
+a { color: #000 !important; text-decoration: underline; }
+.ext-link[href^="http"]::after { content: " (" attr(href) ")"; font-size: 8.5pt; overflow-wrap: anywhere; }
+
+/* Signs are CSS images drawn by decor.js: print them (black forms for the evidence chips). */
+.chip__sign, .estado__sign, .sesion-sign, .adv-stamp__sign, .error-card__sign, .margin-note::before,
+.correction__struck::after, .view-title::after, .block-title::after {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.chip--capacidad .chip__sign { background-image: var(--chip-capacidad-mono) !important; }
+.chip--uso .chip__sign { background-image: var(--chip-uso-mono) !important; }
+.chip--resultado .chip__sign { background-image: var(--chip-resultado-mono) !important; }
+.chip--expectativa .chip__sign { background-image: var(--chip-expectativa-mono) !important; }
+.chip--proyeccion .chip__sign { background-image: var(--chip-proyeccion-mono) !important; }
+.strike { text-decoration: line-through !important; }
+
+.table-wrap { overflow: visible !important; }
+.table-wrap > table, .bank-table, .rubric-table, .agenda-table { min-width: 0 !important; }
+th, td { border-bottom: 0.75pt solid #000; padding: 3pt 5pt; }
+
+.ref__source .btn { display: inline !important; min-height: 0; padding: 0; border: 0; background: none; font-weight: 400; }
+.ref__source .btn::after { content: " (" attr(href) ")"; font-size: 8.5pt; overflow-wrap: anywhere; }
+details > *:not(summary) { display: block; }
+.facilitador { background: #fff !important; border: 1.2pt dashed #000 !important; }
+.site-footer { font-size: 9pt; color: #000 !important; }
+.site-footer__text { color: #000 !important; }
+
+/* "Imprimir esta selección" (banco): a citation sheet with cifra, alcance, tipo, estado and URL. */
+body[data-print="banco"] > *:not(#print-sheet) { display: none !important; }
+body[data-print="banco"] #print-sheet { display: block !important; }
+.print-sheet h1 { font-size: 18pt; margin: 0 0 4pt; }
+.print-sheet__note { font-size: 9.5pt; margin: 0 0 10pt; }
+.print-sheet__list { padding-left: 16pt; margin: 0; }
+.print-sheet__list > li { break-inside: avoid; padding: 6pt 0; border-bottom: 0.75pt solid #000; }
+.print-sheet__list p { margin: 0 0 2pt; overflow-wrap: anywhere; }
+.print-sheet__cifra { font-weight: 700; font-size: 12pt; }
+
+/* "Imprimir guía de la sesión" (facilitator): agenda, láminas thumbnails, activity keys,
+ * discussion and quiz with answers. */
+body[data-print="guia"] .site-footer,
+body[data-print="guia"] .view.is-print-target .lead,
+body[data-print="guia"] .view.is-print-target .block:not(.block--guide):not(.facilitador) { display: none !important; }
+body[data-print="guia"] .view.is-print-target .facilitador__summary::after,
+body[data-print="guia"] .view.is-print-target .facilitador__print { display: none !important; }
+body[data-print="guia"] .laminas { display: grid !important; grid-template-columns: repeat(3, 1fr); gap: 8pt; }
+body[data-print="guia"] .lamina-thumb__canvas { border: 1pt solid #000 !important; }
+body[data-print="guia"] .discussion__item { border: 0 !important; padding: 2pt 0 !important; }
+/* ==== [/page-shell] ==== */
+
+/* ==== [interactions] games, worksheets, cuaderno, rubric, láminas, Modo clase ==== */
+/* ==== [/interactions] ==== */

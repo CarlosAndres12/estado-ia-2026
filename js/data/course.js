@@ -781,7 +781,8 @@ EIA.data.course = EIA.data.course || {}; EIA.data.course.ui = EIA.data.course.ui
   sesion: {
     bloques: 'En esta sesión',
     agendaColumnas: ['Minutos', 'Bloque', 'Recurso'],
-    regla: 'Regla de 120 minutos con {n} bloques, cada uno del largo de su duración.',
+    numero: 'Número del bloque',
+    regla:'Regla de 120 minutos con {n} bloques, cada uno del largo de su duración.',
     minutos: 'min',
     lamina: 'D{n} · {titulo}',
     abrirLamina: 'Abrir la lámina D{n}: {titulo}',
@@ -804,6 +805,7 @@ EIA.data.course = EIA.data.course || {}; EIA.data.course.ui = EIA.data.course.ui
   },
   banco: {
     intro: 'Introducción al banco',
+    lista: 'Las cifras del banco',
     buscar: 'Buscar en el banco',
     buscarAyuda: 'Busca en la cifra, el alcance y la fuente. No importan las tildes ni las mayúsculas.',
     filtros: 'Filtros del banco',
@@ -819,6 +821,7 @@ EIA.data.course = EIA.data.course || {}; EIA.data.course.ui = EIA.data.course.ui
     sesionN: 'Sesión {n}',
     irSesion: 'Ir a la sesión {n}',
     sinResultados: 'Ninguna cifra coincide con la búsqueda y los filtros.',
+    unaCifra: '1 cifra',
     abrirFuente: 'Abrir la fuente: {fuente}',
     cifrasRelacionadas: 'Cifras del banco',
     hoja: {
