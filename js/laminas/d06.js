@@ -54,10 +54,9 @@
       var dx = sp.x[b] - sp.x[a], dy = sp.y[b] - sp.y[a], d = Math.hypot(dx, dy) || 1;
       var w = RIVER_W * (1 + 0.25 * i / sp.n);          // a little wider toward the mouth
       left.push(sp.x[i] - dy / d * w, sp.y[i] + dx / d * w);
-      right.unshift(sp.x[i] + dy / d * w, sp.y[i] - dx / d * w);
+      right.unshift(sp.x[i] + dy / d * w, sp.y[i] - dx / d * w);   // the far bank, walked back
     }
-    var band = left.concat(right.reduce(function (acc, v, j, arr) { if (j % 2 === 0) acc.push(arr[j], arr[j + 1]); return acc; }, []));
-    return { path: sp, L: L, total: L[L.length - 1], band: band };
+    return { path: sp, L: L, total: L[L.length - 1], band: left.concat(right) };
   }
 
   function riverAt(g, u) {

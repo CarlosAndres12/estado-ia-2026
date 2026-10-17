@@ -1,10 +1,11 @@
 /* js/laminas/d01.js — D1 «Portada» (prompt §12.2; KB §4, "Guion de diapositivas").
  *
- * The hero's iceberg as a still: a night-sea painting on the notebook page, drawn with the same
- * engine figures as the #inicio hero and V01 (fig.marNocturno, fig.iceberg, fig.lamp): a crescent
- * moon and irregular stars; the luminous tip, lit by a tiny AI lamp, carries the figure of
- * rotulos.punta («88% de organizaciones usa IA») with the source tag of its cifras; the submerged
- * mass carries rotulos.masa («Escala · Valor · Gobernanza») in chalk-white lettering.
+ * The hero's iceberg as a still: a night-sea painting on the notebook page, drawn with the engine's
+ * night-sea and iceberg figures (fig.marNocturno, fig.iceberg) shared with the #inicio hero and
+ * V01: a crescent moon and irregular stars; the luminous tip, lit by a tiny AI lamp (fig.lamp, as
+ * in the hero), carries the figure of rotulos.punta («88% de organizaciones usa IA») with the
+ * source tag of its cifras; the submerged mass carries rotulos.masa («Escala · Valor ·
+ * Gobernanza») in chalk-white lettering.
  *
  * Copy comes only from the deck entry; the figure's tag from env.tags. Static by default; the
  * calm 8 s ambient loop (stars twinkle, letters flow through the lamp) does nothing when s.still.

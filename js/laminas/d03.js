@@ -7,8 +7,8 @@
  * frontier on a rope from the first lit summit. The three-step diagram (pasos) runs along the
  * bottom, drawn by the engine in a slightly lower band so the mountains get more height.
  *
- * Mountain heights and valley depths encode no value: the two lit peaks and the two valleys are
- * drawn alike so no one reads one figure against the other. Copy comes only from the deck entry.
+ * Mountain heights and valley depths encode no value (both valleys reach the same ground line), so
+ * no one reads one figure against another. Copy comes only from the deck entry.
  * Static by default; in the 8 s ambient loop a bird glides over the range (nothing when s.still).
  */
 (function (root) {
@@ -137,8 +137,9 @@
           { w: 2 * k, profile: 'hair', seed: 'd03-thread2', dot: 1.6 });
       }
 
-      // Deep valleys: the label in chalk white inside the dark field, its tag hanging under it.
-      VALLEYS.forEach(function (v, i) {
+      // Deep valleys: the label in chalk white inside the dark field; its tag hangs under the label,
+      // or in the sky above a valley too narrow to hold it.
+      VALLEYS.forEach(function (v) {
         var r = rot[v.rot];
         if (!r) return;
         var A = MOUNTS[v.a], B = MOUNTS[v.b], ty = v.top + 22;
