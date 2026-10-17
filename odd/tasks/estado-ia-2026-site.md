@@ -45,9 +45,9 @@ exceeds it. Slicing into PRs is left to the user (each task commit is a candidat
 | T04 | Drawing engine: rng, easing, palette + tokens.css, ink, chart, tags, figures, lamina layout, API doc | delegated writer (many non-trivial files) | done (cherry-picked 0149682..a019a98 → 73f2246) |
 | T05 | Video runtime: timeline, captions, narrator, player, recorder, render mode, CDP browser lib, snapshots | delegated writer (many non-trivial files) | done (fast-forward to 58a2c61) |
 | T06 | V02 end to end + art review against prompt §3 | delegated writer | done (cherry-picked 4832670..9f98293) |
-| T07 | Page shell: router, markup, views, nav, hero, chips, citations/popovers, banco, glossary, FAQ, references, asistente, footer, CSS | delegated writer | running (worktree) |
-| T08 | Interactions: quizzes, games, calculator, embudo, cuaderno, rubric, Ley de IA timeline, indicadores, timer, láminas viewer, Modo clase, print | delegated writer | pending |
-| T09 | Láminas D01–D17 | delegated writers (parallel, worktrees) | pending |
+| T07 | Page shell: router, markup, views, nav, hero, chips, citations/popovers, banco, glossary, FAQ, references, asistente, footer, CSS | delegated writer | done (cherry-picked b22f7c2..4c08e68) |
+| T08 | Interactions: quizzes, games, calculator, embudo, cuaderno, rubric, Ley de IA timeline, indicadores, timer, láminas viewer, Modo clase, print | delegated writer | running (worktree) |
+| T09 | Láminas D01–D17 | delegated writers (parallel, worktrees) | running (D01–D06; brief odd/spec/lamina-worker-brief.md) |
 | T10 | Videos V01, V03–V09 | delegated writers (parallel, worktrees) | running (one video per worker, brief in odd/spec/video-worker-brief.md) |
 | T11 | Voice-over tooling with **Edge TTS** (user decision; Azure kept optional): normalizer, SSML, Edge bridge + adapter, alignment, generator, listening sheet | delegated writer (many non-trivial files) | done (merged; fix b91d3af) |
 | T12 | Optional MP4 export (`render-videos.mjs`) | delegated writer | pending |
@@ -137,6 +137,15 @@ zero errors; 9 videos play in sync; 17 láminas render/print with corrected figu
   contact sheet: coherent notebook style, ruled navy benchmark panel, chips sign+label, legible cards.
 - Concurrency policy update: global caps make peak load bounded; at most TWO workers at a time, each
   browser through chromium-safe.sh. Video workers never edit the engine (local helpers; report wishes).
+
+- T07 done (cherry-picked 11 commits): router, markup, all views, chips/popovers/Copiar cita, banco,
+  glossary, FAQ, references, asistente, page CSS, `tools/check-routes.mjs`. Parent re-run: 175/175
+  tests, checker 0 errors, check-routes 30 routes + 30 in-app hash changes 0 console errors; parent
+  looked at #inicio (hero iceberg + tag) and #s3 (tesis with tagged figure popovers). Header lettering
+  writes itself on in 1.1 s (headless screenshots catch it mid-way). Parent fix d36b912: glossary
+  tooltip excluded from verb uses of «escala».
+- Concurrency: temps 39.8 °C at load ~1.3 under the caps → up to three workers (one non-heavy). Running:
+  V01 (T10), T08 (interactions), D01–D06 (T09). Re-check temperature at each notification.
 
 ## Next step
 
