@@ -1339,6 +1339,11 @@
     });
 
     EIA.router.start(show);
-    ui.decor.fontsReady().then(function () { settle(function () { readyResolve(true); }); });
+    ui.decor.fontsReady().then(function () {
+      settle(function () {
+        try { root.performance.mark('eia:ready'); } catch (err) { /* old engines */ }
+        readyResolve(true);
+      });
+    });
   };
 })(typeof window !== 'undefined' ? window : globalThis);

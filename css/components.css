@@ -35,6 +35,7 @@
 .btn--night { background: rgba(14, 26, 59, 0.82); color: var(--lienzo); border-color: var(--lienzo); }
 .btn--night:hover { background: var(--noche); color: var(--lienzo); }
 .btn--night[aria-pressed="true"] { background: var(--lienzo); color: var(--tinta); }
+.btn--night:focus-visible { outline-color: var(--lienzo); }
 .btn[disabled] { opacity: 0.5; cursor: default; transform: none; }
 .btn.is-copied { background: var(--wash-amarillo); }
 
