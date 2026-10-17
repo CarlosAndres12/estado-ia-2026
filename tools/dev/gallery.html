@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Galería del motor de dibujo (desarrollo)</title>
+  <!-- Dev-only review page for the drawing engine (T04). Not part of the site.
+       ?section=signs|people|places|machine|props|charts|tags|lettering|lamina|backgrounds
+       &page=N (when a section has more than one sheet) &p=0..1 (draw-on progress) &t=seconds
+       &dpr=1|2   ?test=1 runs the self-test and writes PASS/FAIL lines into #results. -->
+  <link rel="stylesheet" href="../../css/fonts.css">
+  <link rel="stylesheet" href="../../css/tokens.css">
+  <style>
+    html, body { margin: 0; background: #d9d4c8; }
+    canvas { display: block; }
+    #results { font: 14px/1.4 ui-monospace, monospace; white-space: pre-wrap; padding: 8px 12px; margin: 0; }
+    nav { font: 14px system-ui, sans-serif; padding: 6px 12px; }
+    nav a { margin-right: 10px; color: #1c3f95; }
+  </style>
+</head>
+<body>
+  <canvas id="stage" width="1280" height="720" aria-label="Lámina de prueba del motor"></canvas>
+  <nav id="nav"></nav>
+  <pre id="results"></pre>
+
+  <script src="../../js/core/namespace.js"></script>
+  <script src="../../js/data/cifras.js"></script>
+  <script src="../../js/data/fuentes.js"></script>
+  <script src="../../js/data/glosario.js"></script>
+  <script src="../../js/data/deck.js"></script>
+  <script src="../../js/engine/rng.js"></script>
+  <script src="../../js/engine/easing.js"></script>
+  <script src="../../js/engine/palette.js"></script>
+  <script src="../../js/engine/ink.js"></script>
+  <script src="../../js/engine/chart.js"></script>
+  <script src="../../js/engine/tags.js"></script>
+  <script src="../../js/engine/figures.js"></script>
+  <script src="../../js/engine/lamina.js"></script>
+  <script src="fixture-data.js"></script>
+  <script src="gallery.js"></script>
+</body>
+</html>
