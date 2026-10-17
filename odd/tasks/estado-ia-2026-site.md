@@ -85,6 +85,10 @@ zero errors; 9 videos play in sync; 17 láminas render/print with corrected figu
   Hints are stored without "Pista:" (UI adds "Casi. Pista: "). v08 `omnibus` lectora line names the
   banned AI Act claim only to call it an error (checker must allow it).
 
+- Crash (2026-10-17): machine went down while T02/T04/T05/T11 ran (user: an audio check crashed it).
+  New user rule: never run audio checks (check-voiceover, playback, STT) — only generate audio. Resumed
+  T02, T04, T05 from their worktrees with low-load limits; T11 held until they land.
+
 ## Next step
 
 Merge wave 1 branches as they finish (verify each: checker, tests, headless console), then wave 2:
