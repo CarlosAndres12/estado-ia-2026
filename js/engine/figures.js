@@ -676,5 +676,405 @@
     ctx.restore();
   };
 
+  // =============================================================================================
+  // THE MACHINE KIT (prompt §3.5): small, cool and ruler-straight, always on deep navy. The AI is
+  // only ever the lamp: thin straight pale-blue lines and perfect circles; it never gets eyes, a
+  // face, a body or a brain. Line widths are fixed screen px (crisp), whatever the scale.
+
+  /* fig.panel(ctx, x, y, w, h, opts) -> rect: a ruled navy panel with a fine regular grid (the world
+   * of benchmarks, exams and controlled conditions). opts: cell (14), ticks, construction. */
+  fig.panel = function (ctx, x, y, w, h, o) {
+    o = o || {};
+    I().machineGrid(ctx, x, y, w, h, { cell: o.cell || 14, ticks: o.ticks, construction: o.construction, cx: o.cx, cy: o.cy });
+    return { x: x, y: y, w: w, h: h };
+  };
+
+  function lampDrawing(small) {
+    return cached('lamp|' + (small ? 's' : 'n'), function () {
+      var b = I().drawing('lamp', { w: 2 });
+      b.rdisc(0, 0, 50, { color: '@night' });
+      b.rcircle(0, 0, 46, { w: 1.5 });
+      if (!small) {
+        b.rcircle(0, 0, 33, { w: 1, alpha: 0.55 });
+        for (var i = 0; i < 12; i++) {
+          var a = i / 12 * TAU;
+          b.rline(Math.cos(a) * 40, Math.sin(a) * 40, Math.cos(a) * 46, Math.sin(a) * 46, { w: 1, alpha: 0.7 });
+        }
+      }
+      // The window: a perfect square lattice of 3 × 3 panes.
+      var s = 21;
+      b.rrect(-s, -s, s * 2, s * 2, { w: 1.4, fill: '@grid', fillAlpha: 0.55 });
+      b.rline(-s / 3, -s, -s / 3, s, { w: 1.1 });
+      b.rline(s / 3, -s, s / 3, s, { w: 1.1 });
+      b.rline(-s, -s / 3, s, -s / 3, { w: 1.1 });
+      b.rline(-s, s / 3, s, s / 3, { w: 1.1 });
+      // Two small glows on the ring, never side by side (nothing that could read as eyes).
+      var ag = -0.75, am = 2.45;
+      b.glow(Math.cos(ag) * 46, Math.sin(ag) * 46, 13, '@glowG', { alpha: 0.9, add: true });
+      b.rcircle(Math.cos(ag) * 46, Math.sin(ag) * 46, 2.6, { fill: '@glowG', stroke: false });
+      b.glow(Math.cos(am) * 46, Math.sin(am) * 46, 12, '@glowM', { alpha: 0.8, add: true });
+      b.rcircle(Math.cos(am) * 46, Math.sin(am) * 46, 2.3, { fill: '@glowM', stroke: false });
+      return b.done();
+    });
+  }
+
+  /* fig.lamp(ctx, x, y, scale, opts) — "la lámpara de IA", centered; scale 1 = 100 px across.
+   * opts: t (seconds: tiny regular stars flow through the window), glow (0..1, 1), dim (0..1: the
+   * glow fades, e.g. errors accumulating), p (draw-on), stars (true). */
+  fig.lamp = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1, p = o.p == null ? 1 : o.p, q = Q();
+    var small = s < 0.42;
+    var glowK = (o.glow == null ? 1 : o.glow) * (1 - 0.75 * (o.dim || 0));
+    var d = lampDrawing(small);
+    ctx.save();
+    // Soft pre-rendered halo (weaker when dimmed), then the ruled body.
+    I().glow(ctx, x, y, 96 * s, q.linea, 0.55 * glowK * seg(p, 0, 0.2));
+    I().draw(ctx, d, x, y, s, { p: p, colors: glowK < 1 ? { line: P().mix(q.linea, q.rejilla, 0.5 * (o.dim || 0)) } : null });
+    // Letters flowing through it like tiny regular stars: evenly spaced on one straight line.
+    if (o.stars !== false && p >= 0.75) {
+      var t = o.t || 0, n = small ? 4 : 7, sp = 0.09, a = seg(p, 0.75, 1) * (1 - 0.6 * (o.dim || 0));
+      ctx.strokeStyle = q.linea;
+      ctx.lineWidth = 1.2;
+      ctx.lineCap = 'round';
+      for (var i = 0; i < n; i++) {
+        var u = (i / n + t * sp) % 1;
+        var px = x + lerp(-32, 32, u) * s, py = y + lerp(24, -24, u) * s;
+        var fade = Math.sin(Math.PI * u);
+        ctx.globalAlpha = a * fade;
+        var r = Math.max(1.6, 3.2 * s);
+        ctx.beginPath();
+        ctx.moveTo(px - r, py); ctx.lineTo(px + r, py);
+        ctx.moveTo(px, py - r); ctx.lineTo(px, py + r);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  };
+
+  /* fig.lamps(ctx, x, y, scale, opts): several identical lamps in a row ("models").
+   * opts: n (3), gap (px at scale 1, 120), t, dim. */
+  fig.lamps = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var n = o.n || 3, gap = (o.gap || 120) * (scale || 1);
+    for (var i = 0; i < n; i++) fig.lamp(ctx, x + (i - (n - 1) / 2) * gap, y, scale, { t: o.t, dim: o.dim, p: o.p });
+  };
+
+  /* fig.agentLoop(ctx, x, y, scale, opts) -> { stations: [{ x, y }], panel }: the ruled agent loop
+   * on its navy panel, with the lamp moving along it. (x, y) = top-left; panel 560×300 at scale 1.
+   * opts: labels (verbatim station labels, from data), n (stations, default labels.length or 5),
+   * returnTo (index the return arrow goes back to, 1), at (0..1 lamp position along the loop), t, p. */
+  fig.agentLoop = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1, w = 560 * s, h = 300 * s, p = o.p == null ? 1 : o.p, q = Q(), ink = I();
+    var labels = o.labels || [], n = o.n || labels.length || 5;
+    fig.panel(ctx, x, y, w, h, { cell: 14 });
+    var cx = x + w / 2, cy = y + h / 2 + 6 * s, rx = w * 0.29, ry = h * 0.27, rr = 34 * s;
+    // Rounded-rectangle loop (straight sides, perfect quarter circles).
+    var pts = [], L = 0, segs = [];
+    function addLine(x0, y0, x1, y1) { segs.push({ k: 'l', x0: x0, y0: y0, x1: x1, y1: y1, len: Math.hypot(x1 - x0, y1 - y0) }); }
+    function addArc(ax, ay, a0) { segs.push({ k: 'a', x: ax, y: ay, a0: a0, len: rr * Math.PI / 2 }); }
+    addLine(cx - rx + rr, cy - ry, cx + rx - rr, cy - ry); addArc(cx + rx - rr, cy - ry + rr, -Math.PI / 2);
+    addLine(cx + rx, cy - ry + rr, cx + rx, cy + ry - rr); addArc(cx + rx - rr, cy + ry - rr, 0);
+    addLine(cx + rx - rr, cy + ry, cx - rx + rr, cy + ry); addArc(cx - rx + rr, cy + ry - rr, Math.PI / 2);
+    addLine(cx - rx, cy + ry - rr, cx - rx, cy - ry + rr); addArc(cx - rx + rr, cy - ry + rr, Math.PI);
+    segs.forEach(function (sg) { L += sg.len; });
+    function at(u) {
+      var d = ((u % 1) + 1) % 1 * L;
+      for (var i = 0; i < segs.length; i++) {
+        var sg = segs[i];
+        if (d <= sg.len) {
+          if (sg.k === 'l') return { x: lerp(sg.x0, sg.x1, d / sg.len), y: lerp(sg.y0, sg.y1, d / sg.len) };
+          var a = sg.a0 + d / rr;
+          return { x: sg.x + Math.cos(a) * rr, y: sg.y + Math.sin(a) * rr };
+        }
+        d -= sg.len;
+      }
+      return { x: segs[0].x0, y: segs[0].y0 };
+    }
+    // Draw the loop progressively.
+    ctx.save();
+    ctx.strokeStyle = q.linea;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    var steps = 160, shown = Math.round(steps * seg(p, 0, 0.6));
+    for (var k = 0; k <= shown; k++) { var pt = at(k / steps); if (k === 0) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y); }
+    ctx.stroke();
+    ctx.restore();
+    var stations = [];
+    for (var i = 0; i < n; i++) {
+      var sp = at(i / n);
+      stations.push(sp);
+      var ip = seg(p, 0.3 + 0.5 * i / n, 0.4 + 0.5 * i / n);
+      if (ip <= 0) continue;
+      ink.rRect(ctx, sp.x - 9 * s, sp.y - 9 * s, 18 * s, 18 * s, { fill: q.noche, color: q.linea, w: 1.4, p: ip });
+      ink.rRect(ctx, sp.x - 4 * s, sp.y - 4 * s, 8 * s, 8 * s, { fill: q.linea, stroke: false, p: ip, fillAlpha: 0.8 });
+      // Ruled arrowhead just after each station.
+      var a0 = at(i / n + 0.06), a1 = at(i / n + 0.075);
+      ink.rArrow(ctx, a0.x, a0.y, a1.x, a1.y, { color: q.linea, w: 1.4, headSize: 8 * s, p: ip });
+      if (labels[i]) {
+        var below = sp.y > cy + 1, lx = sp.x, ly = below ? sp.y + 16 * s : sp.y - 16 * s - 18 * s;
+        if (Math.abs(sp.y - cy) < ry * 0.5) { lx = sp.x + (sp.x < cx ? -14 * s : 14 * s); ly = sp.y - 9 * s; }
+        ink.text(ctx, labels[i], lx, ly, { size: 15 * Math.max(0.9, s), weight: 700, color: M().lienzo, p: ip,
+          align: Math.abs(sp.y - cy) < ry * 0.5 ? (sp.x < cx ? 'right' : 'left') : 'center', maxWidth: (Math.abs(sp.y - cy) < ry * 0.5 ? 108 : 150) * s });
+      }
+    }
+    // Return arrow (the loop goes back to "planificar").
+    if (o.returnTo != null && n > 1 && p >= 0.85) {
+      var from = stations[n - 1], to = stations[o.returnTo];
+      ctx.save();
+      ctx.strokeStyle = q.brilloVerde;
+      ctx.lineWidth = 1.4;
+      ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.quadraticCurveTo(cx, cy, to.x, to.y + 10 * s);
+      ctx.stroke();
+      ctx.restore();
+    }
+    if (o.at != null && p >= 0.6) {
+      var lp = at(o.at);
+      fig.lamp(ctx, lp.x, lp.y, 0.34 * s, { t: o.t, p: seg(p, 0.6, 1) });
+    } else if (o.at == null && p >= 0.6) {
+      fig.lamp(ctx, cx, cy, 0.5 * s, { t: o.t, p: seg(p, 0.6, 1) });
+    }
+    return { stations: stations, panel: { x: x, y: y, w: w, h: h }, at: at };
+  };
+
+  /* fig.ruledLadder(ctx, x, y, scale, opts) -> { rungs: [y], scale }: a machine ladder whose rungs
+   * sit at exact heights for their values (honest). (x, y) = bottom-center at the zero line.
+   * opts: max (domain top, 100), h (px at scale 1, 360), w (90), rungs [{ value, crack? }] (numbers
+   * parsed from data by the caller), ref (a reference value drawn as a dotted line), lampAt (value),
+   * panel (true: navy panel behind), t, p. */
+  fig.ruledLadder = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1, H = (o.h || 360) * s, w = (o.w || 90) * s, max = o.max || 100, p = o.p == null ? 1 : o.p, q = Q(), ink = I();
+    var sc = function (v) { return y - v / max * H; };
+    if (o.panel !== false) fig.panel(ctx, x - w * 1.6, y - H - 30 * s, w * 3.2, H + 50 * s, { cell: 12 });
+    var rails = seg(p, 0, 0.4);
+    ink.rLine(ctx, x - w / 2, y, x - w / 2, lerp(y, y - H, rails), { color: q.linea, w: 1.6 });
+    ink.rLine(ctx, x + w / 2, y, x + w / 2, lerp(y, y - H, rails), { color: q.linea, w: 1.6 });
+    ink.rLine(ctx, x - w * 0.8, y, x + w * 0.8, y, { color: q.linea, w: 1.2, p: rails });
+    var ys = [];
+    (o.rungs || []).forEach(function (r, i) {
+      var ry = sc(r.value), rp = seg(p, 0.35 + 0.4 * i / Math.max(1, o.rungs.length), 0.5 + 0.4 * i / Math.max(1, o.rungs.length));
+      ys.push(ry);
+      if (rp <= 0) return;
+      if (r.crack) {
+        // A hairline crack: the rung is drawn in two ruled pieces with a thin zigzag gap.
+        var mx = x + w * 0.12;
+        ink.rLine(ctx, x - w / 2, ry, mx - 3 * s, ry, { color: q.linea, w: 2.2, p: rp });
+        ink.rLine(ctx, mx + 3 * s, ry, x + w / 2, ry, { color: q.linea, w: 2.2, p: rp });
+        ink.rPoly(ctx, [mx - 2 * s, ry - 7 * s, mx + 2 * s, ry - 2 * s, mx - 2 * s, ry + 2 * s, mx + 2 * s, ry + 7 * s], { color: q.brilloMagenta, w: 1.1 });
+      } else {
+        ink.rLine(ctx, x - w / 2, ry, x + w / 2, ry, { color: q.linea, w: 2.2, p: rp });
+      }
+    });
+    if (o.ref != null && p >= 0.8) {
+      var fy = sc(o.ref);
+      ink.rLine(ctx, x - w * 1.4, fy, x + w * 1.4, fy, { color: q.brilloVerde, w: 1.2, dash: [4, 4] });
+    }
+    if (o.lampAt != null && p >= 0.5) fig.lamp(ctx, x, sc(o.lampAt) - 18 * s, 0.32 * s, { t: o.t, p: seg(p, 0.5, 0.9) });
+    return { rungs: ys, scale: sc, x0: x - w / 2, x1: x + w / 2 };
+  };
+
+  /* fig.examPanel(ctx, x, y, scale, opts) -> { x, y, w, h, sheet }: a ruled exam/benchmark panel with
+   * a fine grid and a ruled test sheet. (x, y) = top-left; 420×280 at scale 1 (or opts.w, opts.h).
+   * opts: rows (sheet lines, 6), checked (how many rows carry a ruled check, 0), lamp (true), t, p. */
+  fig.examPanel = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1, w = (o.w || 420) * s, h = (o.h || 280) * s, p = o.p == null ? 1 : o.p, q = Q(), ink = I();
+    fig.panel(ctx, x, y, w, h, { cell: 12 });
+    var sx = x + w * 0.08, sy = y + h * 0.14, sw = w * 0.5, sh = h * 0.72;
+    ink.rRect(ctx, sx, sy, sw, sh, { color: q.linea, w: 1.4, fill: q.noche, p: seg(p, 0, 0.4) });
+    ink.rLine(ctx, sx, sy + sh * 0.14, sx + sw, sy + sh * 0.14, { color: q.linea, w: 1.2, p: seg(p, 0.2, 0.5) });
+    var rows = o.rows || 6;
+    for (var i = 0; i < rows; i++) {
+      var ry = sy + sh * (0.26 + 0.68 * i / rows), rp = seg(p, 0.3 + 0.4 * i / rows, 0.45 + 0.4 * i / rows);
+      ink.rRect(ctx, sx + 10 * s, ry - 5 * s, 10 * s, 10 * s, { color: q.linea, w: 1.1, p: rp });
+      ink.rLine(ctx, sx + 28 * s, ry, sx + sw - 14 * s, ry, { color: q.linea, w: 1, p: rp, alpha: 0.7 });
+      if (i < (o.checked || 0) && rp >= 1) ink.rPoly(ctx, [sx + 11 * s, ry, sx + 15 * s, ry + 4 * s, sx + 21 * s, ry - 6 * s], { color: q.brilloVerde, w: 1.6 });
+    }
+    if (o.lamp !== false) fig.lamp(ctx, x + w * 0.78, y + h * 0.5, 0.62 * s, { t: o.t, p: seg(p, 0.3, 1) });
+    return { x: x, y: y, w: w, h: h, sheet: { x: sx, y: sy, w: sw, h: sh } };
+  };
+
+  /* fig.serverTower(ctx, x, y, scale, opts) -> { x, y, w, h }: a ruled tower of identical cells.
+   * (x, y) = bottom-center; 120×300 at scale 1. opts: rows (14), lit (status dots on, 1), p. */
+  fig.serverTower = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1, w = 120 * s, h = 300 * s, p = o.p == null ? 1 : o.p, q = Q(), ink = I();
+    var x0 = x - w / 2, y0 = y - h;
+    I().glow(ctx, x, y - h / 2, h * 0.65, q.linea, 0.22 * seg(p, 0, 0.3));
+    ink.rRect(ctx, x0, y0, w, h, { fill: q.noche, color: q.linea, w: 1.6, p: seg(p, 0, 0.3) });
+    var rows = o.rows || 14, ch = (h - 16 * s) / rows;
+    for (var i = 0; i < rows; i++) {
+      var cy = y0 + 8 * s + i * ch, rp = seg(p, 0.2 + 0.6 * i / rows, 0.3 + 0.6 * i / rows);
+      if (rp <= 0) continue;
+      ink.rRect(ctx, x0 + 8 * s, cy + 2 * s, w - 16 * s, ch - 4 * s, { color: q.rejilla, w: 1.1, fill: P().mix(q.noche, q.rejilla, 0.45), p: rp });
+      ink.rLine(ctx, x0 + 16 * s, cy + ch / 2, x0 + w * 0.55, cy + ch / 2, { color: q.linea, w: 1, alpha: 0.6, p: rp });
+      if ((o.lit == null ? 1 : o.lit) > 0) {
+        ctx.fillStyle = i % 3 === 0 ? q.brilloMagenta : q.brilloVerde;
+        ctx.globalAlpha = rp;
+        ctx.beginPath(); ctx.arc(x0 + w - 18 * s, cy + ch / 2, 2.2 * Math.max(0.8, s), 0, TAU); ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+    }
+    ink.rRect(ctx, x0 - 10 * s, y - 2, w + 20 * s, 8 * s, { fill: q.rejilla, color: q.linea, w: 1.2, p: seg(p, 0, 0.3) });
+    return { x: x0, y: y0, w: w, h: h };
+  };
+
+  /* fig.computeBlock(ctx, x, y, scale, opts) -> { x, y, w, h, litW }: a block of identical cells;
+   * opts.fraction (0..1, exact area: a vertical slice from the left lights up, e.g. a parsed 9,6%
+   * → 0.096), cols (20), rows (8), cell (px at scale 1, 16), litColor (brillo verde), p (the slice
+   * grows from zero and lands exactly). (x, y) = top-left. */
+  fig.computeBlock = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1, cols = o.cols || 20, rows = o.rows || 8, c = (o.cell || 16) * s, q = Q(), ink = I();
+    var w = cols * c, h = rows * c, p = o.p == null ? 1 : o.p;
+    ink.rRect(ctx, x, y, w, h, { fill: q.noche, stroke: false });
+    var f = clamp(o.fraction || 0, 0, 1), g = 1 - Math.pow(1 - seg(p, 0.2, 1), 3), litW = w * f * g;
+    if (litW > 0) {
+      ctx.save();
+      ctx.globalAlpha *= 0.85;
+      ctx.fillStyle = o.litColor || q.brilloVerde;
+      ctx.fillRect(x, y, litW, h);
+      ctx.restore();
+    }
+    ctx.save();
+    ctx.strokeStyle = q.linea;
+    ctx.lineWidth = 1;
+    ctx.globalAlpha *= 0.8 * seg(p, 0, 0.3);
+    ctx.beginPath();
+    for (var i = 0; i <= cols; i++) { ctx.moveTo(x + i * c, y); ctx.lineTo(x + i * c, y + h); }
+    for (var j = 0; j <= rows; j++) { ctx.moveTo(x, y + j * c); ctx.lineTo(x + w, y + j * c); }
+    ctx.stroke();
+    ctx.restore();
+    if (litW > 0 && p >= 1) ink.rLine(ctx, x + litW, y - 4, x + litW, y + h + 4, { color: M().lienzo, w: 1.6 });
+    return { x: x, y: y, w: w, h: h, litW: litW };
+  };
+
+  /* fig.lampOnWheels(ctx, x, y, scale, opts): a lamp on thin ruled wheels with a plain pennant
+   * (no names, flags or logos). (x, y) = ground contact center; ~150 px tall at scale 1.
+   * opts: pattern ('puntos' | 'rayas' | 'estrellas' | 'cuadros' | 'ondas' | 'espirales'),
+   * pennantColor (lienzo), t (wheels turn, pennant flutters), p. */
+  fig.lampOnWheels = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1, t = o.t || 0, q = Q(), ink = I(), p = o.p == null ? 1 : o.p;
+    var wr = 16 * s, ay = y - wr;
+    [-26, 26].forEach(function (dx, i) {
+      var wx = x + dx * s;
+      ink.rCircle(ctx, wx, ay, wr, { color: q.linea, w: 1.3, p: seg(p, 0, 0.4) });
+      var rot = -t * 2.2 + i;
+      ctx.save();
+      ctx.strokeStyle = q.linea; ctx.lineWidth = 1; ctx.globalAlpha *= seg(p, 0.2, 0.5);
+      ctx.beginPath();
+      for (var k = 0; k < 3; k++) {
+        var a = rot + k * Math.PI / 3;
+        ctx.moveTo(wx + Math.cos(a) * wr, ay + Math.sin(a) * wr);
+        ctx.lineTo(wx - Math.cos(a) * wr, ay - Math.sin(a) * wr);
+      }
+      ctx.stroke();
+      ctx.restore();
+    });
+    ink.rLine(ctx, x - 26 * s, ay, x + 26 * s, ay, { color: q.linea, w: 1.3, p: seg(p, 0, 0.4) });
+    ink.rLine(ctx, x, ay, x, ay - 22 * s, { color: q.linea, w: 1.3, p: seg(p, 0.1, 0.4) });
+    fig.lamp(ctx, x, ay - 52 * s, 0.6 * s, { t: t, p: seg(p, 0.2, 1) });
+    // Pennant on a thin pole behind.
+    var px = x - 30 * s, top = ay - 118 * s;
+    ink.rLine(ctx, px, ay, px, top, { color: q.linea, w: 1.2, p: seg(p, 0.3, 0.6) });
+    if (p >= 0.6) {
+      var fl = Math.sin(t * 3 + x * 0.01) * 4 * s;
+      var tri = new Path2D();
+      tri.moveTo(px, top);
+      tri.lineTo(px - 44 * s, top + 12 * s + fl);
+      tri.lineTo(px, top + 26 * s);
+      tri.closePath();
+      ctx.save();
+      ctx.fillStyle = o.pennantColor || M().lienzo;
+      ctx.fill(tri);
+      ctx.restore();
+      if (o.pattern) fig.pattern(ctx, o.pattern, px - 46 * s, top - 2, 48 * s, 30 * s, { clip: tri, spacing: 8 * s, seed: 'pen' + o.pattern });
+      ctx.save();
+      ctx.strokeStyle = q.linea; ctx.lineWidth = 1.2;
+      ctx.stroke(tri);
+      ctx.restore();
+    }
+  };
+
+  /* fig.ruledSieve(ctx, x, y, scale, opts): a ruled sieve (perfect rim, regular mesh, straight
+   * handle). (x, y) = center of the rim; 160 px across at scale 1. opts: t (letters fall through),
+   * letters (true), p. */
+  fig.ruledSieve = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1, R = 80 * s, q = Q(), ink = I(), p = o.p == null ? 1 : o.p;
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(x, y, R, R * 0.38, 0, 0, TAU);
+    ctx.fillStyle = q.noche;
+    ctx.globalAlpha *= 0.9 * seg(p, 0, 0.3);
+    ctx.fill();
+    ctx.clip();
+    ctx.globalAlpha = seg(p, 0.2, 0.6);
+    ctx.strokeStyle = q.linea; ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (var i = -R; i <= R; i += 12 * s) { ctx.moveTo(x + i, y - R); ctx.lineTo(x + i, y + R); ctx.moveTo(x - R, y + i * 0.38); ctx.lineTo(x + R, y + i * 0.38); }
+    ctx.stroke();
+    ctx.restore();
+    ctx.save();
+    ctx.strokeStyle = q.linea; ctx.lineWidth = 1.8;
+    ctx.globalAlpha *= seg(p, 0, 0.4);
+    ctx.beginPath(); ctx.ellipse(x, y, R, R * 0.38, 0, 0, TAU); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + R, y); ctx.lineTo(x + R * 1.8, y - R * 0.18); ctx.stroke();
+    ctx.restore();
+    if (o.letters !== false && p >= 0.6) {
+      var t = o.t || 0, r = E.rng.create('sieve');
+      ctx.save();
+      ctx.fillStyle = q.linea;
+      for (var k = 0; k < 9; k++) {
+        var lx = x + r.range(-R * 0.7, R * 0.7), phase = r();
+        var u = ((t * 0.35 + phase) % 1), ly = y - R * 0.6 + u * R * 1.8;
+        ctx.globalAlpha = Math.sin(Math.PI * u) * 0.9;
+        ctx.fillRect(lx, ly, 6 * s, 2 * s);
+        ctx.fillRect(lx + 2 * s, ly - 3 * s, 2 * s, 8 * s);
+      }
+      ctx.restore();
+    }
+  };
+
+  /* fig.weightsBox(ctx, x, y, scale, opts): a ruled box holding a tidy grid of identical weights.
+   * (x, y) = top-left; 220×150 at scale 1. opts: lid ('open' | 'closed' | 'transparent'),
+   * drawers (number of closed drawers below, 0), p. Returns { box, drawers: [rects] }. */
+  fig.weightsBox = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1, w = 220 * s, h = 150 * s, q = Q(), ink = I(), p = o.p == null ? 1 : o.p, lid = o.lid || 'closed';
+    ink.rRect(ctx, x, y, w, h, { fill: q.noche, color: q.linea, w: 1.6, p: seg(p, 0, 0.3) });
+    if (lid !== 'closed') {
+      var cols = 10, rows = 5, cw = (w - 30 * s) / cols, chh = (h - 30 * s) / rows;
+      ctx.save();
+      ctx.fillStyle = q.linea;
+      ctx.globalAlpha *= 0.85 * seg(p, 0.3, 0.7);
+      for (var i = 0; i < cols; i++) for (var j = 0; j < rows; j++) ctx.fillRect(x + 15 * s + i * cw + cw * 0.2, y + 15 * s + j * chh + chh * 0.2, cw * 0.6, chh * 0.6);
+      ctx.restore();
+    }
+    if (lid === 'closed' || lid === 'transparent') {
+      ctx.save();
+      if (lid === 'transparent') { ctx.globalAlpha *= 0.25; }
+      ink.rRect(ctx, x - 6 * s, y - 14 * s, w + 12 * s, 14 * s, { fill: lid === 'closed' ? q.rejilla : q.linea, color: q.linea, w: 1.4, p: seg(p, 0.4, 0.7) });
+      ctx.restore();
+      if (lid === 'transparent') ink.rRect(ctx, x - 6 * s, y - 14 * s, w + 12 * s, 14 * s, { color: q.linea, w: 1.4, p: seg(p, 0.4, 0.7) });
+    } else {
+      ink.rLine(ctx, x, y, x - 30 * s, y - 60 * s, { color: q.linea, w: 1.4, p: seg(p, 0.4, 0.7) });
+    }
+    var drawers = [];
+    for (var k = 0; k < (o.drawers || 0); k++) {
+      var dy = y + h + 8 * s + k * 40 * s;
+      ink.rRect(ctx, x, dy, w, 34 * s, { fill: q.noche, color: q.linea, w: 1.4, p: seg(p, 0.5, 0.8) });
+      ink.rLine(ctx, x + w / 2 - 14 * s, dy + 17 * s, x + w / 2 + 14 * s, dy + 17 * s, { color: q.linea, w: 2 });
+      drawers.push({ x: x, y: dy, w: w, h: 34 * s });
+    }
+    return { box: { x: x, y: y, w: w, h: h }, drawers: drawers };
+  };
+
   /* @@figures-more@@ */
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -168,6 +168,32 @@
     });
   });
 
+  section('machine', 1, function (ctx, o) {
+    var fig = E.figures, chart = E.chart, ink = E.ink;
+    ink.background(ctx, 'personas', { seed: 'gallery-machine' });
+    // Lamps at several sizes on a navy field, and one dimmed.
+    fig.panel(ctx, 20, 20, 400, 200);
+    fig.lamp(ctx, 90, 120, 1, { t: o.t, p: o.p });
+    fig.lamp(ctx, 200, 120, 0.6, { t: o.t, p: o.p });
+    fig.lamp(ctx, 280, 120, 0.3, { t: o.t, p: o.p });
+    fig.lamp(ctx, 360, 120, 0.6, { t: o.t, p: o.p, dim: 0.8 });
+    // Agent loop (V03 rótulos).
+    fig.agentLoop(ctx, 440, 20, 0.78, { labels: ['Objetivo', 'Planificar', 'Usar herramientas', 'Ejecutar', 'Verificar'], returnTo: 1, at: 0.3, t: o.t, p: o.p });
+    // Ruled ladder with rungs at exact heights (values parsed from the KB row of cap-1).
+    var lo = chart.parseValue('~12%').value, hi = chart.parseValue('66,3%').value, ref = chart.parseValue('72,35%').value;
+    fig.ruledLadder(ctx, 980, 300, 0.75, { max: 100, rungs: [{ value: lo }, { value: hi, crack: true }], ref: ref, lampAt: hi, t: o.t, p: o.p });
+    fig.examPanel(ctx, 20, 250, 0.8, { checked: 3, t: o.t, p: o.p });
+    fig.serverTower(ctx, 470, 560, 0.9, { p: o.p });
+    fig.computeBlock(ctx, 560, 300, 0.75, { fraction: chart.parseValue('9,6%').value / 100, p: o.p });
+    fig.computeBlock(ctx, 560, 420, 0.75, { fraction: chart.parseValue('22,6%').value / 100, p: o.p });
+    fig.panel(ctx, 20, 500, 400, 210);
+    ['puntos', 'rayas', 'estrellas'].forEach(function (pt, i) { fig.lampOnWheels(ctx, 90 + i * 120, 690, 0.8, { pattern: pt, t: o.t, p: o.p }); });
+    fig.panel(ctx, 820, 330, 450, 380);
+    fig.ruledSieve(ctx, 920, 440, 0.8, { t: o.t, p: o.p });
+    fig.weightsBox(ctx, 1030, 380, 0.85, { lid: 'transparent', drawers: 2, p: o.p });
+    fig.weightsBox(ctx, 850, 560, 0.7, { lid: 'closed', p: o.p });
+  });
+
   section('tags', 1, function (ctx, o) {
     var ink = E.ink, tags = E.tags, L = E.palette.legend;
     ink.background(ctx, 'personas', { seed: 'gallery-tags' });

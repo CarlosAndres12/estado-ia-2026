@@ -1322,13 +1322,13 @@
     g.fillStyle = q.noche;
     g.fillRect(0, 0, w, h);
     g.lineWidth = 1;
-    g.strokeStyle = P().rgba(q.rejilla, 0.9);
+    g.strokeStyle = P().rgba(q.rejilla, 0.72);
     g.beginPath();
     var x, y;
     for (x = cell; x < w; x += cell) { g.moveTo(Math.round(x) + 0.5, 0); g.lineTo(Math.round(x) + 0.5, h); }
     for (y = cell; y < h; y += cell) { g.moveTo(0, Math.round(y) + 0.5); g.lineTo(w, Math.round(y) + 0.5); }
     g.stroke();
-    g.strokeStyle = P().rgba(P().mix(q.rejilla, q.linea, 0.3), 0.75);
+    g.strokeStyle = P().rgba(P().mix(q.rejilla, q.linea, 0.25), 0.5);
     g.beginPath();
     for (x = cell * 5; x < w; x += cell * 5) { g.moveTo(Math.round(x) + 0.5, 0); g.lineTo(Math.round(x) + 0.5, h); }
     for (y = cell * 5; y < h; y += cell * 5) { g.moveTo(0, Math.round(y) + 0.5); g.lineTo(w, Math.round(y) + 0.5); }
