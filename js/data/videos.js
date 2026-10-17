@@ -121,6 +121,7 @@ EIA.data.videos = [
           gobernanza: { text: 'Gobernanza' },
           dosTercios: { text: 'Cerca de dos tercios no escalan la IA a toda la organización', cifras: ['adop-4'] },
           remateAprox: { text: '≈' },
+          etiquetaEbit: { text: 'reporta algún impacto en EBIT' },
           cifraEbit: { text: '39%', cifras: ['adop-5'] },
           notaEbit: { text: 'casi siempre menor de 5%', cifras: ['adop-5'] }
         },
@@ -141,7 +142,12 @@ EIA.data.videos = [
         min: 12,
         seVe: 'Sobre un escritorio, una pequeña lámpara de IA brilla junto a un calendario lleno de días marcados, mientras una sola moneda sigue pequeña; el sello «Uso no es valor» se estampa en la página.',
         rotulos: {
-          sello: { text: 'Uso no es valor' }
+          sello: { text: 'Uso no es valor' },
+          exige: { text: 'El valor exige' },
+          redisenar: { text: 'rediseñar flujos de trabajo' },
+          integrar: { text: 'integrar datos' },
+          formar: { text: 'formar personas' },
+          medir: { text: 'medir contra una línea base' }
         },
         lines: [
           {
@@ -200,7 +206,9 @@ EIA.data.videos = [
         id: 'pregunta',
         min: 12,
         seVe: 'Una página de libreta con una gran pregunta escrita a mano y renglones vacíos; un lápiz espera; las estrellas flotan.',
-        rotulos: {},
+        rotulos: {
+          pregunta: { text: '¿Cuánto valor verificable produce la IA, para quién y con qué controles?' }
+        },
         lines: [
           {
             voice: 'narrador',
