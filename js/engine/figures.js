@@ -137,7 +137,7 @@
 
   // Irregular star: 5–8 strokes of different lengths, sometimes a dot or a small colored center.
   defSign('estrella', function (b, o) {
-    var r = b.r, n = o.rays || r.int(5, 8), a0 = r() * TAU, strokes = Math.floor(n / 2);
+    var r = b.r, n = o.rays || r.int(6, 9), a0 = r() * TAU, strokes = Math.max(3, Math.floor(n / 2));
     var center = o.center !== undefined ? o.center : (r() < 0.35 ? 'color' : r() < 0.45 ? 'dot' : null);
     if (center === 'color') b.blob(0, 0, 9, 8, { fill: '@a', line: false, irr: 0.18 });
     // Crossing strokes (each one gives two points of different lengths), plus a lone ray when odd.
@@ -145,9 +145,9 @@
       var a = a0 + i / strokes * Math.PI + r.jitter(0.2), l1 = r.range(26, 47), l2 = r.range(18, 44);
       var cx = r.jitter(2.5), cy = r.jitter(2.5);
       b.stroke([Math.cos(a) * l1, Math.sin(a) * l1, cx, cy, -Math.cos(a) * l2, -Math.sin(a) * l2],
-        { w: r.range(5.5, 8), profile: 'swell' });
+        { w: r.range(3.8, 5.8), profile: 'swell', press: 0.25 });
     }
-    if (n % 2) ray(b, a0 + Math.PI / (2 * strokes) + r.jitter(0.2), 3, r.range(22, 38), r.range(4.5, 6.5), r.jitter(2));
+    if (n % 2) ray(b, a0 + Math.PI / (2 * strokes) + r.jitter(0.2), 4, r.range(22, 38), r.range(3.4, 5), r.jitter(2));
     if (center === 'dot') b.dot(0, 0, 5.5);
   }, { colors: function () { return { a: M().amarillo }; }, variant: function (o) { return (o.rays || '') + '|' + (o.center === undefined ? '' : o.center); } });
 
