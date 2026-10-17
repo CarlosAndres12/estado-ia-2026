@@ -147,6 +147,13 @@ zero errors; 9 videos play in sync; 17 láminas render/print with corrected figu
 - Concurrency: temps 39.8 °C at load ~1.3 under the caps → up to three workers (one non-heavy). Running:
   V01 (T10), T08 (interactions), D01–D06 (T09). Re-check temperature at each notification.
 
+- V01 done (cherry-picked 72c2fb7, 1708522): 8 scenes, est. 2:47 (target 2:30–3:30), determinism ok,
+  checker 0 errors, 175/175 tests; 46 °C after merge. Engine wishes collected for a later engine-polish
+  pass (after parallel video/lámina work): `fig.iceberg` waterline depth/no-line + mass shape access;
+  `fig.marNocturno` star positions + vertical offset; `chart.unitGrid` approximate cap; `ink.letter`
+  cached-layer fade; `fig.road` station size; snapshots sample mid-chunk instead of line midpoint.
+- V03 launched.
+
 ## Next step
 
 Merge wave 1 branches as they finish (verify each: checker, tests, headless console), then wave 2:
