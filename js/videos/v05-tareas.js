@@ -59,9 +59,8 @@
 
   var CUES = {
     oficina: { puestos: [0, 'qué puestos', 'word'], pero: [0, 'Pero la IA', 'chunk'], tareas: [0, 'tareas antes', 'word'] },
-    exposicion: { cifra: [0, '25%', 'chunk'], alguna: [0, 'alguna exposición', 'word'], paises: [0, '34%', 'chunk'],
-      altos: [0, '34%', 'word'], bajos: [0, '11%', 'word'], masAlta: [1, '3,3%', 'chunk'], categoria: [1, 'exposición más alta', 'word'] },
-    'tres-conceptos': { distintos: [0, 'Son tres', 'chunk'], expuesta: [0, 'Una ocupación expuesta', 'chunk'],
+    exposicion: { cifra: [0, '25%', 'chunk'], paises: [0, '34%', 'chunk'], masAlta: [1, '3,3%', 'chunk'] },
+    'tres-conceptos': { expuesta: [0, 'Una ocupación expuesta', 'chunk'],
       automatizacion: [0, 'La automatización', 'chunk'], integracion: [0, 'integración organizacional', 'word'],
       desplazamiento: [1, 'Y el desplazamiento', 'chunk'], desempleo: [1, 'exposición no es desempleo', 'word'] },
     desigual: { administrativas: [0, 'Las ocupaciones administrativas', 'chunk'], medios: [0, 'medios', 'word'], software: [0, 'software', 'word'],
@@ -843,7 +842,8 @@
       // «≈» beside the dotted cap at the exact value.
       ink.text(ctx, env.pal.legend.words.aprox, gb.x1 + 12, ty + 2, { size: 32, weight: 700, p: lp });
     }
-    sourceTag(ctx, env, 'trab-4', ENT.tag.x, ty + T.h + 26, { x: gb.x1 + 2, y: ty + T.h }, seg(a0, win[0] + 0.02, win[1] + 0.03));
+    // The tag comes with the label (it already holds numbers) and stays tied to the bar's value edge.
+    sourceTag(ctx, env, 'trab-4', ENT.tag.x, ty + T.h + 26, { x: gb.x1 + 2, y: ty + T.h }, hp);
 
     // Line 2: the hypothesis, drawn as one: a dotted arrow from the lost rung to the small lamp.
     var h1 = beat(a1, 0.01, 0.2), h2 = beat(a1, C.automatizando - 0.04, C.automatizando + 0.1);
@@ -956,7 +956,7 @@
       ctx.save();
       ctx.globalAlpha *= clamp01(e * 2);
       skillSign(ctx, s, env, sk[1], sk[2] + 28, y, 1);
-      ink.text(ctx, rot(s, sk[0]), sk[2] + 66, y - 17, { size: 27, weight: 700 });
+      ink.text(ctx, rot(s, sk[0]), sk[2] + (sk[1] === 'portatil' ? 80 : 66), y - 17, { size: 27, weight: 700 });
       ctx.restore();
     }
   }
@@ -999,9 +999,18 @@
     label(ctx, env, rot(s, 'titulo'), S.title.x, S.title.y, S.title.size, { seed: 'v05:siete', underline: true, maxWidth: 1100, p: beat(a0, 0.01, 0.3) });
     var cp = out3(beat(a0, 0.02, 0.12));
     if (cp <= 0) return;
+    var opens = [], order = [], j;
     for (i = 0; i < 7; i++) {
       var cue = s.cue ? s.cue(S.cues[i][0], S.cues[i][1], 'word') : null;
-      var open = inOut3(beat(lines[S.cues[i][0]], (cue == null ? 0.5 : cue) - 0.04, (cue == null ? 0.5 : cue) + 0.06));
+      cue = cue == null ? 0.5 : cue;
+      opens.push(inOut3(beat(lines[S.cues[i][0]], cue - 0.04, cue + 0.06)));
+    }
+    // Cards still in the closed stack lie under the opened ones (the next to open on top of it).
+    for (i = 6; i >= 0; i--) if (opens[i] <= 0) order.push(i);
+    for (i = 0; i < 7; i++) if (opens[i] > 0) order.push(i);
+    for (j = 0; j < order.length; j++) {
+      i = order[j];
+      var open = opens[i];
       var a = lerp((i - 3) * 0.02, S.angles[i], open), r = lerp(S.r * 0.92, S.r, open);
       var cx = S.pivot.x + Math.sin(a) * r, cy = S.pivot.y - Math.cos(a) * r + (1 - open) * 30;
       ctx.save();
@@ -1015,7 +1024,8 @@
         ctx.translate(0, -38);
         capacityIcon(ctx, s, env, i, ip);
         ctx.restore();
-        ink.text(ctx, rot(s, S.keys[i]), 0, 22, { size: 21, weight: 700, align: 'center', maxWidth: S.w - 16, lineHeight: 1.08, p: ip });
+        ink.text(ctx, rot(s, S.keys[i]), 0, 18, { size: 21, weight: 700, align: 'center', maxWidth: S.w - 26, maxLines: 2, fit: true, minSize: 15,
+          lineHeight: 1.08, p: ip });
       }
       ctx.restore();
     }
