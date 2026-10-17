@@ -572,6 +572,9 @@ EIA.data.videos = [
         min: 14,
         seVe: 'Tres medidores reglados, de MMMU, GPQA y SWE-bench; en cada uno, una flecha crece exactamente lo que subió, en una misma escala: «+18,8», «+48,9», «+67,3 puntos»; luego, un medidor aparte con todas las marcas llenas se desdibuja («ya no distingue») y a su lado se dibujan instrumentos nuevos: «evaluaciones dinámicas», «tareas no contaminadas», «varios intentos», «fuera de distribución» y «daños».',
         rotulos: {
+          medidorMmmu: { text: 'MMMU', cifras: ['cap-4'] },
+          medidorGpqa: { text: 'GPQA', cifras: ['cap-4'] },
+          medidorSwe: { text: 'SWE-bench', cifras: ['cap-4'] },
           subidaMmmu: { text: '+18,8', cifras: ['cap-4'] },
           subidaGpqa: { text: '+48,9', cifras: ['cap-4'] },
           subidaSwe: { text: '+67,3 puntos', cifras: ['cap-4'] },
@@ -615,10 +618,13 @@ EIA.data.videos = [
         min: 16,
         seVe: 'Una escalera reglada de máquina; la lámpara sube del peldaño «~12%» al «66,3%»; una línea punteada marca la referencia humana, «72,35%»; el peldaño de arriba muestra una grieta fina, «≈ 1 de cada 3 intentos falla»; luego, una segunda escalera, aparte, para Terminal-Bench 2.0: «20% (febrero de 2025) → 77,3% (inicios de 2026)».',
         rotulos: {
+          escaleraOsworld: { text: 'OSWorld', cifras: ['cap-1'] },
           inicio: { text: '~12%', cifras: ['cap-1'] },
           final: { text: '66,3%', cifras: ['cap-1'] },
+          referenciaEtiqueta: { text: 'referencia humana', cifras: ['cap-1'] },
           referenciaHumana: { text: '72,35%', cifras: ['cap-1'] },
           grieta: { text: '≈ 1 de cada 3 intentos falla', cifras: ['cap-1'] },
+          escaleraTerminal: { text: 'Terminal-Bench 2.0', cifras: ['cap-2'] },
           terminalBench: { text: '20% (febrero de 2025) → 77,3% (inicios de 2026)', cifras: ['cap-2'] }
         },
         lines: [
@@ -718,7 +724,14 @@ EIA.data.videos = [
         id: 'peloton',
         min: 16,
         seVe: 'Seis lámparas idénticas suben una colina sobre ruedas regladas y delgadas, muy juntas cerca de la cima; cada una arrastra un pequeño banderín liso con un patrón distinto (puntos, rayas, estrellas, cuadros, ondas, espirales); no hay nombres, banderas ni logotipos.',
-        rotulos: {},
+        rotulos: {
+          costo: { text: 'costo' },
+          latencia: { text: 'latencia' },
+          confiabilidad: { text: 'confiabilidad' },
+          privacidad: { text: 'privacidad' },
+          integracion: { text: 'integración' },
+          apertura: { text: 'apertura' }
+        },
         lines: [
           {
             voice: 'narrador',
