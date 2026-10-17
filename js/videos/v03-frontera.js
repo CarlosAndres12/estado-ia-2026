@@ -1240,7 +1240,7 @@
       var I = TEN.inset;
       panelIn(ctx, env, I, ip, 16);
       var days = val(env, rot(s, 'duplicacionReciente')), runD = days / 30.44 * TEN.mpx;
-      var L2 = ink.text(ctx, rot(s, 'duplicacionReciente'), I.x + 18, I.y + 16, { size: 21, weight: 700, color: m.lienzo, maxWidth: I.w - 36,
+      ink.text(ctx, rot(s, 'duplicacionReciente'), I.x + 18, I.y + 16, { size: 21, weight: 700, color: m.lienzo, maxWidth: I.w - 36,
         lineHeight: 1.14, p: seg(ip, 0.4, 1) });
       var bx = I.x + 60, by = I.y + I.h - 40, sp = seg(ip, 0.5, 1);
       ctx.save();
@@ -1253,7 +1253,6 @@
       ink.rLine(ctx, bx + runD, by - TEN.g, bx + runD * 2, by - TEN.g, { color: q.brilloVerde, w: 1.8, dash: [3, 3] });
       ink.rLine(ctx, bx + runD * 2, by - TEN.g, bx + runD * 2, by - TEN.g * 2, { color: q.brilloVerde, w: 1.8 });
       ctx.restore();
-      void L2;
     }
   }
 
@@ -1572,7 +1571,7 @@
   }
 
   function setup(env) {
-    var ink = env.ink, m = env.pal.mundo, q = env.pal.maquina, video = findVideo(env.id || 'v03'), i, k;
+    var ink = env.ink, m = env.pal.mundo, video = findVideo(env.id || 'v03'), i, k;
     var st = {};
 
     // pregunta: the task's steps (the count of its line, «una tarea de 20 pasos»), laid out as a
@@ -1753,7 +1752,6 @@
     // peloton: as many lamps as the lámina D5 counts for the converging developers (its datos).
     var d05 = ((EIA.data && EIA.data.deck) || []).filter(function (d) { return d.id === 'd05'; })[0];
     st.pel.n = d05 && d05.datos && d05.datos.lamparas ? d05.datos.lamparas.valor : env.pal.legend.patterns.length;
-    void q;
     return st;
   }
 
