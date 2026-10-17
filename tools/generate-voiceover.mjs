@@ -52,10 +52,23 @@ export const CACHE_DIR = path.join(HERE, '.cache');
 
 export const SAMPLE_RATE = 24000; // clips are decoded and mixed at the voices' own rate
 export const FAST_CPS = 17;       // subtitle chunks faster than this are listed in the report
-export const DRY_RUN_WPS = 2.3;
+export const DRY_RUN_WPS = 2.3;   // prompt §8.3 default; an engine may set its own `dryRunWps` in the config
+export const TAIL_SECONDS = 0.15; // silence kept after a clip's last word (Edge clips end with ~0.9 s of it)
+
+/**
+ * Drops a clip's trailing silence after its last spoken word, keeping a short tail, so the gap between
+ * lines is the timeline's own 0.5 s instead of 0.5 s plus the engine's padding. The start is never
+ * trimmed, so word and bookmark offsets stay valid. Without word timings the clip is left whole.
+ */
+export function trimTail(pcm, words, sampleRate, tail = TAIL_SECONDS) {
+  if (!words || !words.length) return pcm;
+  const last = words.reduce((end, w) => Math.max(end, (Number(w.start) || 0) + (Number(w.dur) || 0)), 0);
+  const keep = Math.ceil((last + tail) * sampleRate);
+  return keep > 0 && keep < pcm.length ? pcm.subarray(0, keep) : pcm;
+}
 
 const HELP = `Usage: node tools/generate-voiceover.mjs [--dry-run] [--only v01,v04] [--force] [--out <dir>]
-  --dry-run   estimate durations at ${DRY_RUN_WPS} words/s and report; no network, no ffmpeg, no files
+  --dry-run   estimate durations (engine dryRunWps, default ${DRY_RUN_WPS} words/s) and report; no network, no ffmpeg, no files
   --only      generate only these videos (the manifest keeps the others)
   --force     ignore the clip cache (tools/.cache/tts/)
   --out       write assets/audio and assets/captions under <dir> (default: the repository)`;
@@ -281,8 +294,9 @@ export async function generate(opts = {}) {
 
   if (opts.dryRun) {
     const results = plans.map((plan) => {
-      const lineDurations = Object.fromEntries(plan.lines.map((l) => [l.key, estimateLine(l)]));
-      const tl = layout.build(plan.video, { lineDurations, chunk: chunkOption(plan), wps: DRY_RUN_WPS });
+      const wps = Number(config[config.engine] && config[config.engine].dryRunWps) || DRY_RUN_WPS;
+      const lineDurations = Object.fromEntries(plan.lines.map((l) => [l.key, estimateLine(l, wps)]));
+      const tl = layout.build(plan.video, { lineDurations, chunk: chunkOption(plan), wps });
       return { plan, tl, report: videoReport({ plan, tl, dryRun: true }) };
     });
     const pending = jobs.filter((job) => !cached(job)).length;
@@ -331,10 +345,12 @@ export async function generate(opts = {}) {
     for (const line of plan.lines) {
       const job = jobs.find((j) => j.line === line);
       if (synthesizedKeys.has(job.clip.key)) synthesized++;
-      const pcm = await decodeClip(job.clip.audio, { sampleRate: SAMPLE_RATE });
-      if (!pcm.length) throw new Error(`${id} ${line.key}: the clip ${job.clip.audio} decodes to no audio; run again with --force`);
-      const duration = pcm.length / SAMPLE_RATE;
       const meta = JSON.parse(fs.readFileSync(job.clip.meta, 'utf8'));
+      const decoded = await decodeClip(job.clip.audio, { sampleRate: SAMPLE_RATE });
+      if (!decoded.length) throw new Error(`${id} ${line.key}: the clip ${job.clip.audio} decodes to no audio; run again with --force`);
+      const tail = Number.isFinite(Number(config.mix && config.mix.tailSeconds)) ? Number(config.mix.tailSeconds) : TAIL_SECONDS;
+      const pcm = trimTail(decoded, meta.words, SAMPLE_RATE, tail);
+      const duration = pcm.length / SAMPLE_RATE;
       const info = chunkOffsetsFor(line, meta, duration);
       samples.set(line.key, pcm);
       lineDurations[line.key] = duration;

@@ -9,7 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { parseArgs, loadConfig, planVideo, estimateLine, generate } from '../generate-voiceover.mjs';
+import { parseArgs, loadConfig, planVideo, estimateLine, generate, trimTail, TAIL_SECONDS } from '../generate-voiceover.mjs';
 import { loadVoiceData, createLayout } from '../lib/voice-layout.mjs';
 import { wavBuffer } from '../lib/audio.mjs';
 import { readManifest } from '../lib/voice-assets.mjs';
@@ -136,9 +136,10 @@ test('full run with a fake engine: clips, cache, timeline, mix, manifest, captio
   const entry = manifest.v99;
   assertUsable(entry, mini);
   assert.equal(entry.file, 'assets/audio/v99.mp3');
-  // Each line lasts exactly its clip: 0.1 + 0.3 per spoken word + 0.2 s.
+  // Each line lasts until its last word ends (0.1 + 0.3 per earlier word + 0.24 s) plus the 0.15 s tail:
+  // the fake clip's 0.2 s of trailing silence is trimmed, its start is not.
   const spokenWords = result.plan.lines.map((l) => l.spoken.split(/\s+/).length);
-  entry.lines.forEach((l, i) => assert.ok(Math.abs(l.dur - (0.3 + spokenWords[i] * 0.3)) < 0.002, `${l.dur}`));
+  entry.lines.forEach((l, i) => assert.ok(Math.abs(l.dur - (0.1 + (spokenWords[i] - 1) * 0.3 + 0.24 + TAIL_SECONDS)) < 0.002, `${l.dur}`));
   // The second chunk of the first line starts at its first word.
   const first = result.plan.lines[0];
   assert.ok(first.chunks.length > 1);
@@ -157,4 +158,13 @@ test('full run with a fake engine: clips, cache, timeline, mix, manifest, captio
   assert.equal(calls.length, 3);
   assert.match(again.results[0].report, /clips: 3 \(0 synthesized, 3 cached\)/);
   assert.deepEqual(readManifest(path.join(out, 'assets/audio/manifest.js')).v99, entry);
+});
+
+test('trimTail keeps the start and a short tail after the last word', () => {
+  const rate = 1000;
+  const pcm = new Int16Array(2000); // 2 s clip, last word ends at 1.2 s
+  const words = [{ text: 'a', start: 0.1, dur: 0.4 }, { text: 'b', start: 0.7, dur: 0.5 }];
+  assert.equal(trimTail(pcm, words, rate, 0.15).length, 1350);
+  assert.equal(trimTail(pcm, [], rate, 0.15).length, 2000);          // no word timings: untouched
+  assert.equal(trimTail(pcm, [{ start: 1.95, dur: 0.1 }], rate).length, 2000); // tail beyond the end: untouched
 });

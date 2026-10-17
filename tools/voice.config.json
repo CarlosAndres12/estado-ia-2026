@@ -3,25 +3,46 @@
   "edge": {
     "python": "",
     "voices": {
-      "narrador": { "name": "es-MX-JorgeNeural", "pitch": "+0Hz" },
-      "lectora":  { "name": "es-MX-DaliaNeural", "pitch": "+0Hz" }
+      "narrador": {
+        "name": "es-MX-JorgeNeural",
+        "pitch": "+0Hz"
+      },
+      "lectora": {
+        "name": "es-MX-DaliaNeural",
+        "pitch": "+0Hz"
+      }
     },
-    "rate": { "default": "0%" },
+    "rate": {
+      "default": "0%"
+    },
     "concurrency": 2,
     "timeoutSeconds": 60,
-    "retries": 4
+    "retries": 4,
+    "dryRunWps": 2.9
   },
   "azure": {
     "keyEnv": "AZURE_SPEECH_KEY",
     "regionEnv": "AZURE_SPEECH_REGION",
     "outputFormat": "Riff24Khz16BitMonoPcm",
     "voices": {
-      "narrador": { "name": "es-MX-JorgeNeural" },
-      "lectora":  { "name": "es-MX-DaliaNeural" }
+      "narrador": {
+        "name": "es-MX-JorgeNeural"
+      },
+      "lectora": {
+        "name": "es-MX-DaliaNeural"
+      }
     },
-    "rate": { "default": "0%" },
+    "rate": {
+      "default": "0%"
+    },
     "concurrency": 4
   },
   "lexicon": {},
-  "mix": { "loudnessLUFS": -16, "truePeakDB": -1.5, "mp3Bitrate": "128k", "sampleRate": 44100 }
+  "mix": {
+    "loudnessLUFS": -16,
+    "truePeakDB": -1.5,
+    "mp3Bitrate": "128k",
+    "sampleRate": 44100,
+    "tailSeconds": 0.15
+  }
 }
