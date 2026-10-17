@@ -31,9 +31,10 @@
   var DIAL = { cx: 280, cy: 172, r: 94, max: 500, ticks: 10 };
   var KNOBS = [{ x: 82, y: 226, color: 'rojo', turn: -0.7 }, { x: 476, y: 226, color: 'amarillo', turn: 0.5 }];
   var PILOT = { x: 62, y: 40, r: 10 };
-  var TAG = { x: 566, y: -6, scale: 0.8 };
+  // Tags never wrap their source label: maxWidth leaves room for the longest one.
+  var TAG = { x: 566, y: -6, scale: 0.8, maxWidth: 360 };
   var READER = { x: 694, y: 282, scale: 1.76 };
-  var COLS = { tagGap: 18, tagScale: 0.86, sign: 74, size: 24 };
+  var COLS = { tagGap: 18, tagScale: 0.86, maxWidth: 340, sign: 74, size: 24 };
 
   // The same points array while its numbers stay the same, so the engine's geometry cache (keyed by
   // the array) is reused frame after frame instead of rebuilding the stroke.
@@ -140,7 +141,8 @@
       (r.cifras || []).forEach(function (id) { if (ids.indexOf(id) < 0) ids.push(id); });
     });
     if (!ids.length || !anchors.length) return;
-    var tg = env.tags.sourceTag(ctx, ids, { x: X(TAG.x), y: Y(TAG.y), scale: TAG.scale * k, scope: 'auto', anchor: anchors[0] });
+    var tg = env.tags.sourceTag(ctx, ids, { x: X(TAG.x), y: Y(TAG.y), scale: TAG.scale * k, scope: 'auto', maxWidth: TAG.maxWidth,
+      anchor: anchors[0] });
     for (var i = 1; i < anchors.length; i++) {
       var a = anchors[i], hx = tg.hole.x, hy = tg.hole.y;
       ink.line(ctx, stable(env, 'thread' + i, [a.x, a.y, (a.x + hx) / 2, (a.y + hy) / 2 + 8 * k, hx, hy]), { w: 2 * TAG.scale * k, profile: 'hair',
@@ -153,7 +155,7 @@
     var items = (d && d.items) || [], n = items.length;
     if (!n) return;
     var ink = env.ink, fig = env.fig, legend = env.pal.legend.riesgos || [];
-    var ids = d.cifras || [], to = { scale: COLS.tagScale, scope: 'auto' };
+    var ids = d.cifras || [], to = { scale: COLS.tagScale, scope: 'auto', maxWidth: COLS.maxWidth };
     var tm = ids.length ? env.tags.measureTag(ctx, ids, to) : { w: 0, h: 0 };
     var cardW = r.w - (tm.w ? tm.w + COLS.tagGap + 8 : 0), cardH = r.h - 6, colW = cardW / n, y = r.y + 2;
     ink.card(ctx, r.x, y, cardW, cardH, { seed: 'd13-cols', weight: 4, radius: 16, peek: env.pal.mundo.amarillo, peekCorner: 'tl' });
@@ -168,7 +170,7 @@
     });
     if (ids.length) {
       env.tags.sourceTag(ctx, ids, { x: r.x + cardW + COLS.tagGap, y: y + (cardH - tm.h) / 2, scale: to.scale, scope: to.scope,
-        anchor: { x: r.x + cardW + 2, y: y + cardH / 2 } });
+        maxWidth: to.maxWidth, anchor: { x: r.x + cardW + 2, y: y + cardH / 2 } });
     }
   }
 
