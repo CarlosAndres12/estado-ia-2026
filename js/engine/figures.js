@@ -1428,6 +1428,20 @@
   // top-left corner; it draws its own ground unless opts.ground === false, leaves generous empty
   // space for the subject, and returns anchor points. Finished places are cached as layers.
 
+  /* fig.inRect(ctx, rect, fn): draws a 1280×720 stage into any rect, cover-fitted, centered and
+   * clipped: fn(x, y, scale) receives the stage origin and scale to pass to a place function.
+   * Example: fig.inRect(ctx, s.zones.ilustracion, function (x, y, k) { fig.river(ctx, x, y, k); }). */
+  fig.inRect = function (ctx, r, fn) {
+    var k = Math.max(r.w / 1280, r.h / 720), x = r.x + (r.w - 1280 * k) / 2, y = r.y + (r.h - 720 * k) / 2;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(r.x, r.y, r.w, r.h);
+    ctx.clip();
+    var out = fn(x, y, k);
+    ctx.restore();
+    return out;
+  };
+
   function placeDraw(ctx, key, x, y, s, o, build) {
     var p = o.p == null ? 1 : o.p;
     var d = cached('place|' + key, build);
@@ -1985,7 +1999,7 @@
   // ---- Bridges
 
   /* fig.bridge(ctx, x, y, scale, opts) -> { left, right, end }: a bridge over an abyss from one bank to
-   * the other, its last spans still scaffolding. (x, y) = middle of the deck; 400 px wide at scale 1.
+   * the other, its last spans still scaffolding. (x, y) = middle of the deck; 560 × 200 px at scale 1.
    * opts: built (0..1 share of the deck finished, 0.72), labels { left, right } (verbatim, from data),
    * p, seed. */
   defProp('bridge', function (b, o) {

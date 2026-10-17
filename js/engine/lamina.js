@@ -133,7 +133,7 @@
   lamina.bigFigure = function (ctx, item, r, o) {
     o = o || {};
     var ink = I(), p = o.p == null ? 1 : o.p, seed = o.seed || ('fig:' + item.valor);
-    var vs = clamp(r.h * 0.42, 40, 70);
+    var vs = clamp(r.h * 0.3, 36, 66);
     var vl = ink.measureLetter(ctx, item.valor, { size: vs, maxWidth: r.w - 10, maxLines: 1, seed: seed, underline: false, stars: false, counters: 0.5 });
     var rr = E.rng.create(seed);
     ink.blob(ctx, r.x + vl.w * 0.32, r.y + vl.h * 0.55, Math.max(28, vl.w * 0.36), vl.h * 0.42, {
@@ -143,9 +143,14 @@
     var lab = item.etiqueta ? ink.text(ctx, item.etiqueta, r.x, ly, { size: 19, maxWidth: r.w, maxLines: 3, fit: true, minSize: 14, p: seg(p, 0.4, 0.9) }) : { h: 0, w: 0 };
     var out = { valueBox: { x: r.x, y: r.y, w: vl.w, h: vl.h }, labelBox: { x: r.x, y: ly, w: lab.w, h: lab.h }, tagBox: null };
     if (item.cifras && item.cifras.length && E.tags) {
+      // The tag fits the rest of the row: with its scope when there is room, without it otherwise.
+      var room = r.y + r.h - (ly + lab.h + 8) - 4;
+      var to = { scale: 0.8, maxWidth: r.w - 10, scope: 'auto' };
+      if (E.tags.measureTag(ctx, item.cifras, to).h > room) to.scope = false;
+      if (E.tags.measureTag(ctx, item.cifras, to).h > room) to.scale = 0.7;
       out.tagBox = E.tags.sourceTag(ctx, item.cifras, {
-        x: r.x + 6, y: ly + lab.h + 10, anchor: { x: r.x + Math.min(vl.w, 90) * 0.5, y: r.y + vl.h * 0.92 },
-        p: seg(p, 0.5, 1), scale: 0.86, maxWidth: r.w - 10, scope: r.h > 150 ? 'auto' : false });
+        x: r.x + 6, y: ly + lab.h + 8, anchor: { x: r.x + Math.min(vl.w, 90) * 0.5, y: r.y + vl.h * 0.92 },
+        p: seg(p, 0.5, 1), scale: to.scale, maxWidth: to.maxWidth, scope: to.scope });
     }
     return out;
   };

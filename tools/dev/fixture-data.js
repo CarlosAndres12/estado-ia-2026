@@ -189,7 +189,7 @@
       draw: function (ctx, s, env) {
         var r = s.zones.ilustracion, rot = s.lamina.rotulos, fig = env.fig;
         if (fig.bridge) {
-          fig.bridge(ctx, r.x + r.w / 2, r.y + r.h * 0.62, r.w / 400, { seed: 'd07', built: 0.72, t: s.t,
+          fig.bridge(ctx, r.x + r.w / 2, r.y + r.h * 0.4, r.w / 580, { seed: 'd07', built: 0.72, t: s.t,
             labels: { left: rot.uso.text, right: rot.valor.text } });
         }
       },
@@ -204,8 +204,8 @@
       setup: function () { return null; },
       draw: function (ctx, s, env) {
         var r = s.zones.ilustracion, fig = env.fig;
-        if (fig.river) fig.river(ctx, r.x, r.y, r.w / 1280, { seed: 'd06', coins: true, t: s.t, h: r.h * 1280 / r.w });
-        if (fig.serverTower) fig.serverTower(ctx, r.x + r.w - 90, r.y + r.h - 10, 1, { seed: 'd06' });
+        if (fig.river) fig.inRect(ctx, r, function (x, y, k) { fig.river(ctx, x, y, k, { seed: 'd06', coins: true, t: s.t }); });
+        if (fig.serverTower) fig.serverTower(ctx, r.x + r.w - 80, r.y + r.h - 6, Math.min(1, r.h / 330), { seed: 'd06' });
       }
     };
   }
