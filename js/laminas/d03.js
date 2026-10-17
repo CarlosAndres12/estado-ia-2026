@@ -34,6 +34,15 @@
   function lerp(a, b, t) { return a + (b - a) * t; }
   function slopeX(m, side, y) { return lerp(m.x, side < 0 ? m.l : m.r, (y - m.top) / (BASE - m.top)); }
 
+  // The same points array while its numbers stay the same, so the engine's geometry cache (keyed by
+  // the array) is reused frame after frame instead of rebuilding the stroke.
+  function stable(env, key, pts) {
+    var prev = env.cache.get(key);
+    if (prev && prev.length === pts.length && prev.every(function (v, i) { return v === pts[i]; })) return prev;
+    env.cache.set(key, pts);
+    return pts;
+  }
+
   function fitOf(z) {
     var k = Math.min(z.w / NOMINAL.w, z.h / NOMINAL.h);
     return { k: k, x: z.x + (z.w - NOMINAL.w * k) / 2, y: z.y + (z.h - NOMINAL.h * k) / 2 };
@@ -107,7 +116,7 @@
       var climber = fig.person(ctx, X(cxF), Y(cyF), 0.6 * k, { role: 'persona', pose: 'walking', facing: 1, seed: 'd03-climber',
         skin: 3, cloth: m.rojo, legs: m.azul, hair: 'curly' });
       var hand = climber.hand.left;
-      ink.line(ctx, [X(p1.x + 8), Y(p1.top + 6), X((p1.x + cxF) / 2), Y(140), hand.x, hand.y], { w: 2.8 * k, profile: 'even', seed: 'd03-rope' });
+      ink.line(ctx, stable(env, 'rope', [X(p1.x + 8), Y(p1.top + 6), X((p1.x + cxF) / 2), Y(140), hand.x, hand.y]), { w: 2.8 * k, profile: 'even', seed: 'd03-rope' });
       ink.circle(ctx, X(p1.x + 8), Y(p1.top + 6), 5 * k, { fill: m.tinta, line: false, seed: 'd03-anchor' });
 
       // A bird gliding over the range (ambient only).
@@ -124,7 +133,7 @@
       var lb = rot.pico2 ? label(ctx, env, rot.pico2.text, Math.max(X(p2.x + 20), tx + mt.w + 22 * k + lbw / 2), Y(p2.top - 46), lo) : null;
       if (la && lb && peakIds.length) {
         var tg = tags.sourceTag(ctx, peakIds, { x: tx, y: Y(-4), scale: tagO.scale, scope: tagO.scope, anchor: { x: la.x + la.w + 3, y: la.y + la.h * 0.6 } });
-        if (tg) ink.line(ctx, [tg.x + tg.w - 3, tg.y + tg.h * 0.6, (tg.x + tg.w + lb.x) / 2, tg.y + tg.h * 0.8, lb.x - 3, lb.y + lb.h * 0.6],
+        if (tg) ink.line(ctx, stable(env, 'thread2', [tg.x + tg.w - 3, tg.y + tg.h * 0.6, (tg.x + tg.w + lb.x) / 2, tg.y + tg.h * 0.8, lb.x - 3, lb.y + lb.h * 0.6]),
           { w: 2 * k, profile: 'hair', seed: 'd03-thread2', dot: 1.6 });
       }
 

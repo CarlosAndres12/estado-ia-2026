@@ -24,6 +24,15 @@
   var NOMINAL = { w: 810, h: 462 };                    // the illustration zone this design is drawn for
   var LADDER = { panelX: 516, cx: 576, zeroY: 430, h: 340, scale: 0.944, max: 100 };
 
+  // The same points array while its numbers stay the same, so the engine's geometry cache (keyed by
+  // the array) is reused frame after frame instead of rebuilding the stroke.
+  function stable(env, key, pts) {
+    var prev = env.cache.get(key);
+    if (prev && prev.length === pts.length && prev.every(function (v, i) { return v === pts[i]; })) return prev;
+    env.cache.set(key, pts);
+    return pts;
+  }
+
   function fitOf(z) {
     var k = Math.min(z.w / NOMINAL.w, z.h / NOMINAL.h);
     return { k: k, x: z.x + (z.w - NOMINAL.w * k) / 2, y: z.y + (z.h - NOMINAL.h * k) / 2 };
@@ -52,8 +61,8 @@
       fig.lamp(ctx, lampX, lampY, 0.6 * k, { t: t });
       if (rot.pregunta) bubble(ctx, env, rot.pregunta.text, X(14), Y(18), 152 * k, 66 * k, { x: X(152), y: Y(82) }, 'd04-pregunta');
       if (rot.respuesta) bubble(ctx, env, rot.respuesta.text, X(334), Y(18), 152 * k, 66 * k, { x: X(348), y: Y(82) }, 'd04-respuesta');
-      ink.arrow(ctx, [X(170), Y(52), X(184), Y(48), X(190), Y(52)], { w: 3.2 * k, headSize: 11 * k, seed: 'd04-in' });
-      ink.arrow(ctx, [X(310), Y(52), X(320), Y(48), X(330), Y(52)], { w: 3.2 * k, headSize: 11 * k, seed: 'd04-out' });
+      ink.arrow(ctx, stable(env, 'in', [X(170), Y(52), X(184), Y(48), X(190), Y(52)]), { w: 3.2 * k, headSize: 11 * k, seed: 'd04-in' });
+      ink.arrow(ctx, stable(env, 'out', [X(310), Y(52), X(320), Y(48), X(330), Y(52)]), { w: 3.2 * k, headSize: 11 * k, seed: 'd04-out' });
 
       // Bottom: the diagram as the ruled agent loop around the lamp. The station labels are set
       // here (as fig.agentLoop sets them) except that a label on a side of the loop stays inside

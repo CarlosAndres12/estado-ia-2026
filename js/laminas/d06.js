@@ -30,6 +30,15 @@
   var COINS = 7;
   var POOL_COINS = [[286, 236], [338, 258], [372, 226], [316, 214], [244, 252]];
 
+  // The same points array while its numbers stay the same, so the engine's geometry cache (keyed by
+  // the array) is reused frame after frame instead of rebuilding the stroke.
+  function stable(env, key, pts) {
+    var prev = env.cache.get(key);
+    if (prev && prev.length === pts.length && prev.every(function (v, i) { return v === pts[i]; })) return prev;
+    env.cache.set(key, pts);
+    return pts;
+  }
+
   function fitOf(z) {
     var k = Math.min(z.w / NOMINAL.w, z.h / NOMINAL.h);
     return { k: k, x: z.x + (z.w - NOMINAL.w * k) / 2, y: z.y + (z.h - NOMINAL.h * k) / 2 };
@@ -100,13 +109,23 @@
     var dcx = r.x + r.w / 2, dcy = r.y + r.h - 24;
     ink.blob(ctx, dcx, dcy, 34, 7, { fill: m.lienzoOcre, w: 2.6, irr: 0.02, n: 14, seed: 'd06-disc' });
     var mx = dcx + Math.sin(turn) * 30, front = Math.cos(turn) > 0;
-    if (front) ink.circle(ctx, mx, dcy + 2, 3.4, { fill: m.rojo, line: false, seed: 'd06-mark' });
+    if (front) {
+      ctx.fillStyle = m.rojo;
+      ctx.beginPath();
+      ctx.arc(mx, dcy + 2, 3.4, 0, TAU);
+      ctx.fill();
+    }
     return { x: win.x + win.w / 2 - lay.w / 2, y: win.y + (win.h - lay.h) / 2 + 1, w: lay.w, h: lay.h };
   }
 
   // A small hand-drawn bolt (energy) on the meter's corner.
-  function bolt(ctx, env, x, y) {
-    env.ink.shape(ctx, [x, y, x + 14, y, x + 6, y + 14, x + 16, y + 14, x - 2, y + 36, x + 4, y + 20, x - 6, y + 20], { fill: env.pal.mundo.amarillo, w: 2.6, seed: 'd06-bolt' });
+  var BOLT = [0, 0, 14, 0, 6, 14, 16, 14, -2, 36, 4, 20, -6, 20];
+  function bolt(ctx, env, x, y, k) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(k, k);
+    env.ink.shape(ctx, BOLT, { fill: env.pal.mundo.amarillo, w: 2.6, seed: 'd06-bolt' });
+    ctx.restore();
   }
 
   EIA.laminas.d06 = {
@@ -137,11 +156,11 @@
       var tw = fig.serverTower(ctx, X(TOWER.x), Y(GROUND), TOWER.scale * k, {});
       var mr = { x: X(METER.x), y: Y(METER.y), w: METER.w * k, h: METER.h * k };
       // The cable rises from the top of the tower to the meter.
-      ink.line(ctx, [tw.x + tw.w * 0.5, tw.y + 1, tw.x + tw.w * 0.62, tw.y - 26 * k, (tw.x + tw.w + mr.x) / 2, mr.y + mr.h * 0.62, mr.x + 2, mr.y + mr.h * 0.5],
-        { w: 3 * k, profile: 'even', seed: 'd06-cable' });
+      ink.line(ctx, stable(env, 'cable', [tw.x + tw.w * 0.5, tw.y + 1, tw.x + tw.w * 0.62, tw.y - 26 * k, (tw.x + tw.w + mr.x) / 2, mr.y + mr.h * 0.62,
+        mr.x + 2, mr.y + mr.h * 0.5]), { w: 3 * k, profile: 'even', seed: 'd06-cable' });
       if (rot.medidor) {
         var txt = meter(ctx, env, rot.medidor, mr, (s.still ? 0 : s.loop) * TAU * 3);
-        bolt(ctx, env, mr.x + mr.w - 16 * k, mr.y - 20 * k);
+        bolt(ctx, env, mr.x + mr.w - 16 * k, mr.y - 20 * k, k);
         if (rot.medidor.cifras && rot.medidor.cifras.length) {
           var to = { scale: 0.74 * k, scope: 'auto' }, tm = env.tags.measureTag(ctx, rot.medidor.cifras, to);
           to.x = Math.min(mr.x - 6 * k, z.x + z.w - tm.w - 2);
