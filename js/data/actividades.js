@@ -502,7 +502,17 @@ EIA.data.actividades = {
     ],
     sinCambios: { texto: 'No cambió las fechas para modelos de propósito general.', cifras: ['ries-4'] },
     sellos: { aplazado: 'aplazado', sinCambios: 'sin cambios' },
-    nota: 'Información, no asesoría jurídica.'
+    nota: 'Información, no asesoría jurídica.',
+    // Tool copy (prompt §11, sesión 6), not KB text. Only the KB's dates are drawn.
+    ui: {
+      instrucciones: 'Enciende o apaga cada capa. Toca una fecha de la línea para leer qué ocurre ese día.',
+      capas: 'Capas del calendario',
+      linea: 'Línea de tiempo de la Ley de IA de la UE: cada fecha está a la distancia que le corresponde.',
+      hitos: 'Fechas del calendario',
+      pin: '{fecha}: {etiqueta}',
+      capa: 'Capa',
+      desplazar: 'Desliza la línea de tiempo para ver todas las fechas.'
+    }
   },
   's6-ciclo': {
     id: 's6-ciclo',

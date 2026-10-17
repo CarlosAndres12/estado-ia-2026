@@ -1680,4 +1680,101 @@ html:not(.has-decor) .feedback--casi .feedback__sign { border-style: dotted; }
 .light--ambar { background: var(--semaforo-ambar); }
 .light--verde { background: var(--semaforo-verde); }
 .light-chip__sign { flex: none; }
+
+/* ---- «Calendario de la Ley de IA» (S6): pins at exact positions, two layers ------------------ */
+
+.cal__help { max-width: var(--text-max); }
+.cal__layers { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 0 0 var(--sp-4); }
+.cal__layer { justify-content: flex-start; text-align: left; }
+.cal__layer-mark { flex: none; width: 1.25rem; height: 1.25rem; border: 2.5px solid var(--tinta); border-radius: 50%; }
+.cal__layer--omnibus .cal__layer-mark { border-style: dashed; }
+.cal__layer[aria-pressed="true"] { color: var(--lienzo); background: var(--tinta); }
+.cal__layer[aria-pressed="true"]:hover { background: #2C2620; }
+.cal__layer--ley[aria-pressed="true"] .cal__layer-mark { background: var(--amarillo); border-color: var(--lienzo); }
+.cal__layer--omnibus[aria-pressed="true"] .cal__layer-mark { background: var(--celeste); border-color: var(--lienzo); }
+.cal__wrap { overflow-x: auto; margin: 0; padding: 4px 2px 8px; -webkit-overflow-scrolling: touch; }
+.cal__wrap:focus-visible { outline: var(--focus-ring); }
+.cal__strip { position: relative; min-width: 880px; height: 312px; }
+.cal__paper { position: absolute; left: 0; top: 0; }
+.cal__anchor { position: absolute; top: 0; bottom: 0; width: 0; }
+.cal__stem { position: absolute; left: -1.25px; border-left: 2.5px solid var(--tinta); }
+.cal__dot {
+  position: absolute;
+  left: -8px;
+  width: 16px;
+  height: 16px;
+  margin-top: -8px;
+  background: var(--amarillo);
+  border: 2.5px solid var(--tinta);
+  border-radius: 50%;
+}
+.cal__anchor--omnibus .cal__dot { background: var(--celeste); border-style: dashed; }
+.cal__pin {
+  position: absolute;
+  left: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  height: 46px;
+  padding: 0.15rem 0.55rem;
+  font-weight: var(--fw-bold);
+  font-size: 0.86rem;
+  line-height: 1.15;
+  white-space: nowrap;
+  background: var(--papel);
+  border: 2px solid var(--tinta);
+  border-radius: 8px 12px 9px 13px;
+  transform: translateX(-50%);
+}
+.cal__anchor--omnibus .cal__pin { border-style: dashed; }
+.cal__pin:hover { background: var(--wash-amarillo); }
+.cal__pin-stamps { display: flex; gap: 0.25rem; }
+.cal__stamp {
+  display: inline-block;
+  padding: 0 0.35rem;
+  font-family: var(--font-sans);
+  font-weight: var(--fw-black);
+  font-size: 0.68rem;
+  line-height: 1.35;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1.5px solid var(--tinta);
+  border-radius: 4px 6px 3px 5px;
+  transform: rotate(-3deg);
+}
+.cal__card-head .cal__stamp { font-size: 0.78rem; }
+.cal__scroll-hint { display: none; margin: 0 0 var(--sp-4); font-size: 0.95rem; color: var(--ink-muted); }
+.cal__omnibus { margin: 0 0 var(--sp-4); }
+.cal__omnibus-card { max-width: 860px; }
+.cal__omnibus-title { font-weight: var(--fw-bold); }
+.cal__src { margin: 0; }
+.cal__list { list-style: none; padding: 0; margin: 0 0 var(--sp-5); display: grid; gap: var(--sp-3); max-width: 900px; }
+.cal__card { margin: 0; }
+.cal__card:focus { outline: none; }
+.cal__card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.7rem; margin-bottom: 0.4rem; }
+.cal__card-layer {
+  padding: 0.05rem 0.55rem;
+  font-size: 0.82rem;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1.5px solid var(--tinta);
+  border-radius: 999px;
+}
+.cal__card--omnibus .cal__card-layer { border-style: dashed; }
+.cal__card-date { font-size: 1.15rem; }
+.cal__card-text { margin-bottom: 0.4rem; }
+.cal__card.is-flash { animation: eia-flash 1.6s ease-out; }
+@keyframes eia-flash {
+  0% { background-color: var(--wash-amarillo); }
+  100% { background-color: transparent; }
+}
+.cal__legal { display: flex; align-items: center; gap: 0.6rem; margin: 0; font-style: italic; font-weight: var(--fw-bold); }
+.cal__legal-sign { flex: none; width: 2.2rem; height: 2.2rem; background: var(--sign-libreta-mono, none) no-repeat center / contain; }
+@media (max-width: 940px) {
+  .cal__scroll-hint { display: block; }
+}
 /* ==== [/interactions] ==== */

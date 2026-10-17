@@ -661,5 +661,211 @@
     }
   };
 
+  // =============================================================================================
+  // S6 · «Calendario de la Ley de IA» (prompt §11): a paper timeline with two layers, "La ley" and
+  // the Ómnibus Digital. Pins sit at positions exactly proportional to their KB dates; turning the
+  // Ómnibus on pins its own dates (stamped "aplazado" where the KB says so) and stamps the
+  // general-purpose-model pins "sin cambios". No date the KB does not give is drawn.
+
+  function isoTime(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ''));
+    return m ? Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : NaN;
+  }
+  // Placement of the pins: alternate label rows inside each layer so neighbors never overlap.
+  var CAL = { h: 312, axis: 154, rows: { ley: [18, 78], omnibus: [196, 254] }, label: 46 };
+
+  function drawStrip(ctx, w, o) {
+    var E = EIA.engine, ink = E.ink, m = E.palette.mundo;
+    ink.card(ctx, 4, 4, w - 8, CAL.h - 8, { seed: 'cal-strip', weight: 3.2, radius: 16, fill: ui.decor ? ui.decor.PAPEL : m.lienzo, grain: false });
+    ink.line(ctx, [18, CAL.axis + 1, w * 0.35, CAL.axis - 1, w * 0.7, CAL.axis + 1, w - 18, CAL.axis], { w: 3.6, profile: 'even', seed: 'cal-axis', dot: true });
+    ctx.font = '700 13px "EIA Sans", system-ui, sans-serif';
+    ctx.fillStyle = E.palette.mix(m.tinta, m.lienzo, 0.25);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    o.years.forEach(function (y) {
+      ink.line(ctx, [y.x, CAL.axis - 9, y.x + 0.5, CAL.axis + 9], { w: 2.4, profile: 'even', seed: 'cal-year-' + y.label });
+      ctx.fillText(y.label, y.x + 5, CAL.axis + 5);
+    });
+  }
+
+  tools['s6-calendario'] = {
+    mount: function (el, o) {
+      var a = act(o.id || 's6-calendario');
+      if (!a || !a.hitos) return null;
+      var kit = K(), c = a.ui || {};
+      var on = { ley: true, omnibus: false };
+      var capas = {};
+      a.capas.forEach(function (x) { capas[x.id] = x; });
+
+      // Domain: four months of margin around the first and last KB dates.
+      var times = a.hitos.map(function (x) { return isoTime(x.iso); });
+      var t0 = Math.min.apply(null, times), t1 = Math.max.apply(null, times);
+      var from = new Date(t0); from.setUTCMonth(from.getUTCMonth() - 4);
+      var to = new Date(t1); to.setUTCMonth(to.getUTCMonth() + 4);
+      var span = to.getTime() - from.getTime();
+      function pos(iso) { return (isoTime(iso) - from.getTime()) / span; }
+
+      // Pins: one per layer and date.
+      var pins = [];
+      a.hitos.forEach(function (x) {
+        var p = pins.filter(function (q) { return q.capa === x.capa && q.iso === x.iso; })[0];
+        if (!p) { p = { capa: x.capa, iso: x.iso, fecha: x.fecha, hitos: [] }; pins.push(p); }
+        p.hitos.push(x);
+      });
+      ['ley', 'omnibus'].forEach(function (capa) {
+        pins.filter(function (p) { return p.capa === capa; }).sort(function (p, q) { return isoTime(p.iso) - isoTime(q.iso); })
+          .forEach(function (p, i) { p.row = i % 2; });
+      });
+
+      var layerBtns = a.capas.map(function (x) {
+        var b = h('button', { type: 'button', class: 'btn cal__layer cal__layer--' + x.id, 'aria-pressed': on[x.id] ? 'true' : 'false' }, [
+          h('span', { class: 'cal__layer-mark', 'aria-hidden': 'true' }), h('span', { text: x.label })
+        ]);
+        b.addEventListener('click', function () { on[x.id] = !on[x.id]; b.setAttribute('aria-pressed', on[x.id] ? 'true' : 'false'); render(); });
+        return b;
+      });
+      var canvas = kit.canvas('cal__paper');
+      var strip = h('div', { class: 'cal__strip' }, [canvas]);
+      var wrap = h('div', { class: 'cal__wrap', role: 'group', tabindex: '-1', 'aria-label': c.linea }, [strip]);
+      var omnibusNote = h('div', { class: 'cal__omnibus', hidden: true });
+      var listId = kit.uid('hitos');
+      var list = h('ol', { class: 'cal__list', 'aria-labelledby': listId });
+      var box = h('div', { class: 'cal' }, [
+        h('p', { class: 'cal__help', text: c.instrucciones }),
+        h('div', { class: 'cal__layers', role: 'group', 'aria-label': c.capas }, layerBtns),
+        wrap,
+        h('p', { class: 'cal__scroll-hint', text: c.desplazar }),
+        omnibusNote,
+        h('h4', { class: 'game__label', id: listId, text: c.hitos }),
+        list,
+        h('p', { class: 'cal__legal' }, [h('span', { class: 'cal__legal-sign', 'aria-hidden': 'true' }), a.nota])
+      ]);
+      el.appendChild(box);
+
+      function stampsOf(x) {
+        var out = [];
+        if (on.omnibus && x.estado === 'aplazado') out.push(a.sellos.aplazado);
+        if (on.omnibus && x.estadoConOmnibus === 'sin cambios') out.push(a.sellos.sinCambios);
+        return out;
+      }
+      function stampEls(list) { return list.map(function (s) { return h('span', { class: 'cal__stamp', text: s }); }); }
+      var cardIds = {};
+      function cardId(x) { return cardIds[x.id] || (cardIds[x.id] = kit.uid('hito-' + x.id)); }
+
+      function render() {
+        // Pins on the strip: an anchor at the exact date holds the stem and the dot; the label
+        // above or below may slide sideways (clampLabels) to stay inside the paper.
+        Array.prototype.forEach.call(strip.querySelectorAll('.cal__anchor'), function (n) { n.remove(); });
+        pins.forEach(function (p) {
+          if (!on[p.capa]) return;
+          var first = p.hitos[0];
+          var stamps = [];
+          p.hitos.forEach(function (x) { stampsOf(x).forEach(function (s) { if (stamps.indexOf(s) < 0) stamps.push(s); }); });
+          var top = CAL.rows[p.capa][p.row];
+          var above = p.capa === 'ley';
+          var stemTop = above ? top + CAL.label : CAL.axis;
+          var stemH = above ? CAL.axis - top - CAL.label : top - CAL.axis;
+          var label = p.hitos.map(function (x) { return x.etiqueta; }).join('; ');
+          var pin = h('button', {
+            type: 'button', class: 'cal__pin', style: 'top: ' + top + 'px',
+            'aria-label': kit.fmt(c.pin, { fecha: p.fecha, etiqueta: label }) + (stamps.length ? ' (' + stamps.join(', ') + ')' : '')
+          }, [
+            h('span', { class: 'cal__pin-date', text: p.fecha }),
+            stamps.length ? h('span', { class: 'cal__pin-stamps' }, stampEls(stamps)) : null
+          ]);
+          pin.addEventListener('click', function () {
+            var card = doc.getElementById(cardId(first));
+            if (!card) return;
+            card.scrollIntoView({ block: 'nearest', behavior: kit.reduced() ? 'auto' : 'smooth' });
+            card.classList.remove('is-flash');
+            void card.offsetWidth;
+            card.classList.add('is-flash');
+            try { card.focus({ preventScroll: true }); } catch (err) { card.focus(); }
+          });
+          strip.appendChild(h('span', {
+            class: 'cal__anchor cal__anchor--' + p.capa, 'data-pos': pos(p.iso), 'data-capa': p.capa, 'data-row': p.row,
+            style: 'left: ' + (pos(p.iso) * 100).toFixed(4) + '%'
+          }, [
+            h('span', { class: 'cal__stem', 'aria-hidden': 'true', style: 'top: ' + stemTop + 'px; height: ' + stemH + 'px' }),
+            h('span', { class: 'cal__dot', 'aria-hidden': 'true', style: 'top: ' + CAL.axis + 'px' }),
+            pin
+          ]));
+        });
+        // The Ómnibus layer's own sentence.
+        omnibusNote.innerHTML = '';
+        omnibusNote.hidden = !on.omnibus;
+        if (on.omnibus) {
+          var om = capas.omnibus || {};
+          omnibusNote.appendChild(kit.card('card--thin cal__omnibus-card', [
+            h('p', { class: 'cal__omnibus-title', text: om.label }),
+            h('p', {}, [om.texto ? om.texto + '. ' : '', a.sinCambios ? a.sinCambios.texto : '']),
+            h('p', { class: 'cal__src' }, sourceTags((om.cifras || []).concat(a.sinCambios ? a.sinCambios.cifras : [])))
+          ]));
+        }
+        // The cards, in date order.
+        list.innerHTML = '';
+        a.hitos.filter(function (x) { return on[x.capa]; }).sort(function (x, y) {
+          return isoTime(x.iso) - isoTime(y.iso) || (x.capa === y.capa ? 0 : x.capa === 'ley' ? -1 : 1);
+        }).forEach(function (x) {
+          var stamps = stampsOf(x);
+          list.appendChild(h('li', {
+            class: 'card card--thin cal__card cal__card--' + x.capa + (x.tarjeta === 'texto' ? ' cal__card--texto' : ''),
+            id: cardId(x), tabindex: '-1'
+          }, [
+            h('p', { class: 'cal__card-head' }, [
+              h('span', { class: 'cal__card-layer' }, [h('span', { class: 'visually-hidden', text: c.capa + ': ' }), (capas[x.capa] || {}).label]),
+              ' ',
+              figButton((x.cifras || [])[0], x.fecha, 'cal__card-date')
+            ].concat(stamps.length ? [' '].concat(stampEls(stamps)) : [])),
+            h('p', { class: 'cal__card-text', text: x.texto }),
+            h('p', { class: 'cal__src' }, sourceTags(x.cifras))
+          ]));
+        });
+        draw();
+      }
+
+      var width = 0;
+      function draw() {
+        if (!width || !EIA.engine.ink) return;
+        var ctx = kit.fit(canvas, width, CAL.h);
+        var years = [];
+        for (var y = from.getUTCFullYear() + 1; y <= to.getUTCFullYear(); y++) {
+          var tt = Date.UTC(y, 0, 1);
+          if (tt > from.getTime() && tt < to.getTime()) years.push({ label: String(y), x: (tt - from.getTime()) / span * width });
+        }
+        try { drawStrip(ctx, width, { years: years }); } catch (err) { if (root.console) root.console.warn('[games] calendar: ' + err.message); }
+        clampLabels();
+      }
+      // Labels stay inside the paper, and a label in the row nearer the axis never covers the
+      // stem of a neighbor whose label sits in the farther row (same layer).
+      var NEAR = { ley: 1, omnibus: 0 };
+      function clampLabels() {
+        var W = strip.clientWidth, pad = 12, gapStem = 9;
+        var anchors = Array.prototype.slice.call(strip.querySelectorAll('.cal__anchor'));
+        anchors.forEach(function (an) {
+          var pin = an.querySelector('.cal__pin');
+          var x = Number(an.getAttribute('data-pos')) * W, half = pin.offsetWidth / 2;
+          var left = x - half, capa = an.getAttribute('data-capa');
+          function fit() { left = Math.max(pad, Math.min(W - pad - 2 * half, left)); }
+          fit();
+          if (Number(an.getAttribute('data-row')) === NEAR[capa]) {
+            anchors.forEach(function (other) {
+              if (other === an || other.getAttribute('data-capa') !== capa || Number(other.getAttribute('data-row')) === NEAR[capa]) return;
+              var sx = Number(other.getAttribute('data-pos')) * W;
+              if (sx < left - gapStem || sx > left + 2 * half + gapStem) return;
+              left = sx < x ? sx + gapStem : sx - gapStem - 2 * half;
+              fit();
+            });
+          }
+          pin.style.transform = 'translateX(' + Math.round(left - x) + 'px)';
+        });
+      }
+      var stop = kit.observeSize(strip, function (w) { width = w; draw(); });
+      kit.engineReady().then(draw);
+      render();
+      return { destroy: function () { stop(); box.remove(); } };
+    }
+  };
+
   ui.games = { sorter: sorter, pasos: pasos };
 })(typeof window !== 'undefined' ? window : globalThis);
