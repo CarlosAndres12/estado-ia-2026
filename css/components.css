@@ -1455,7 +1455,7 @@ html:not(.has-decor) .feedback--casi .feedback__sign { border-style: dotted; }
 
 /* ---- Calculator «Pasos que se acumulan» (S2) ------------------------------------------------ */
 
-.calc { display: grid; gap: var(--sp-4); }
+.calc { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); }
 .calc__stamp { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.8rem; margin: 0; font-size: 1rem; }
 .calc__stamp .chip { transform: rotate(-1.5deg); }
 .calc__controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: var(--sp-4) var(--sp-6); }
@@ -1517,7 +1517,7 @@ html:not(.has-decor) .feedback--casi .feedback__sign { border-style: dotted; }
   transform: rotate(45deg);
 }
 .funnel__end { position: relative; z-index: 1; padding: 0.1rem 0.2rem; background: var(--papel); }
-.funnel__list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-4); }
+.funnel__list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); }
 .funnel__item { margin: 0; }
 .fig.funnel__bar {
   display: block;
@@ -1664,7 +1664,7 @@ html:not(.has-decor) .feedback--casi .feedback__sign { border-style: dotted; }
   border-radius: 999px;
   transform: rotate(-1deg);
 }
-.ladder__results { display: grid; gap: var(--sp-3); margin-top: var(--sp-4); }
+.ladder__results { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-3); margin-top: var(--sp-4); }
 .ladder__results .game__label { margin-bottom: 0; }
 .ladder__result-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 1rem; }
 .ladder__result ul { margin-bottom: var(--sp-2); }
@@ -1751,7 +1751,7 @@ html:not(.has-decor) .feedback--casi .feedback__sign { border-style: dotted; }
 .cal__omnibus-card { max-width: 860px; }
 .cal__omnibus-title { font-weight: var(--fw-bold); }
 .cal__src { margin: 0; }
-.cal__list { list-style: none; padding: 0; margin: 0 0 var(--sp-5); display: grid; gap: var(--sp-3); max-width: 900px; }
+.cal__list { list-style: none; padding: 0; margin: 0 0 var(--sp-5); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-3); max-width: 900px; }
 .cal__card { margin: 0; }
 .cal__card:focus { outline: none; }
 .cal__card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.7rem; margin-bottom: 0.4rem; }
@@ -1880,13 +1880,13 @@ html:not(.has-decor) .feedback--casi .feedback__sign { border-style: dotted; }
   border-radius: 10px 14px 9px 15px / 14px 9px 15px 10px;
 }
 @media (max-width: 860px) {
-  .timer { grid-template-columns: 1fr; }
+  .timer { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* ---- «Cuaderno del equipo» and its sheets (prompt §10.7) ----------------------------------- */
 
-.cuaderno { display: grid; gap: var(--sp-5); }
-.cuaderno__bar { display: grid; gap: var(--sp-3); }
+.cuaderno { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-5); }
+.cuaderno__bar { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-3); }
 .cuaderno__pick-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
 .cuaderno__select { flex: 1 1 14rem; width: auto; max-width: 28rem; }
 .cuaderno__campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: var(--sp-3) var(--sp-5); }
@@ -1909,15 +1909,15 @@ html:not(.has-decor) .feedback--casi .feedback__sign { border-style: dotted; }
 }
 .cuaderno__index a:hover { background: var(--wash-amarillo); }
 .cuaderno__index-n { font-size: 0.85rem; color: var(--ink-muted); }
-.cuaderno__sheets { display: grid; gap: var(--sp-6); }
+.cuaderno__sheets { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-6); }
 .btn.is-armed { background: var(--wash-amarillo); border-style: solid; }
 
 .sheet:focus { outline: none; }
 .sheet__kicker { margin-bottom: 0.2rem; }
 .sheet__title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3rem 1rem; font-size: clamp(1.4rem, 1.1rem + 1vw, 1.9rem); }
 .sheet__link { font-family: var(--font-sans); font-size: 1rem; font-weight: var(--fw-regular); }
-.sheet__body { display: grid; gap: var(--sp-5); }
-.sheet--inline { display: grid; gap: var(--sp-3); }
+.sheet__body { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-5); }
+.sheet--inline { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-3); }
 .sheet__bar {
   display: flex;
   flex-wrap: wrap;
@@ -1932,7 +1932,7 @@ html:not(.has-decor) .feedback--casi .feedback__sign { border-style: dotted; }
 .sheet__who { margin: 0; font-weight: var(--fw-bold); }
 .sheet__own { margin: 0; }
 
-.sheet-sec { display: grid; gap: var(--sp-3); min-width: 0; margin: 0; padding: 0; border: 0; }
+.sheet-sec { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-3); min-width: 0; margin: 0; padding: 0; border: 0; }
 .sheet-legend { margin: 0 0 var(--sp-2); padding: 0; font-family: var(--font-display); font-weight: var(--fw-black); font-size: 1.2rem; }
 .sheet-label { display: block; margin-bottom: 0.3rem; font-weight: var(--fw-bold); }
 .sheet-field { position: relative; min-width: 0; }
@@ -2015,7 +2015,7 @@ html:not(.has-decor) .feedback--casi .feedback__sign { border-style: dotted; }
 
 /* ---- Rubric (prompt §10.9): one level per criterion, honest score meter -------------------- */
 
-.rubric { display: grid; gap: var(--sp-4); }
+.rubric { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); }
 .rubric__kb-note, .rubric__help, .rubric__who { margin: 0; }
 .rubric__who { font-weight: var(--fw-bold); }
 .rubric-table--pick { min-width: 60rem; }
@@ -2042,7 +2042,7 @@ html:not(.has-decor) .feedback--casi .feedback__sign { border-style: dotted; }
 .rubric__radio:focus-visible + .rubric__mark { outline: var(--focus-ring); outline-offset: 3px; }
 .rubric__option:has(.rubric__radio:checked) { font-weight: var(--fw-bold); background: var(--wash-amarillo); border: 2.5px solid var(--tinta); }
 .rubric__option:has(.rubric__radio:checked) .rubric__mark { border-color: transparent; background: var(--exito, var(--tinta)) no-repeat center / contain; transform: scale(1.25); }
-.rubric__result { display: grid; gap: var(--sp-2); max-width: 780px; }
+.rubric__result { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-2); max-width: 780px; }
 .rubric__score { margin: 0; font-family: var(--font-display); font-weight: var(--fw-black); font-size: clamp(1.5rem, 1.2rem + 1.4vw, 2.2rem); }
 .rubric__meter { display: block; height: 1.15rem; overflow: hidden; background: var(--papel); border: 2.5px solid var(--tinta); border-radius: 999px; }
 .rubric__meter-fill { display: block; width: 0; height: 100%; background: var(--amarillo); transition: width 220ms ease-out; }
@@ -2050,7 +2050,7 @@ html:not(.has-decor) .feedback--casi .feedback__sign { border-style: dotted; }
 .rubric__disclaimer { display: flex; align-items: center; gap: 0.6rem; margin: 0; font-style: italic; font-weight: var(--fw-bold); }
 .rubric__disclaimer-sign { flex: none; width: 2rem; height: 2rem; background: var(--sign-lapiz-mono, none) no-repeat center / contain; }
 .rubric__actions { margin: 0; }
-.rubric__retro { display: grid; gap: var(--sp-4); }
+.rubric__retro { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); }
 .rubric__crit { min-width: 0; margin: 0; padding: var(--sp-3) var(--sp-4) var(--sp-4); background: var(--papel); border: 2px solid var(--tinta); border-radius: var(--radius-hand-2); }
 .rubric__crit-title { padding: 0 0.3rem; font-family: var(--font-display); font-weight: var(--fw-black); font-size: 1.15rem; }
 .rubric__crit-level { font-family: var(--font-sans); font-weight: var(--fw-regular); font-size: 1rem; color: var(--ink-muted); }
