@@ -80,4 +80,49 @@ body[data-print="guia"] .discussion__item { border: 0 !important; padding: 2pt 0
 /* ==== [/page-shell] ==== */
 
 /* ==== [interactions] games, worksheets, cuaderno, rubric, láminas, Modo clase ==== */
+/* Owner: T08. Print sheets built by the tools:
+ *   body[data-print="cuaderno"]  "Imprimir cuaderno": #print-cuaderno (worksheets.js) — the team
+ *                                notebook, the decision log and the rubric, as plain text blocks
+ *   body[data-print="laminas"]   "Imprimir láminas": #print-laminas (laminas-viewer.js) — two láminas
+ *                                per page, still frames, with their notes */
+
+/* Games, timers and overlays never print; the static tools (funnel, calendar, indicators,
+ * scenarios) print as they are. */
+.game, .quiz, .timer, .calc__controls, .calc__presets, .funnel__toggle, .cal__layers, .cal__scroll-hint,
+.ind__bar, .sheet__bar, .visor, .clase, .sticky-note, .cuaderno__bar, .rubric__actions { display: none !important; }
+
+body[data-print="cuaderno"] > *:not(#print-cuaderno),
+body[data-print="laminas"] > *:not(#print-laminas) { display: none !important; }
+body[data-print="cuaderno"] #print-cuaderno,
+body[data-print="laminas"] #print-laminas { display: block !important; }
+
+.print-cuaderno h1 { font-size: 18pt; margin: 0 0 2pt; }
+.print-cuaderno h2 { font-size: 13.5pt; margin: 7mm 0 2mm; padding-bottom: 1mm; border-bottom: 1pt solid #000; break-after: avoid; }
+.print-cuaderno h3 { font-size: 11pt; margin: 3mm 0 1mm; break-after: avoid; }
+.print-cuaderno__campos { display: grid; grid-template-columns: max-content 1fr; gap: 1mm 4mm; margin: 0 0 4mm; }
+.print-cuaderno__campos > div { display: contents; }
+.print-cuaderno__campos dt { font-weight: 700; }
+.print-cuaderno__campos dd { margin: 0; }
+.print-cuaderno__grupo, .print-cuaderno__item { break-inside: avoid; }
+.print-cuaderno__item { margin: 0 0 2mm; }
+.print-cuaderno__label { margin: 0; font-weight: 700; font-size: 10pt; }
+.print-cuaderno__value { margin: 0 0 0 4mm; font-size: 10.5pt; white-space: pre-wrap; overflow-wrap: anywhere; }
+.print-cuaderno__value.is-empty { color: #555 !important; }
+.print-cuaderno__tabla { margin: 0 0 3mm; font-size: 9.5pt; }
+.print-cuaderno__tabla th, .print-cuaderno__tabla td { border: 0.75pt solid #000; padding: 1.5mm 2mm; vertical-align: top; overflow-wrap: anywhere; }
+.print-cuaderno__tabla td { height: 9mm; }
+.print-cuaderno__tabla tr { break-inside: avoid; }
+.print-cuaderno__rubrica { break-before: page; }
+.print-cuaderno__rubrica table { margin: 0 0 3mm; }
+.print-cuaderno__score { font-weight: 700; font-size: 12pt; }
+
+.print-laminas__item { margin: 0 0 6mm; break-inside: avoid; page-break-inside: avoid; }
+.print-laminas__item:nth-child(2n) { break-after: page; page-break-after: always; }
+.print-laminas__item:last-child { break-after: auto; page-break-after: auto; }
+.print-laminas__canvas { display: block; width: 160mm; height: 90mm; margin: 0 auto 2mm; border: 1pt solid #000; }
+.print-laminas figcaption { padding: 0 6mm; }
+.print-laminas__title { margin: 0 0 1mm; font-size: 11pt; font-weight: 700; }
+.print-laminas .lamina-notes p { margin: 0 0 1mm; font-size: 9pt; line-height: 1.3; }
+.print-laminas .lamina-notes__fix { border: 0.75pt dashed #000; padding: 1mm 2mm; margin: 1mm 0; }
+.print-laminas .strike { text-decoration: line-through !important; }
 /* ==== [/interactions] ==== */

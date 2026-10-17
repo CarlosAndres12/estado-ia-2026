@@ -936,10 +936,30 @@ EIA.data.course.ui.quiz = {
     nivelElegido: 'Nivel elegido',
     sinNivel: 'sin elegir',
     conContenido: 'ya tiene contenido',
+    numero: 'N.º',
     vacio: '—'
   };
   Object.keys(add).forEach(function (k) { if (!(k in cq)) cq[k] = add[k]; });
 })(EIA.data.course.ui.cuaderno = EIA.data.course.ui.cuaderno || {});
+// Láminas viewer (prompt §10.10); "Notas" and "Imprimir láminas" are ui.laminas above.
+EIA.data.course.ui.visor = {
+  region: 'Visor de láminas',
+  lamina: 'D{n} · {titulo}',
+  posicion: '{n} de {total}',
+  anterior: 'Lámina anterior',
+  siguiente: 'Lámina siguiente',
+  cerrar: 'Cerrar',
+  cerrarAria: 'Cerrar el visor de láminas',
+  notasAbrir: 'Mostrar las notas',
+  notasCerrar: 'Ocultar las notas',
+  nota: 'Nota',
+  sinNotas: 'La base de conocimiento no trae notas para esta lámina.',
+  contenido: 'Contenido relacionado',
+  contenidoN: 'Contenido {n}: {titulo}',
+  atajos: 'Flechas o Re Pág y Av Pág: cambiar de lámina · N: notas · Esc: cerrar',
+  imprimirTitulo: 'Láminas del curso «Estado de la IA 2026»',
+  descripcion: 'Lámina D{n}. {texto}'
+};
 // Completes ui.rubrica (puntaje, nota, evidencia and accion above are the prompt's words).
 (function (r) {
   var add = {

@@ -223,9 +223,10 @@
   }
   C.costSum = costSum;
 
-  /* entries(nb, hoja) -> [{ title?, items: [{ label, value }] }]: the sheet as text, for "Copiar
-   * como texto" and the printed notebook. */
-  function entries(nb, hoja) {
+  /* entries(nb, hoja, asTables) -> [{ title?, items: [{ label, value }] } | { table: { head, rows } }]:
+   * the sheet as text, for "Copiar como texto" and the printed notebook (asTables: rows and matrices
+   * as tables, with blank cells left for handwriting). */
+  function entries(nb, hoja, asTables) {
     var data = (nb.hojas || {})[hoja.id] || {};
     var groups = [];
     hoja.secciones.forEach(function (sec) {
@@ -233,6 +234,19 @@
       var title = sec.titulo || sec.label || '';
       if (sec.tipo === 'campos') {
         groups.push({ title: sec.titulo || '', items: sec.campos.map(function (c) { return { label: c.label, value: str(get(v, [c.id])) }; }) });
+      } else if (sec.tipo === 'filas' && asTables) {
+        var trows = Array.isArray(v) ? v : [];
+        var body = [];
+        for (var r = 0; r < Math.max(rowCount(sec, trows), sec.max == null && !trows.length ? 3 : 0); r++) {
+          var tr = trows[r] || {};
+          body.push([String(r + 1)].concat(sec.columnas.map(function (col) { return display(col, tr[col.id]); })));
+        }
+        groups.push({ table: { head: [cq('numero')].concat(sec.columnas.map(function (col) { return col.label; })), rows: body } });
+      } else if (sec.tipo === 'matriz' && asTables) {
+        groups.push({ title: sec.titulo || '', table: {
+          head: [sec.encabezado].concat(sec.columnas),
+          rows: sec.filas.map(function (f) { return [f].concat(sec.columnas.map(function (col) { return str(get(v, [slug(f), slug(col)])); })); })
+        } });
       } else if (sec.tipo === 'filas') {
         var rows = Array.isArray(v) ? v : [];
         for (var i = 0; i < rowCount(sec, rows); i++) {
@@ -1010,8 +1024,18 @@
     ]);
     (schema().hojas || []).forEach(function (hoja) {
       var sec = h('section', { class: 'print-cuaderno__hoja' }, [h('h2', { text: hojaTitle(hoja) })]);
-      entries(nb, hoja).forEach(function (g) {
+      entries(nb, hoja, true).forEach(function (g) {
         var block = h('div', { class: 'print-cuaderno__grupo' }, [g.title ? h('h3', { text: g.title }) : null]);
+        if (g.table) {
+          block.appendChild(h('table', { class: 'print-cuaderno__tabla' }, [
+            h('thead', {}, [h('tr', {}, g.table.head.map(function (c) { return h('th', { scope: 'col', text: c }); }))]),
+            h('tbody', {}, g.table.rows.map(function (row) {
+              return h('tr', {}, row.map(function (c, j) { return j ? h('td', { text: c }) : h('th', { scope: 'row', text: c }); }));
+            }))
+          ]));
+          sec.appendChild(block);
+          return;
+        }
         g.items.forEach(function (it) {
           block.appendChild(h('div', { class: 'print-cuaderno__item' }, [
             it.label ? h('p', { class: 'print-cuaderno__label', text: it.label }) : null,
