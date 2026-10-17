@@ -56,7 +56,7 @@ EIA.data.glosario = [
     termino: 'Escala',
     definicion: 'Despliegue sostenido en procesos, unidades o funciones, con infraestructura, gobernanza y métricas.',
     variantes: ['escala'],
-    excluir: ['escala agentes', 'escala la ia', 'escala a toda', 'la escala a toda']
+    excluir: ['escala agentes', 'escala la ia', 'escala a toda', 'la escala a toda', 'los escala', '% escala y']
   },
   {
     id: 'evaluacion-autentica',
