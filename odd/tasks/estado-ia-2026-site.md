@@ -44,11 +44,11 @@ exceeds it. Slicing into PRs is left to the user (each task commit is a candidat
 | T03 | Video scripts as data: `js/data/videos.js` (9 videos, prompt §13) | delegated writer (large transcription) | done (84e78b8) |
 | T04 | Drawing engine: rng, easing, palette + tokens.css, ink, chart, tags, figures, lamina layout, API doc | delegated writer (many non-trivial files) | done (cherry-picked 0149682..a019a98 → 73f2246) |
 | T05 | Video runtime: timeline, captions, narrator, player, recorder, render mode, CDP browser lib, snapshots | delegated writer (many non-trivial files) | done (fast-forward to 58a2c61) |
-| T06 | V02 end to end + art review against prompt §3 | delegated writer | running (worktree) |
+| T06 | V02 end to end + art review against prompt §3 | delegated writer | done (cherry-picked 4832670..9f98293) |
 | T07 | Page shell: router, markup, views, nav, hero, chips, citations/popovers, banco, glossary, FAQ, references, asistente, footer, CSS | delegated writer | running (worktree) |
 | T08 | Interactions: quizzes, games, calculator, embudo, cuaderno, rubric, Ley de IA timeline, indicadores, timer, láminas viewer, Modo clase, print | delegated writer | pending |
 | T09 | Láminas D01–D17 | delegated writers (parallel, worktrees) | pending |
-| T10 | Videos V01, V03–V09 | delegated writers (parallel, worktrees) | pending |
+| T10 | Videos V01, V03–V09 | delegated writers (parallel, worktrees) | running (one video per worker, brief in odd/spec/video-worker-brief.md) |
 | T11 | Voice-over tooling with **Edge TTS** (user decision; Azure kept optional): normalizer, SSML, Edge bridge + adapter, alignment, generator, listening sheet | delegated writer (many non-trivial files) | done (merged; fix b91d3af) |
 | T12 | Optional MP4 export (`render-videos.mjs`) | delegated writer | pending |
 | T13 | README (Spanish), acceptance checks (prompt §16), final fixes | delegated verifier + writer | pending |
@@ -129,6 +129,14 @@ zero errors; 9 videos play in sync; 17 láminas render/print with corrected figu
   trim trailing engine silence to 0.15 s after the last word (Edge pads ~0.87 s) and dry-run wps from
   config (Edge 2.9) → estimate 39:07 total; 132/132 tests. Final narration generated at the end (after T10).
 - T07 (page shell) launched alongside T06.
+
+- T06 done (cherry-picked): V02 all 11 scenes + art gate; engine fixes (closed outlines, warning-stamp
+  desks, stopwatch sectors, labelTag, sourceTag chip:false, checkpoint card tags), contract additions
+  `drawsWarnings` and `s.cue(i, words, 'chunk'|'word')`. Parent re-run: 132/132 tests, checker 0 errors,
+  `snapshots.mjs --only v02` 25 frames 0 console errors, est. 3:24 (target 3:00–4:30); parent looked at the
+  contact sheet: coherent notebook style, ruled navy benchmark panel, chips sign+label, legible cards.
+- Concurrency policy update: global caps make peak load bounded; at most TWO workers at a time, each
+  browser through chromium-safe.sh. Video workers never edit the engine (local helpers; report wishes).
 
 ## Next step
 
