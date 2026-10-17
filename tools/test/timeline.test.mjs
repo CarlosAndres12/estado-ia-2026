@@ -399,6 +399,21 @@ test('glossary notes: first use of each term, one note per line', () => {
   assert.equal(T.build(sampleVideo(), { glosario: false }).overlays.glossary.length, 0);
 });
 
+test('glossary notes skip a term inside one of its excluir phrases', () => {
+  const T = load(BOTH).engine.timeline;
+  const glosario = [
+    { id: 'escala', termino: 'Escala', definicion: 'Despliegue sostenido…', variantes: ['escala'], excluir: ['escala agentes', '% escala y'] }
+  ];
+  const v = sampleVideo();
+  v.scenes[0].lines[0].text = 'En las empresas, el 23% escala agentes en alguna función.';
+  v.scenes[0].lines[1].text = 'El 23% escala y el 39% experimenta.';
+  v.scenes[1].lines[0].text = 'Debajo del agua está la escala, el valor y la gobernanza.';
+  const tl = T.build(v, { glosario });
+  assert.equal(tl.lines[0].glossary, null, 'verb before "agentes" is excluded');
+  assert.equal(tl.lines[1].glossary, null, 'verb after a percentage is excluded');
+  assert.equal(tl.lines[2].glossary && tl.lines[2].glossary.id, 'escala', 'the noun still gets its note');
+});
+
 test('overlays: warnings 3 s each, ilustrativo for the whole beat, chapter titles 2 s', () => {
   const T = load(BOTH).engine.timeline;
   const tl = T.build(sampleVideo());

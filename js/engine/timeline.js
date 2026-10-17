@@ -165,25 +165,44 @@
       seen[p] = true;
       return true;
     }).map(function (p) {
-      return new RegExp('(^|[^a-z0-9])' + escapeRe(p).replace(/ /g, '\\s+') + '(?=$|[^a-z0-9])');
+      return new RegExp('(^|[^a-z0-9])' + escapeRe(p).replace(/ /g, '\\s+') + '(?=$|[^a-z0-9])', 'g');
     });
+  }
+
+  // True when the match [at, at + len) lies inside one of the entry's `excluir` phrases, where the
+  // word means something else (e.g. the verb in «23% escala agentes»), as the page tooltips do.
+  function excluded(entry, folded, at, len) {
+    var list = entry.excluir || [];
+    for (var i = 0; i < list.length; i++) {
+      var p = fold(list[i]), from = 0, pos;
+      while (p && (pos = folded.indexOf(p, from)) >= 0) {
+        if (at >= pos && at + len <= pos + p.length) return true;
+        from = pos + 1;
+      }
+    }
+    return false;
   }
 
   function glossaryMatcher(glosario) {
     var terms = (glosario || []).map(function (entry) {
       return { entry: entry, patterns: termPatterns(entry), used: false };
     });
-    // The first unused term the line mentions (by position in the text), marked as used.
+    // The first unused term the line mentions (by position in the text, skipping excluded uses),
+    // marked as used.
     return function (text) {
       var folded = fold(text);
       var best = null, bestAt = Infinity;
       terms.forEach(function (term) {
         if (term.used) return;
         term.patterns.forEach(function (re) {
-          var m = re.exec(folded);
-          if (m) {
+          re.lastIndex = 0;
+          var m;
+          while ((m = re.exec(folded))) {
             var at = m.index + m[1].length;
-            if (at < bestAt) { bestAt = at; best = term; }
+            if (!excluded(term.entry, folded, at, m[0].length - m[1].length)) {
+              if (at < bestAt) { bestAt = at; best = term; }
+              break;
+            }
           }
         });
       });
