@@ -1843,14 +1843,16 @@
 
   var cardCache = new LRU(200);
   function cardGeom(w, h, o) {
-    var rad = o.radius == null ? 12 : o.radius;
+    var rad = Math.min(o.radius == null ? 12 : o.radius, Math.min(w, h) / 2 - 0.5);
     var key = w + '|' + h + '|' + (o.seed || '') + '|' + rad + '|' + (o.weight || 4) + '|' + (o.peek || '') + '|' + (o.peekCorner || '');
     var g = cardCache.get(key);
     if (g) return g;
     var r = rng('card:' + (o.seed || '') + ':' + w + 'x' + h);
     var pts = [], wob = o.wobble == null ? 1.3 : o.wobble;
     function edge(x0, y0, x1, y1) {
-      var len = Math.sqrt(d2(x0, y0, x1, y1)), n = Math.max(1, Math.round(len / 46));
+      var len = Math.sqrt(d2(x0, y0, x1, y1));
+      if (len < 1) return;
+      var n = Math.max(1, Math.round(len / 46));
       var nx = -(y1 - y0) / len, ny = (x1 - x0) / len;
       for (var i = 0; i < n; i++) {
         var t = i / n, j = i === 0 ? 0 : r.jitter(wob);

@@ -99,6 +99,73 @@
     }
   });
 
+  // Chart strings below are verbatim KB fragments (KB §13 and the D7 slide script).
+  var D7_ITEMS = [
+    { text: '88% usa IA en al menos una función', cifras: ['adop-1'] },
+    { text: '62% experimenta o escala agentes', cifras: ['adop-2'] },
+    { text: '~1/3 escala la IA en toda la organización (la barra más estrecha, el cuello de botella)', cifras: ['adop-4'] },
+    { text: '39% reporta algún impacto en EBIT (normalmente <5%)', cifras: ['adop-5'] }
+  ];
+  EIA.dev.D7_ITEMS = D7_ITEMS;
+
+  section('charts', 2, function (ctx, o) {
+    var ink = E.ink, chart = E.chart, m = E.palette.mundo;
+    ink.background(ctx, 'datos', { seed: 'gallery-charts' });
+    if (o.page === 1) {
+      chart.bars(ctx, D7_ITEMS, { x: 70, y: 50, len: 380, h: 30, gap: 30, p: o.p, labelSize: 20, labelWidth: 230, tag: false });
+      chart.unitGrid(ctx, { x: 70, y: 330, w: 220, total: 100, value: 23, p: o.p, seed: 'g23' });
+      chart.unitGrid(ctx, { x: 330, y: 330, w: 320, total: 1000, percent: 3.3, p: o.p, litColor: m.tinta, seed: 'g33' });
+      chart.dots(ctx, { x: 160, y: 620, count: 44, pitch: 15, p: o.p, seed: 'd44' });
+      chart.dots(ctx, { x: 330, y: 620, count: 8, pitch: 15, p: o.p, seed: 'd8' });
+      var sc = chart.scale(100, 700, 330);
+      chart.band(ctx, { text: '+14–15%', scale: sc, y: 60, p: o.p });
+      chart.bar(ctx, { text: 'Hasta −83% de tiempo de redacción de notas clínicas', scale: sc, y: 120, h: 28, p: o.p, color: m.verde, labelWidth: 200, cifras: ['med-1'] });
+      chart.bar(ctx, { text: '<20%', label: '', scale: sc, y: 190, h: 28, p: o.p, color: m.rojo });
+      chart.bar(ctx, { text: 'Más de 90% (91,2%)', scale: sc, y: 250, h: 28, p: o.p, color: m.amarillo, labelWidth: 120 });
+      chart.interval(ctx, { min: -50, max: 20, x: 700, len: 500, y: 400, lo: chart.parseValue('−38%').value, hi: chart.parseValue('+9%').value,
+        point: chart.parseValue('−18%').value, labels: { lo: '−38%', hi: '+9%', point: '−18%' }, p: o.p });
+      chart.gauge(ctx, { x: 780, y: 600, r: 80, max: 400, text: '362 (2025)', ghost: chart.parseValue('233 (2024)').value, p: o.p, cifras: ['ries-1'] });
+      ink.machineGrid(ctx, 1060, 500, 190, 190, { cell: 12 });
+      chart.gauge(ctx, { x: 1155, y: 600, r: 62, max: 100, text: '55,84', style: 'ruled', p: o.p });
+    } else {
+      chart.funnel(ctx, { x: 60, y: 60, w: 360, items: D7_ITEMS, p: o.p, labelWidth: 290 });
+      chart.timeline(ctx, { x: 60, y: 470, w: 1160, from: '1 de enero de 2024', to: '1 de enero de 2029', p: o.p, items: [
+        { text: '1 de agosto de 2024: entra en vigor' }, { text: '2 de febrero de 2025: prohibiciones y alfabetización en IA' },
+        { text: '2 de agosto de 2025: obligaciones para modelos de propósito general' }, { text: '2 de diciembre de 2027' }, { text: '2 de agosto de 2028' }] });
+      chart.panels(ctx, { x: 760, y: 560, w: 460, h: 140, p: o.p, panels: [
+        { draw: function (c, r, pp) { E.ink.text(c, '88%', r.x + r.w / 2, r.y + 40, { size: 40, weight: 700, align: 'center', p: pp }); } },
+        { draw: function (c, r, pp) { E.ink.text(c, '~9 de 10', r.x + r.w / 2, r.y + 44, { size: 34, weight: 700, align: 'center', p: pp }); } }] });
+    }
+  });
+
+  section('tags', 1, function (ctx, o) {
+    var ink = E.ink, tags = E.tags, L = E.palette.legend;
+    ink.background(ctx, 'personas', { seed: 'gallery-tags' });
+    // Source tags tied to big numbers (the number text here is a dev stand-in for a rótulo).
+    var ids = ['adop-1', 'cap-3', 'adop-7', 'adop-8', 'trab-1', 'ries-2'];
+    ids.forEach(function (id, i) {
+      var x = 60 + (i % 3) * 410, y = 60 + Math.floor(i / 3) * 170;
+      ctx.font = '900 40px "EIA Display"';
+      ctx.fillStyle = E.palette.mundo.tinta;
+      ctx.fillText(id, x, y + 40);
+      tags.sourceTag(ctx, id, { near: { x: x + 4, y: y + 56, side: 'below', gap: 26 }, anchor: { x: x + 30, y: y + 50 }, p: o.p });
+    });
+    // Chips, full and monochrome, plus the neutral chip.
+    L.tipos.forEach(function (t, i) {
+      tags.chip(ctx, t.clase, t.label, { x: 50 + i * 238, y: 400, size: 16, pill: true, p: o.p });
+      tags.chip(ctx, t.clase, t.label, { x: 50 + i * 238, y: 440, size: 16, mono: true, p: o.p });
+    });
+    tags.chip(ctx, 'neutral', 'Proyección/índice', { x: 1060, y: 470, size: 16, pill: true, p: o.p });
+    // Estado signs.
+    ['verificada', 'con-matiz', 'actualizacion', 'informe-base'].forEach(function (k, i) {
+      tags.estadoSign(ctx, k, 80 + i * 60, 520, 40);
+    });
+    tags.illustrativeStamp(ctx, 330, 500, 1, o.p);
+    tags.updateRibbon(ctx, 720, 505, 1, o.p);
+    for (var n = 1; n <= 4; n++) tags.warningStamp(ctx, n, 80 + (n - 1) * 175, 640, 150, o.p);
+    tags.marginNote(ctx, 'Benchmark', 'Prueba estandarizada para comparar sistemas en una tarea definida (texto de prueba).', 760, 570, 480, o.p);
+  });
+
   section('lettering', 1, function (ctx, o) {
     var ink = E.ink;
     ink.background(ctx, 'personas', { seed: 'gallery-letter' });
