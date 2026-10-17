@@ -64,8 +64,8 @@
       tres: [1, 'de 3 a', 'word'], cuarenta: [1, 'a 44', 'word'], resto: [1, 'China tiene 85', 'chunk'] },
     embudo: { uso: [0, '88%', 'chunk'], agentes: [0, '62%', 'chunk'], escala: [1, 'cerca de un tercio', 'chunk'], impacto: [1, '39%', 'chunk'],
       patron: [3, 'El embudo muestra', 'chunk'] },
-    puente: { procesos: [0, 'rediseñar', 'word'], liderazgo: [0, 'liderazgo', 'word'], metricas: [0, 'métricas', 'word'],
-      transformacion: [0, 'transformación', 'word'] },
+    puente: { tecnologia: [0, 'la tecnología', 'word'], procesos: [0, 'rediseñar', 'word'], liderazgo: [0, 'liderazgo', 'word'],
+      metricas: [0, 'métricas', 'word'], transformacion: [0, 'transformación', 'word'] },
     etapas: { e0: [0, 'acceso', 'word'], e1: [0, 'experimentación,', 'word'], e2: [0, 'integración,', 'word'], e3: [0, 'rediseño', 'word'],
       e4: [0, 'escala', 'word'], e5: [0, 'transformación', 'word'], mayoria: [0, 'La mayoría', 'chunk'] },
     actualizacion: { uso: [0, 'cerca de nueve', 'chunk'], escala: [0, 'el 44%', 'chunk'], curso: [1, 'El curso', 'chunk'],
@@ -672,9 +672,11 @@
       meterDisc(ctx, env, Mt, turn);
       ink.draw(ctx, st.bolt, Mt.x + Mt.w - 18, Mt.y - 22, 1, { p: intro });
       if (np > 0) env.tags.sourceTag(ctx, 'eco-4', { x: E.tag4.x, y: E.tag4.y, anchor: { x: box.x + 6, y: box.y + box.h - 4 }, p: np, scale: 1.04 });
-      // The rebound: the tower's glow grows with the demand.
+      // Energy runs from the meter to the tower along the cable; with the rebound (demand growing
+      // faster than efficiency) more of it runs, faster, and the tower's glow grows.
       var rb = beat(a0, C.rebote - 0.02, C.rebote + 0.12);
       if (rb > 0) ink.glow(ctx, tw.x + tw.w / 2, tw.y + tw.h * 0.45, tw.h * 0.75, env.pal.maquina.linea, 0.22 * rb * (0.8 + 0.2 * Math.sin(s.t * 2.2)));
+      cablePulses(ctx, s, env, st.cablePath, intro, rb, tR);
       ctx.restore();
     }
     if (a1 <= 0) return;
@@ -712,6 +714,29 @@
     // What the dots count, written under the islands once the first cluster has landed.
     var cap = beat(a1, winE[1], winE[1] + 0.06);
     if (cap > 0) ink.text(ctx, rot(s, 'clusteres'), W / 2, E.caption.y, { size: E.caption.size, italic: true, align: 'center', p: cap });
+  }
+
+  // Small yellow pulses running down the cable from the meter to the tower: three always, four
+  // more (and a faster run) once the rebound is said. Positions come from s.t; the extra pulses
+  // fade in with `more`.
+  function cablePulses(ctx, s, env, g, alpha, more, tR) {
+    var m = env.pal.mundo, run = s.t * 0.22 + Math.max(0, s.t - tR) * 0.2;
+    for (var k = 0; k < 7; k++) {
+      var a = (k < 3 ? 1 : more) * alpha;
+      if (a <= 0) continue;
+      var u = 1 - ((k / (k < 3 ? 3 : 4) + (k < 3 ? 0 : 0.125) + run) % 1);
+      pathAt(g, u, Q2);
+      ctx.save();
+      ctx.globalAlpha *= a * Math.min(1, u * 8, (1 - u) * 8);
+      ctx.fillStyle = m.amarillo;
+      ctx.strokeStyle = m.tinta;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.arc(Q2.x, Q2.y, 5, 0, TAU);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
   }
 
   // The register's disc seen edge-on, with a red mark going round (as in lámina D6).
@@ -800,7 +825,7 @@
     bridge: { x: 640, y: 394, k: 1.55 },
     built: 0.62,
     title: { x: 64, y: 30, size: 44, w: 980 },
-    feet: 382, walkK: 1.2, start: 236,
+    feet: 382, walkK: 1.2, start: 150, walk: 2.4,
     stops: [700, 616, 532, 448],
     keys: ['procesos', 'liderazgo', 'metricas', 'transformacion'],
     roles: [['directiva', 3, 'bun'], ['docente', 0, 'curly'], ['servidor', 4, 'short'], ['investigadora', 1, 'long']],
@@ -817,18 +842,22 @@
     var intro = out3(s.intro), a0 = s.at(0);
     floaters(ctx, s, env, [['sol', 1170, 268, 60, m.rojo], ['pajaro', 980, 210, 58]], intro);
     bridgeScene(ctx, s, env, P.bridge, P.built, intro);
-    env.fig.lamp(ctx, P.lamp.x, P.lamp.y + Math.sin(s.t * 1.2) * 1.2 * calm(s), P.lamp.k, { t: s.t, p: intro });
+    // «no se distinguen tanto por la tecnología»: the lamp is already on the «Uso» bank; its glow
+    // settles down when the technology is named (it is not what makes the difference).
+    var dim = 0.55 * beat(a0, C.tecnologia - 0.02, C.tecnologia + 0.08);
+    env.fig.lamp(ctx, P.lamp.x, P.lamp.y + Math.sin(s.t * 1.2) * 1.2 * calm(s), P.lamp.k, { t: s.t, p: intro, dim: dim });
     // The idea of lámina D7, written on as it is said.
     ink.letter(ctx, rot(s, 'idea'), P.title.x, P.title.y, { size: P.title.size, maxWidth: P.title.w, maxLines: 2, seed: 'v04:idea-puente',
       counters: 0.3, stars: false, p: beat(a0, 0, 0.22) });
     // Four people carry the planks toward the scaffolding, each as its plank is named.
     var cues = [C.procesos, C.liderazgo, C.metricas, C.transformacion];
     for (var i = P.keys.length - 1; i >= 0; i--) {
-      var t0 = lineT(s, 0, Math.max(0, cues[i] - 0.05)), t1 = t0 + 2.8;
+      var t0 = lineT(s, 0, Math.max(0, cues[i] - 0.05)), t1 = t0 + P.walk;
       if (s.t < t0) continue;
-      var r = P.roles[i], pp = seg(s.t, t0, t0 + 0.5);
+      // Each one fades in at the left edge already walking (no stroke-by-stroke draw-on mid-stride).
+      var r = P.roles[i], pp = seg(s.t, t0, t0 + 0.4);
       var who = walker(ctx, s, env, P.start, P.stops[i], P.feet, P.walkK, t0, t1, {
-        role: r[0], skin: r[1], hair: r[2], seed: 'v04:carga' + i, pose: 'carrying', prop: 'plank', facing: 1, p: pp
+        role: r[0], skin: r[1], hair: r[2], seed: 'v04:carga' + i, pose: 'carrying', prop: 'plank', facing: 1, alpha: pp
       });
       // Labels on two staggered rows, so neighbours never overlap once everyone has arrived.
       var ly = who.y - 122 * P.walkK - (i % 2 ? 28 : 0);
@@ -1466,8 +1495,9 @@
     var Mt = ENERGIA.meter, T = ENERGIA.tower, towerTop = T.y - 300 * T.k;
     var bolt = ink.drawing('v04:rayo', { w: 2.6, jitter: 0.3 });
     bolt.shape([0, 0, 14, 0, 6, 14, 16, 14, -2, 36, 4, 20, -6, 20], { fill: m.amarillo, w: 2.6 });
+    var cable = [T.x, towerTop, T.x + 12, towerTop - 30, (T.x + Mt.x) / 2 + 30, Mt.y + Mt.h * 0.7, Mt.x + 2, Mt.y + Mt.h * 0.55];
     st.energia = {
-      cable: [T.x, towerTop, T.x + 12, towerTop - 30, (T.x + Mt.x) / 2 + 30, Mt.y + Mt.h * 0.7, Mt.x + 2, Mt.y + Mt.h * 0.55],
+      cable: cable, cablePath: samplePath(ink, cable, 3),
       bolt: bolt.done(),
       islands: ENERGIA.islands.map(function (I, k) {
         var b = ink.drawing('v04:isla' + k, { w: 4, jitter: 0.6 });
