@@ -129,16 +129,23 @@
   }
 
   /* lamina.bigFigure(ctx, item, rect, opts): big number (valor), its label (etiqueta) and the source
-   * tag of item.cifras, with a flat color field peeking behind the number. */
+   * tag of item.cifras, with a flat color field peeking behind the number. The field is always a
+   * light color and sits low-left, so black digits keep their contrast; digits get no colored
+   * counters (a number must read as exactly itself from the back of a room). */
+  var LIGHT = null;
+  function lightDecor() {
+    if (!LIGHT) LIGHT = [M().amarillo, M().celeste, M().lienzoOcre];
+    return LIGHT;
+  }
   lamina.bigFigure = function (ctx, item, r, o) {
     o = o || {};
     var ink = I(), p = o.p == null ? 1 : o.p, seed = o.seed || ('fig:' + item.valor);
     var vs = clamp(r.h * 0.3, 36, 66);
-    var vl = ink.measureLetter(ctx, item.valor, { size: vs, maxWidth: r.w - 10, maxLines: 1, seed: seed, underline: false, stars: false, counters: 0.5 });
+    var vl = ink.measureLetter(ctx, item.valor, { size: vs, maxWidth: r.w - 10, maxLines: 1, seed: seed, underline: false, stars: false, counters: 0 });
     var rr = E.rng.create(seed);
-    ink.blob(ctx, r.x + vl.w * 0.32, r.y + vl.h * 0.55, Math.max(28, vl.w * 0.36), vl.h * 0.42, {
-      fill: rr.pick(decor()), line: false, seed: seed + 'blob', irr: 0.2, p: seg(p, 0, 0.6), fillAlpha: 0.9 });
-    ink.letter(ctx, item.valor, r.x, r.y, { size: vs, maxWidth: r.w - 10, maxLines: 1, seed: seed, underline: false, stars: false, counters: 0.5, p: seg(p, 0.1, 0.7) });
+    ink.blob(ctx, r.x + vl.w * 0.22, r.y + vl.h * 0.74, Math.max(24, vl.w * 0.3), vl.h * 0.3, {
+      fill: rr.pick(lightDecor()), line: false, seed: seed + 'blob', irr: 0.2, p: seg(p, 0, 0.6), fillAlpha: 0.85 });
+    ink.letter(ctx, item.valor, r.x, r.y, { size: vs, maxWidth: r.w - 10, maxLines: 1, seed: seed, underline: false, stars: false, counters: 0, p: seg(p, 0.1, 0.7) });
     var ly = r.y + vl.h + 2;
     var lab = item.etiqueta ? ink.text(ctx, item.etiqueta, r.x, ly, { size: 19, maxWidth: r.w, maxLines: 3, fit: true, minSize: 14, p: seg(p, 0.4, 0.9) }) : { h: 0, w: 0 };
     var out = { valueBox: { x: r.x, y: r.y, w: vl.w, h: vl.h }, labelBox: { x: r.x, y: ly, w: lab.w, h: lab.h }, tagBox: null };
