@@ -337,7 +337,22 @@ EIA.data.actividades = {
       { id: 'verde', label: 'Verde', signo: 'estrella' },
       { id: 'ambar', label: 'Ámbar', signo: 'medio-disco' },
       { id: 'rojo', label: 'Rojo', signo: 'cruz' }
-    ]
+    ],
+    // Tool copy (prompt §10.6), not KB text. Hints point back to the ladder and add no facts.
+    ui: {
+      instrucciones: 'Lleva cada afirmación al escalón de la escalera que hoy la respalda. Sin mouse, toca o elige con el teclado una afirmación y luego un escalón.',
+      afirmaciones: 'Afirmaciones del contenido 5',
+      escalera: 'Escalera de evidencia',
+      escalon: 'Escalón {n}',
+      elegida: 'Elegiste «{afirmacion}». Ahora elige su escalón.',
+      soltar: 'Llevar «{afirmacion}» al escalón {n}',
+      progreso: 'Ubicadas: {n} de {total}',
+      pistaAlta: 'ese escalón pide más evidencia de la que existe hoy para esta afirmación; revisa qué clase de estudio la respalda.',
+      pistaBaja: 'esta afirmación ya tiene algo más que eso; revisa de dónde salen sus datos.',
+      color: 'Semáforo: {color}',
+      resultados: 'Lo que dice la evidencia',
+      fin: 'Ubicaste todas las afirmaciones en la escalera.'
+    }
   },
   's5-semaforo': {
     id: 's5-semaforo',

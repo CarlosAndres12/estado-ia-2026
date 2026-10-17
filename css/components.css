@@ -1590,4 +1590,94 @@ html:not(.has-decor) .feedback--casi .feedback__sign { border-style: dotted; }
   .funnel__chart { padding-left: var(--sp-4); }
   .funnel__ends { display: none; }
 }
+
+/* ---- «Sube la escalera de evidencia» (S5): six numbered rungs, traffic light as sign + label --- */
+
+.ladder__board { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr); gap: var(--sp-6); align-items: start; }
+.ladder__claims { display: grid; gap: var(--sp-3); }
+.ladder__claim { min-height: 68px; }
+.ladder__rungs {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0 1.5rem;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--sp-3);
+}
+.ladder__rungs::before, .ladder__rungs::after {
+  content: "";
+  position: absolute;
+  top: -12px;
+  bottom: -12px;
+  width: 10px;
+  background: var(--tierra);
+  border: 2.5px solid var(--tinta);
+  border-radius: 6px 3px 7px 4px;
+}
+.ladder__rungs::before { left: 0.2rem; transform: rotate(-0.4deg); }
+.ladder__rungs::after { right: 0.2rem; transform: rotate(0.5deg); }
+.ladder__rung { position: relative; z-index: 1; margin: 0; }
+.ladder__rung + .ladder__rung { margin-top: 0; }
+.ladder__target {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  min-height: 56px;
+  padding: 0.45rem 0.8rem;
+  font-size: 1.02rem;
+  line-height: 1.3;
+  text-align: left;
+  background: var(--papel);
+  border: 2.5px solid var(--tinta);
+  border-radius: 8px 12px 9px 14px;
+}
+.ladder__target:hover, .ladder__target.is-over { background: var(--wash-amarillo); }
+.ladder__target.is-over { box-shadow: inset 0 0 0 3px var(--tinta); }
+.game.has-selection .ladder__target { box-shadow: 3px 3px 0 var(--tinta); }
+.ladder__n {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  font-weight: var(--fw-bold);
+  background: var(--lienzo);
+  border: 2px solid var(--tinta);
+  border-radius: 50%;
+}
+.ladder__placed { list-style: none; margin: 0.35rem 0 0 2.4rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.ladder__placed:empty { display: none; }
+.ladder__tag {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.6rem;
+  margin: 0;
+  padding: 0.2rem 0.6rem;
+  font-weight: var(--fw-bold);
+  font-size: 0.95rem;
+  background: var(--papel);
+  border: 2px solid var(--tinta);
+  border-radius: 999px;
+  transform: rotate(-1deg);
+}
+.ladder__results { display: grid; gap: var(--sp-3); margin-top: var(--sp-4); }
+.ladder__results .game__label { margin-bottom: 0; }
+.ladder__result-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 1rem; }
+.ladder__result ul { margin-bottom: var(--sp-2); }
+.ladder__result-src { margin: 0; }
+.ladder__key ul { margin: 0; }
+@media (max-width: 760px) {
+  .ladder__board { grid-template-columns: 1fr; gap: var(--sp-4); }
+}
+
+.light-chip { display: inline-flex; align-items: center; gap: 0.3rem; font-weight: var(--fw-bold); vertical-align: middle; }
+.light { flex: none; width: 1.35rem; height: 1.35rem; border: 2.5px solid var(--tinta); border-radius: 50%; }
+.light--rojo { background: var(--semaforo-rojo); }
+.light--ambar { background: var(--semaforo-ambar); }
+.light--verde { background: var(--semaforo-verde); }
+.light-chip__sign { flex: none; }
 /* ==== [/interactions] ==== */

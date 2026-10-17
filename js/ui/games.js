@@ -524,5 +524,142 @@
     }
   };
 
+  // =============================================================================================
+  // S5 · «Sube la escalera de evidencia» (prompt §10.6): the KB's three claims onto the six rungs;
+  // feedback from the KB key, then each claim shows its traffic-light color as light + sign + label.
+
+  function lightChip(colorId, label) {
+    var L = (EIA.engine.palette && EIA.engine.palette.legend.semaforo) || [];
+    var spec = L.filter(function (x) { return x.key === colorId; })[0];
+    var sign = spec && ui.decor && ui.decor.signCanvas ? ui.decor.signCanvas(spec.sign, 24, { seed: 'semaforo-' + colorId, mono: true, className: 'light-chip__sign' }) : null;
+    return h('span', { class: 'light-chip light-chip--' + colorId }, [
+      h('span', { class: 'light light--' + colorId, 'aria-hidden': 'true' }), sign,
+      h('span', { class: 'light-chip__label', text: label })
+    ]);
+  }
+
+  tools['s5-escalera'] = {
+    mount: function (el, o) {
+      var a = act(o.id || 's5-escalera');
+      if (!a || !a.peldanos) return null;
+      var kit = K(), c = a.ui || {};
+      var colores = {};
+      (a.colores || []).forEach(function (x) { colores[x.id] = x; });
+      var total = a.afirmaciones.length, placed = 0;
+      var claimsId = kit.uid('claims'), rungsId = kit.uid('rungs');
+
+      var help = h('p', { class: 'game__help', text: c.instrucciones });
+      var progress = h('p', { class: 'game__progress' });
+      var claims = h('div', { class: 'ladder__claims', role: 'group', 'aria-labelledby': claimsId });
+      var rungs = h('ol', { class: 'ladder__rungs', 'aria-labelledby': rungsId });
+      var feedback = kit.feedbackBox('game__feedback');
+      var results = h('div', { class: 'ladder__results', hidden: true });
+      var endEl = h('div', { class: 'game__end', hidden: true });
+      var box = h('div', { class: 'game game--ladder' }, [
+        help, progress,
+        h('div', { class: 'ladder__board' }, [
+          h('div', { class: 'ladder__col' }, [h('h4', { class: 'game__label', id: claimsId, text: c.afirmaciones }), claims]),
+          h('div', { class: 'ladder__col ladder__col--rungs' }, [h('h4', { class: 'game__label', id: rungsId, text: c.escalera }), rungs])
+        ]),
+        feedback, results, endEl
+      ]);
+      el.appendChild(box);
+
+      function claimData(btn) {
+        var id = btn.getAttribute('data-claim');
+        return a.afirmaciones.filter(function (x) { return x.id === id; })[0] || null;
+      }
+      function build() {
+        placed = 0;
+        claims.innerHTML = '';
+        rungs.innerHTML = '';
+        results.innerHTML = '';
+        results.hidden = true;
+        endEl.innerHTML = '';
+        endEl.hidden = true;
+        kit.feedback(feedback, null);
+        a.afirmaciones.forEach(function (f) {
+          claims.appendChild(h('button', { type: 'button', class: 'game-card ladder__claim', 'data-claim': f.id, 'aria-pressed': 'false' }, [
+            h('span', { class: 'game-card__cifra', text: f.text })
+          ]));
+        });
+        a.peldanos.forEach(function (p, i) {
+          rungs.appendChild(h('li', { class: 'ladder__rung' }, [
+            h('button', { type: 'button', class: 'ladder__target', 'data-rung': i + 1 }, [
+              h('span', { class: 'ladder__n', text: String(i + 1) }),
+              h('span', { class: 'ladder__text' }, [h('span', { class: 'visually-hidden', text: kit.fmt(c.escalon, { n: i + 1 }) + ': ' }), p])
+            ]),
+            h('ul', { class: 'ladder__placed' })
+          ]));
+        });
+        progress.textContent = kit.fmt(c.progreso, { n: 0, total: total });
+      }
+
+      function place(btn, target) {
+        var f = claimData(btn), n = Number(target.getAttribute('data-rung'));
+        if (!f) return;
+        if (n !== f.escalon) {
+          kit.feedback(feedback, 'casi', ui.t('feedback.casi', { pista: n > f.escalon ? c.pistaAlta : c.pistaBaja }));
+          return;
+        }
+        var col = colores[f.color] || { label: f.color };
+        var next = btn.nextElementSibling || btn.previousElementSibling;
+        sort.select(null);
+        btn.remove();
+        target.parentNode.querySelector('.ladder__placed').appendChild(h('li', { class: 'ladder__tag' }, [
+          h('span', { class: 'ladder__tag-text', text: f.text }), lightChip(f.color, col.label)
+        ]));
+        placed += 1;
+        progress.textContent = kit.fmt(c.progreso, { n: placed, total: total });
+        kit.feedback(feedback, 'bien', ui.t('feedback.bien'), h('div', {}, [
+          h('p', { class: 'feedback__extra', html: kit.mi(String(f.clave).replace(/[;.]\s*$/, '')) }),
+          h('p', { class: 'feedback__extra' }, [lightChip(f.color, kit.fmt(c.color, { color: col.label }))])
+        ]));
+        results.hidden = false;
+        if (!results.firstChild) results.appendChild(h('h4', { class: 'game__label', text: c.resultados }));
+        results.appendChild(kit.card('card--thin ladder__result', [
+          h('p', { class: 'ladder__result-head' }, [h('strong', { text: f.text }), ' ', lightChip(f.color, col.label)]),
+          h('ul', {}, (f.detalle || []).map(function (d) { return h('li', { html: kit.mi(d) }); })),
+          h('p', { class: 'ladder__result-src' }, sourceTags(f.cifras))
+        ]));
+        if (placed === total) finish();
+        else focusEl(next && next.classList.contains('ladder__claim') ? next : claims.querySelector('.ladder__claim'));
+      }
+
+      function finish() {
+        var again = h('button', { type: 'button', class: 'btn', text: ui.t('feedback.repetir') });
+        again.addEventListener('click', function () { build(); focusEl(claims.querySelector('.ladder__claim')); });
+        var titleId = kit.uid('clave');
+        var title = h('h4', { class: 'game__end-title', id: titleId, tabindex: '-1', text: a.claveTitulo });
+        endEl.appendChild(h('p', { class: 'game__done', text: c.fin }));
+        endEl.appendChild(kit.card('card--thin ladder__key', [title, h('ul', { 'aria-labelledby': titleId }, a.afirmaciones.map(function (f) {
+          return h('li', { html: kit.mi(f.clave) });
+        }))]));
+        endEl.appendChild(h('p', { class: 'game__again' }, [again]));
+        endEl.hidden = false;
+        focusEl(title);
+      }
+
+      var sort = sorter({
+        root: box,
+        cards: '.ladder__claim',
+        targets: '.ladder__target',
+        place: place,
+        select: function (card) {
+          box.classList.toggle('has-selection', !!card);
+          var f = card ? claimData(card) : null;
+          Array.prototype.forEach.call(rungs.querySelectorAll('.ladder__target'), function (t) {
+            if (f) t.setAttribute('aria-label', kit.fmt(c.soltar, { afirmacion: f.text, n: t.getAttribute('data-rung') }));
+            else t.removeAttribute('aria-label');
+          });
+          if (f) kit.feedback(feedback, 'info', kit.fmt(c.elegida, { afirmacion: f.text }));
+        }
+      });
+
+      build();
+      return { destroy: function () { sort.destroy(); box.remove(); } };
+    }
+  };
+
   ui.games = { sorter: sorter, pasos: pasos };
 })(typeof window !== 'undefined' ? window : globalThis);
