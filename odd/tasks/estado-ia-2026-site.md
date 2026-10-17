@@ -47,7 +47,7 @@ exceeds it. Slicing into PRs is left to the user (each task commit is a candidat
 | T06 | V02 end to end + art review against prompt §3 | delegated writer | done (cherry-picked 4832670..9f98293) |
 | T07 | Page shell: router, markup, views, nav, hero, chips, citations/popovers, banco, glossary, FAQ, references, asistente, footer, CSS | delegated writer | done (cherry-picked b22f7c2..4c08e68) |
 | T08 | Interactions: quizzes, games, calculator, embudo, cuaderno, rubric, Ley de IA timeline, indicadores, timer, láminas viewer, Modo clase, print | delegated writer | done (cherry-picked 540ff7d..cb96f5a) |
-| T09 | Láminas D01–D17 | delegated writers (parallel, worktrees) | running (D01–D06; brief odd/spec/lamina-worker-brief.md) |
+| T09 | Láminas D01–D17 | delegated writers (parallel, worktrees) | done (D01–D17 merged) |
 | T10 | Videos V01, V03–V09 | delegated writers (parallel, worktrees) | running (one video per worker, brief in odd/spec/video-worker-brief.md) |
 | T11 | Voice-over tooling with **Edge TTS** (user decision; Azure kept optional): normalizer, SSML, Edge bridge + adapter, alignment, generator, listening sheet | delegated writer (many non-trivial files) | done (merged; fix b91d3af) |
 | T12 | Optional MP4 export (`render-videos.mjs`) | delegated writer | pending |
@@ -179,6 +179,15 @@ zero errors; 9 videos play in sync; 17 láminas render/print with corrected figu
   checker 0 errors. Parent fix (test-first): video glossary notes now honour `excluir` (RED 1 fail →
   GREEN 188/188). More engine wishes: cordillera deep valleys look rectangular; default fillJitter/
   fillScale grow with size; agentLoop `lamp:false` + labelSize; ruledLadder crack size + scale rungs.
+
+- D13–D17 done (cherry-picked 5102152..9217daf): checker 0 errors, 17 stills 0 console errors,
+  determinism ok (worker). Parent: D15 «14% vs 11%» got the verbatim thesis label (the guion has none;
+  the checker only accepts session/guion text); engine lamina.bigFigure sets an overflowing label in two
+  smaller lines so its tag stays in its row (changed D09, D11, D15 only); gallery self-test 50/50.
+  Kept: D13 shows the ries-1 tag twice (big figure + dial), both honest. More engine wishes:
+  `chart.parseDate` misreads «Ago 2027: … agosto de 2025»; `chart.gauge` sub-range colour; columnas/
+  tarjetas/linea drawers ignore cifras/signo/hitos; sourceTag maxWidth × scale; suspensionBridge label
+  width; faro one-sided beam; thread crosses big-figure label.
 
 ## Next step
 
