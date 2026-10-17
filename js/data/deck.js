@@ -734,7 +734,7 @@ EIA.data.deck = [
     titular: 'América Latina y Colombia: consumo rápido, capacidad por construir',
     subtitulo: '',
     cifras: [
-      { valor: '14% vs 11%', etiqueta: '', cifras: ['alc-1'] },
+      { valor: '14% vs 11%', etiqueta: 'de las visitas mundiales a soluciones de IA con 11% de los usuarios de Internet', cifras: ['alc-1'] },
       { valor: '55,84', etiqueta: 'Colombia en el ILIA 2025, cuarta en la región', cifras: ['alc-3'] },
       {
         valor: '479.273',

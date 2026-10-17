@@ -147,7 +147,16 @@
       fill: rr.pick(lightDecor()), line: false, seed: seed + 'blob', irr: 0.2, p: seg(p, 0, 0.6), fillAlpha: 0.85 });
     ink.letter(ctx, item.valor, r.x, r.y, { size: vs, maxWidth: r.w - 10, maxLines: 1, seed: seed, underline: false, stars: false, counters: 0, p: seg(p, 0.1, 0.7) });
     var ly = r.y + vl.h + 2;
-    var lab = item.etiqueta ? ink.text(ctx, item.etiqueta, r.x, ly, { size: 19, maxWidth: r.w, maxLines: 3, fit: true, minSize: 14, p: seg(p, 0.4, 0.9) }) : { h: 0, w: 0 };
+    // A long label (up to 3 lines) can leave no room for the tag in the row; then it is set in 2
+    // smaller lines so the tag never spills onto the next figure.
+    var labOpts = { size: 19, maxWidth: r.w, maxLines: 3, fit: true, minSize: 14 };
+    if (item.etiqueta && item.cifras && item.cifras.length && E.tags) {
+      var tagMin = E.tags.measureTag(ctx, item.cifras, { scale: 0.7, maxWidth: r.w - 10, scope: false }).h;
+      if (vl.h + 2 + ink.measureText(ctx, item.etiqueta, labOpts).h + 8 + tagMin > r.h) {
+        labOpts = { size: 16, maxWidth: r.w, maxLines: 2, fit: true, minSize: 13 };
+      }
+    }
+    var lab = item.etiqueta ? ink.text(ctx, item.etiqueta, r.x, ly, Object.assign({ p: seg(p, 0.4, 0.9) }, labOpts)) : { h: 0, w: 0 };
     var out = { valueBox: { x: r.x, y: r.y, w: vl.w, h: vl.h }, labelBox: { x: r.x, y: ly, w: lab.w, h: lab.h }, tagBox: null };
     if (item.cifras && item.cifras.length && E.tags) {
       // The tag fits the rest of the row: with its scope when there is room, without it otherwise.
