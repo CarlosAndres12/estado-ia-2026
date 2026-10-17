@@ -10,17 +10,18 @@
  * reservoir with one sluice gate, its ruled server tower and its hand-drawn register meter; D7's
  * proportional funnel and the bridge from «Uso» to «Valor» whose last span is still scaffolding;
  * D8's balance (three weights against an hourglass) and its causal diagram with the dotted
- * «asociación» line. Coins and rivers carry no count: they are the metaphor, not data.
+ * «asociación» line. Coins carry no count: they are the metaphor, not data.
  *
  * Every number is an exact mark or a whole reading, with its source tag from the line that says it
- * to the end of its scene: coin piles exactly 23,1 : 1 on one baseline; compute slices exactly
+ * to the end of its scene: the stream of corporate investment exactly 581.700 / 344.700 times as
+ * wide as the river; coin piles exactly 23,1 : 1 on one baseline; compute slices exactly
  * 9,6% / 22,6% / 12,3% of identical ruled blocks; dot clusters of exactly 44, 85, 41 and 8; the four
  * funnel bars on one zero-based scale, the narrowest with the «≈» cap; the weights of the balance on
  * one scale (the 14–15% range as a band); the METR interval from −38% to +9% with its point and the
  * zero line; the PwC towers exactly 27,0 : 8,5. Editions never share a page, an axis or a line: the
  * 2026 survey is a separate page with its «Actualización» ribbon, and the 2026 wage premium a
- * separate card. Benchmarks and compute live in ruled navy panels; people and places are warm and
- * free; the AI is only the small ruled lamp.
+ * separate card. Compute lives in a ruled navy panel and the data center is a ruled tower; people
+ * and places are warm and free; the AI is only the small ruled lamp.
  *
  * Beats follow the voice (prompt §5.6): every change is keyed to s.at(i) of the line that brings
  * it, and in-line beats to s.cue(i, words, kind) (the subtitle chunk times), never to fixed seconds.
@@ -1465,8 +1466,8 @@
       })()
     };
 
-    // paises: a river running down between the two banks; the guide from the label to the tall
-    // pile's exact top; the thread of the note; the seal and the gear signs.
+    // paises: a river running down between the two banks; the thread of the note pinned to the
+    // small pile; the seal of a granted patent and the gear of industrial machinery.
     var pr = samplePath(ink, PAISES.river, 4);
     var pb = ink.drawing('v04:rio-orillas', { w: 3.6, jitter: 0.6 });
     pb.shape(bandPoints(pr, 10, 46, 40), { fill: m.celeste, w: 3.4 });
