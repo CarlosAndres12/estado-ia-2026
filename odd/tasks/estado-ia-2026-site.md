@@ -168,6 +168,13 @@ zero errors; 9 videos play in sync; 17 láminas render/print with corrected figu
   name → `estrella-visto`; data-model.md documents tool copy. Untested: facilitator-window sync with two
   windows, timer chime (no-audio rule), real-mouse drag, video playback in Modo clase.
 
+- D07–D12 done (cherry-picked 85cf5da..f2cad9f): checker 0 errors, 17 stills 0 console errors,
+  determinism ok (worker); parent looked at the six together: coherent, no "34%" on D10, D12 lab result
+  in navy panel, D8 corrected 27,0% vs 8,5%. More engine wishes: flujo/pasos/causal drawers ignore
+  `titulo`/`luz`/`enlace`; `sourceTag` label wrap; big-figure thread crosses its label; long scopes;
+  sharp-outline option; `fig.boat` motor detached.
+- D13–D17 launched (running: V03, V04, D13–D17).
+
 ## Next step
 
 Merge wave 1 branches as they finish (verify each: checker, tests, headless console), then wave 2:
