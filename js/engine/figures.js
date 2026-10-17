@@ -1076,5 +1076,352 @@
     return { box: { x: x, y: y, w: w, h: h }, drawers: drawers };
   };
 
+  // =============================================================================================
+  // PEOPLE (prompt §3.4): rounded biomorphic bodies in flat color, black brush outlines, dot eyes,
+  // small smiles, hair as calligraphic strokes, clear poses. Built in a 100-unit-tall frame with the
+  // feet at y = 0; scale 1 = 100 px tall. No real or famous people, no logos, nothing grotesque.
+
+  var NECK = -75;
+  // Arm chains (shoulder, elbow, hand) per pose, for the right arm (x > 0) and left arm (x < 0).
+  var POSES = {
+    standing: { r: [11, -71, 15, -57, 14, -45], l: [-11, -71, -15, -57, -14, -45], tilt: 0 },
+    reading: { r: [11, -71, 14, -60, 5, -56], l: [-11, -71, -14, -60, -5, -56], tilt: 0.13, prop: 'held' },
+    writing: { r: [11, -71, 17, -61, 5, -59], l: [-11, -71, -14, -60, -6, -55], tilt: 0.12, prop: 'held' },
+    pointing: { r: [11, -71, 24, -79, 37, -86], l: [-11, -71, -15, -58, -13, -46], tilt: -0.06 },
+    presenting: { r: [11, -71, 25, -64, 37, -63], l: [-11, -71, -15, -58, -13, -46], tilt: -0.04 },
+    asking: { r: [11, -71, 17, -63, 7, -78], l: [-11, -71, -14, -60, -6, -56], tilt: 0.09, prop: 'held' },
+    lookingUp: { r: [11, -71, 15, -57, 14, -45], l: [-11, -71, -15, -57, -14, -45], tilt: -0.24, eyesUp: true },
+    waving: { r: [11, -71, 21, -83, 22, -97], l: [-11, -71, -15, -57, -14, -45], tilt: -0.05 },
+    carrying: { r: [11, -71, 19, -82, 12, -94], l: [-11, -71, -18, -82, -12, -94], tilt: 0 },
+    catching: { r: [11, -71, 23, -70, 33, -74], l: [-11, -71, -6, -62, 6, -66], tilt: -0.08, prop: 'open' },
+    tying: { r: [11, -71, 22, -64, 31, -60], l: [-11, -71, 2, -64, 22, -58], tilt: 0.08 },
+    walking: { r: [11, -71, 17, -58, 19, -46], l: [-11, -71, -16, -59, -20, -48], tilt: 0, walk: true }
+  };
+  fig.poses = function () { return Object.keys(POSES); };
+
+  var HAIRS = ['short', 'bob', 'long', 'bun', 'curly', 'ponytail', 'braids', 'bald'];
+  var OUTFITS = { directiva: 'blazer', servidor: 'shirt', docente: 'cardigan', investigadora: 'coat', medica: 'coat',
+    desarrollador: 'hoodie', estudiante: 'shirt', campesina: 'dress', lectora: 'dress', persona: 'shirt' };
+
+  function personSpec(o) {
+    var role = o.role || 'persona';
+    var r = E.rng.create('person:' + (o.seed == null ? role : o.seed));
+    var m = M();
+    var spec = {
+      role: role,
+      pose: POSES[o.pose] ? o.pose : 'standing',
+      hair: o.hair || r.pick(HAIRS),
+      outfit: o.outfit || OUTFITS[role] || 'shirt',
+      skin: o.skin != null ? o.skin : r.int(0, 4),
+      hairColor: o.hairColor || r.pick([m.tinta, m.tinta, m.madera, m.siena, m.lienzoOcre]),
+      cloth: o.cloth || r.pick([m.rojo, m.azul, m.amarillo, m.verde, m.tierra, m.celeste]),
+      legs: o.legs || r.pick([m.tinta, m.azul, m.madera, m.siena]),
+      width: o.width || r.range(0.9, 1.18),
+      height: o.height || (role === 'estudiante' ? r.range(0.88, 0.95) : r.range(0.94, 1.04)),
+      glasses: o.glasses != null ? !!o.glasses : r() < 0.2,
+      cheeks: o.cheeks != null ? !!o.cheeks : r() < 0.5,
+      prop: o.prop || null,
+      seed: String(o.seed == null ? role : o.seed)
+    };
+    if (spec.outfit === 'coat') spec.cloth = m.lienzo;
+    return spec;
+  }
+
+  function personKey(sp) {
+    return ['person', sp.role, sp.pose, sp.hair, sp.outfit, sp.skin, sp.hairColor, sp.cloth, sp.legs, sp.width.toFixed(3), sp.height.toFixed(3),
+      sp.glasses ? 1 : 0, sp.cheeks ? 1 : 0, sp.prop || '', sp.seed].join('|');
+  }
+
+  function wx(pts, k) { var out = pts.slice(); for (var i = 0; i < out.length; i += 2) out[i] *= k; return out; }
+
+  function hairBack(b, sp) {
+    var hc = '@hair';
+    switch (sp.hair) {
+      case 'bob': b.shape([-14, -90, -12.5, -98, 0, -101.5, 12.5, -98, 14, -90, 14.5, -79, 10, -76.5, -10, -76.5, -14.5, -79], { fill: hc, w: 2.2 }); break;
+      case 'long': b.shape([-14, -92, -12, -99, 0, -102, 12, -99, 14, -92, 16, -76, 15, -64, 8, -66, -8, -66, -15, -64, -16, -76], { fill: hc, w: 2.2 }); break;
+      case 'ponytail': b.shape([10, -95, 17, -90, 21, -78, 18, -68, 15, -78, 12, -88], { fill: hc, w: 2 }); break;
+      case 'braids':
+        [-1, 1].forEach(function (sd) {
+          for (var i = 0; i < 4; i++) b.ellipse(sd * 13.5, -80 + i * 5.2, 2.8, 3.2, { fill: hc, w: 1.4 });
+        });
+        break;
+    }
+  }
+  function hairFront(b, sp) {
+    var hc = '@hair';
+    switch (sp.hair) {
+      case 'short': b.shape([-11.8, -88, -10.5, -96, -3, -99.5, 6, -99, 11.5, -94, 12, -87, 7, -92, 0, -93.5, -6, -92], { fill: hc, w: 2.2 }); break;
+      case 'bob': b.shape([-11.8, -88, -10, -96, 0, -99.8, 10, -96, 11.8, -88, 7, -93.5, 1, -94.6, -5, -93.6], { fill: hc, w: 2.2 }); b.stroke([-2, -95, 1, -97.5, 4, -95.5], { w: 0.9, profile: 'hair', color: '@paper' }); break;
+      case 'long': case 'braids': case 'ponytail':
+        b.shape([-11.8, -88, -9.5, -96.5, 0, -99.8, 9.5, -96.5, 11.8, -88, 4, -94, -3, -93.5], { fill: hc, w: 2.2 }); break;
+      case 'bun':
+        b.circle(1, -101, 5.6, { fill: hc, w: 2 });
+        b.shape([-11.8, -88, -9.5, -96.5, 0, -99.6, 9.5, -96.5, 11.8, -88, 5, -93.5, -4, -93.5], { fill: hc, w: 2.2 });
+        break;
+      case 'curly':
+        for (var i = 0; i < 6; i++) {
+          var a = Math.PI * (1.05 + i * 0.18);
+          b.circle(Math.cos(a) * 10.5, -89 + Math.sin(a) * 10.5, 4.4, { fill: hc, w: 1.8 });
+        }
+        break;
+      case 'bald':
+        b.stroke([-5, -97, -1, -99.5, 3, -97.5], { w: 1.2, profile: 'hair' });
+        b.stroke([-9, -93, -7, -96], { w: 1, profile: 'hair' });
+        break;
+    }
+  }
+
+  function headInto(b, sp, pose) {
+    hairBack(b, sp);
+    b.circle(0, -86.5, 11.6, { fill: '@skin', w: 2.5 });
+    hairFront(b, sp);
+    var ey = POSES[pose].eyesUp ? -88.3 : -86.6;
+    b.dot(-4.2, ey, 1.4);
+    b.dot(4.2, ey, 1.4);
+    if (sp.cheeks) { b.dot(-6.8, -82.4, 1.9, { color: '@cheek' }); b.dot(6.8, -82.4, 1.9, { color: '@cheek' }); }
+    if (POSES[pose].eyesUp) b.stroke([-2.4, -81, 0, -79.8, 2.4, -81], { w: 1.1, profile: 'even' });
+    else b.stroke([-3.6, -81.6, 0, -79.6, 3.6, -81.6], { w: 1.2, profile: 'even' });
+    if (sp.glasses) {
+      b.stroke(arc(-4.3, ey, 3.9, 0, TAU, 12), { w: 1.15, profile: 'even' });
+      b.stroke(arc(4.3, ey, 3.9, 0, TAU, 12), { w: 1.15, profile: 'even' });
+      b.stroke([-0.6, ey - 0.4, 0.6, ey - 0.4], { w: 1, profile: 'even' });
+      b.stroke([-8.1, ey - 0.8, -11.2, ey - 1.6], { w: 0.9, profile: 'even' });
+      b.stroke([8.1, ey - 0.8, 11.2, ey - 1.6], { w: 0.9, profile: 'even' });
+    }
+    if (sp.role === 'campesina') {
+      b.shape([-19, -95, -10, -98, 0, -99, 10, -98, 19, -95, 10, -93.5, 0, -93, -10, -93.5], { fill: M().tierra, w: 2 });
+      b.shape([-9, -96, -8, -104, 0, -106, 8, -104, 9, -96], { fill: M().tierra, w: 2 });
+    }
+  }
+
+  function bodyInto(b, sp, pose) {
+    var k = sp.width, P2 = POSES[pose];
+    var walk = !!P2.walk;
+    // Legs / trousers first (behind the torso).
+    if (sp.outfit === 'dress') {
+      b.stroke(walk ? [-5, -31, -8, -16, -11, -3] : [-5.5, -31, -6, -16, -6.5, -3], { w: 3.6, profile: 'blunt' });
+      b.stroke(walk ? [5, -31, 7, -16, 9, -3] : [5.5, -31, 6, -16, 6.5, -3], { w: 3.6, profile: 'blunt' });
+    } else {
+      var tr = walk ? [-12, -39, 12, -39, 11.5, -22, 13, -3, 6, -3, 1.5, -24, -1.5, -24, -7, -3, -14, -3, -11.5, -22]
+        : [-12, -39, 12, -39, 11.5, -21, 9.5, -3, 3, -3, 1, -25, -1, -25, -3, -3, -9.5, -3, -11.5, -21];
+      b.shape(wx(tr, k), { fill: '@legs', w: 2.4 });
+    }
+    var fx = walk ? [-11, 10] : [-7.5, 7.5];
+    b.ellipse(fx[0] * (sp.outfit === 'dress' ? 1 : k) - 1.5, -1.8, 5, 2.4, { fill: '@ink', w: 1.2 });
+    b.ellipse(fx[1] * (sp.outfit === 'dress' ? 1 : k) + 1.5, -1.8, 5, 2.4, { fill: '@ink', w: 1.2 });
+    // Torso.
+    var torso;
+    switch (sp.outfit) {
+      case 'dress': torso = [-11.5, -73, -7, -75.8, 7, -75.8, 11.5, -73, 13, -61, 14.2, -47, 16.6, -30.5, 0, -29.2, -16.6, -30.5, -14.2, -47, -13, -61]; break;
+      case 'coat': torso = [-12.5, -73, -7, -75.8, 7, -75.8, 12.5, -73, 14.8, -60, 15.4, -42, 17.4, -21, 3, -20, 0, -25, -3, -20, -17.4, -21, -15.4, -42, -14.8, -60]; break;
+      default: torso = [-12, -73, -7, -75.8, 7, -75.8, 12, -73, 14, -61, 13.6, -49, 13, -37.5, 0, -36.5, -13, -37.5, -13.6, -49, -14, -61];
+    }
+    var tb = b.shape(wx(torso, k), { fill: '@outfit', w: 2.6 });
+    switch (sp.outfit) {
+      case 'coat': b.stroke([0, -75, 0.5, -50, 0, -26], { w: 1.4, profile: 'even' }); b.stroke([-4, -75, 0, -66, 4, -75], { w: 1.4, profile: 'even' }); break;
+      case 'blazer': b.stroke([-5, -75, 0, -62, 5, -75], { w: 1.6, profile: 'even' }); b.fill(wx([-4, -75, 0, -63, 4, -75], 1), { fill: '@paper', tex: false }); break;
+      case 'cardigan': b.stroke([0, -74, 0, -38], { w: 1.3, profile: 'even' }); b.dot(-2.2, -60, 0.9); b.dot(-2.2, -50, 0.9); break;
+      case 'hoodie': b.blob(0, -76, 9, 3.6, { fill: '@outfit', w: 1.8, irr: 0.05 }); b.stroke([-6, -48, 6, -48], { w: 1.3, profile: 'even' }); break;
+      case 'shirt': b.stroke([-3.5, -75.5, 0, -71, 3.5, -75.5], { w: 1.4, profile: 'even' }); break;
+    }
+    if (sp.role === 'lectora') {
+      // Her red scarf.
+      b.shape([-8, -76.5, 0, -73, 8, -76.5, 7, -72, 0, -70.5, -7, -72], { fill: '@accent', w: 1.8 });
+      b.shape([3, -72, 7, -60, 3.5, -59, 1, -71], { fill: '@accent', w: 1.6 });
+    }
+    if (sp.role === 'medica') {
+      b.stroke([-6, -75, -7, -66, -3, -60, 2, -61, 5, -66, 5, -75], { w: 1.4, profile: 'even' });
+      b.circle(2.2, -58.5, 2.3, { fill: M().celeste, w: 1.2 });
+    }
+    if (sp.role === 'estudiante') b.stroke([-9, -74, -11, -58, -12.5, -44], { w: 2, profile: 'even', color: M().siena });
+    return tb;
+  }
+
+  function heldProp(b, sp, pose) {
+    var P2 = POSES[pose], prop = sp.prop || (P2.prop ? (sp.role === 'lectora' ? 'notebook' : null) : null);
+    if (!prop) return;
+    var m = M();
+    var hr = P2.r, hl = P2.l;
+    var cx = (hr[4] + hl[4]) / 2, cy = (hr[5] + hl[5]) / 2;
+    switch (prop) {
+      case 'notebook':
+        if (P2.prop === 'open') {
+          b.shape([-4, -72, 6, -73, 16, -70, 16, -60, 6, -62, -4, -61], { fill: '@paper', w: 1.8, fillScale: 0 });
+          b.stroke([6, -72.5, 6, -62], { w: 1.2, profile: 'even' });
+        } else {
+          b.shape(box(cx - 8, cy - 9, cx + 8, cy + 3, 0.1), { fill: '@book', w: 1.9, fillScale: 0 });
+          b.fill(box(cx - 6.5, cy - 7.5, cx + 6.5, cy + 1.5, 0.1), { fill: '@paper', fillScale: 0, tex: false });
+          b.stroke([cx - 4.5, cy - 4.5, cx + 4.5, cy - 4.8], { w: 0.9, profile: 'even' });
+          b.stroke([cx - 4.5, cy - 1.6, cx + 3, cy - 1.8], { w: 0.9, profile: 'even' });
+        }
+        break;
+      case 'book': b.shape(box(cx - 9, cy - 8, cx + 9, cy + 4, 0.1), { fill: m.rojo, w: 1.9, fillScale: 0 }); break;
+      case 'phone': b.shape(box(hr[4] - 2.5, hr[5] - 8, hr[4] + 2.5, hr[5] + 1, 0.2), { fill: m.tinta, w: 1.2, fillScale: 0 }); break;
+      case 'clipboard':
+        b.shape(box(cx - 8, cy - 11, cx + 8, cy + 4, 0.08), { fill: m.madera, w: 1.8, fillScale: 0 });
+        b.fill(box(cx - 6, cy - 8, cx + 6, cy + 2.5, 0.08), { fill: '@paper', fillScale: 0, tex: false });
+        break;
+      case 'laptop':
+        b.shape([cx - 12, cy - 2, cx + 12, cy - 2, cx + 14, cy + 2, cx - 14, cy + 2], { fill: m.lienzoOcre, w: 1.6, fillScale: 0 });
+        b.shape([cx - 11, cy - 2, cx - 9, cy - 16, cx + 9, cy - 16, cx + 11, cy - 2], { fill: m.lienzoOcre, w: 1.6, fillScale: 0 });
+        b.dot(cx, cy - 9, 1.6, { color: m.tierra });
+        break;
+      case 'flask':
+        b.shape([hr[4] - 1.5, hr[5] - 12, hr[4] - 1.5, hr[5] - 7, hr[4] - 6, hr[5] + 1, hr[4] + 6, hr[5] + 1, hr[4] + 1.5, hr[5] - 7, hr[4] + 1.5, hr[5] - 12],
+          { fill: m.celeste, w: 1.4, fillScale: 0 });
+        break;
+      case 'folder': b.shape(box(cx - 10, cy - 8, cx + 10, cy + 4, 0.08), { fill: m.amarillo, w: 1.8, fillScale: 0 }); break;
+      case 'plank': b.shape([-28, -97, 30, -95, 30, -91, -28, -93], { fill: m.tierra, w: 1.8, fillScale: 0 }); break;
+      case 'spyglass':
+        b.shape(rotPts([4, -88, 30, -88, 30, -82, 4, -83], -0.25, 4, -86), { fill: m.madera, w: 1.6, fillScale: 0 });
+        break;
+    }
+  }
+
+  function personDrawing(sp) {
+    return cached(personKey(sp), function () {
+      var b = I().drawing('person:' + sp.seed + ':' + sp.pose, { w: 2.6, jitter: 0.25 });
+      var pose = sp.pose, P2 = POSES[pose];
+      bodyInto(b, sp, pose);
+      // The head tilts around the neck; build it in its own builder space by rotating points.
+      var hb = I().drawing('head:' + sp.seed + ':' + pose, { w: 2.4, jitter: 0.15 });
+      headInto(hb, sp, pose);
+      var head = hb.done();
+      var tilt = P2.tilt || 0;
+      b.custom(function (ctx, e, o, s) {
+        ctx.save();
+        ctx.translate(0, NECK);
+        ctx.rotate(tilt);
+        ctx.translate(0, -NECK);
+        I().draw(ctx, head, 0, 0, 1, { p: e, colors: o.colors, mono: o.mono, offset: (o.offset != null ? o.offset : clamp(3.1 * Math.sqrt(s), 1, 4)) / s,
+          weight: (o.weight || 1) * I().weightFor(s) / I().weightFor(1) });
+        ctx.restore();
+      }, { t: [0, 0.75], len: 80 });
+      // Arms over the torso, then hands and any held prop.
+      var hand = function (c) { b.circle(c[4], c[5], 2.9, { fill: '@skin', w: 1.5 }); };
+      if (P2.prop) heldProp(b, sp, pose);
+      b.stroke([P2.r[0], P2.r[1], P2.r[2], P2.r[3], P2.r[4], P2.r[5]], { w: 3.3, profile: 'blunt' });
+      b.stroke([P2.l[0], P2.l[1], P2.l[2], P2.l[3], P2.l[4], P2.l[5]], { w: 3.3, profile: 'blunt' });
+      if (!P2.prop) heldProp(b, sp, pose);
+      hand(P2.r);
+      hand(P2.l);
+      if (sp.role === 'lectora' && (pose === 'writing' || pose === 'asking' || pose === 'pointing' || pose === 'catching' || pose === 'reading')) {
+        var h = P2.r;
+        b.stroke([h[4] + 1, h[5] + 2, h[4] + 7, h[5] - 8], { w: 2.4, profile: 'blunt', color: M().amarillo });
+        b.dot(h[4] + 7.4, h[5] - 8.6, 1, { color: '@ink' });
+      }
+      return b.done({ colors: null });
+    });
+  }
+
+  function personColors(sp, o) {
+    var m = M();
+    return merge({
+      skin: P().pieles[clamp(sp.skin, 0, 4)], hair: sp.hairColor, outfit: sp.cloth, legs: sp.legs, accent: m.rojo,
+      cheek: P().mix(m.rojo, P().pieles[clamp(sp.skin, 0, 4)], 0.45), book: m.azul, paper: m.lienzo
+    }, o.colors);
+  }
+
+  /* fig.person(ctx, x, y, scale, opts) — one friendly personaje. (x, y) = between the feet on the
+   * ground; scale 1 = 100 px tall (good from 0.8 to 4).
+   * opts: role ('directiva' | 'servidor' | 'docente' | 'investigadora' | 'medica' | 'desarrollador' |
+   *   'estudiante' | 'campesina' | 'persona'), pose (fig.poses()), seed (picks skin, hair, colors),
+   *   skin (0..4, Pieles), hair (short | bob | long | bun | curly | ponytail | braids | bald),
+   *   hairColor, cloth, legs, outfit (dress | coat | blazer | cardigan | hoodie | shirt), glasses,
+   *   prop (notebook | book | phone | clipboard | laptop | flask | folder | plank | spyglass),
+   *   facing (1 right, -1 left), p (draw-on), colors (slot overrides), mono. */
+  fig.person = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var sp = personSpec(o);
+    var d = personDrawing(sp);
+    var s = (scale || 1) * sp.height;
+    I().draw(ctx, d, x, y, s, { p: o.p, colors: personColors(sp, o), flip: o.facing === -1, mono: o.mono, alpha: o.alpha, rot: o.rot });
+    return { x: x, y: y, top: y - 100 * s, head: { x: x, y: y - 86.5 * s, r: 11.6 * s }, hand: handPos(sp, x, y, s, o.facing) };
+  };
+  function handPos(sp, x, y, s, facing) {
+    var P2 = POSES[sp.pose], f = facing === -1 ? -1 : 1;
+    return { right: { x: x + P2.r[4] * s * f, y: y + P2.r[5] * s }, left: { x: x + P2.l[4] * s * f, y: y + P2.l[5] * s } };
+  }
+
+  /* fig.lectora(ctx, x, y, scale, opts) — the recurring reader who voices the critical questions:
+   * round glasses, notebook and pencil, yellow dress and red scarf; same design in every video.
+   * opts: pose ('reading' default | 'writing' | 'asking' | 'pointing' | 'catching' | 'tying' |
+   * 'standing' | 'lookingUp' | 'walking'), facing, p. She never holds a magnifying glass. */
+  fig.lectora = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var m = M();
+    return fig.person(ctx, x, y, scale, merge({
+      role: 'lectora', seed: 'lectora', pose: o.pose || 'reading', hair: 'bob', outfit: 'dress', skin: 2, glasses: true, cheeks: true,
+      hairColor: m.tinta, cloth: m.amarillo, legs: m.tinta, width: 1.04, height: 1, prop: 'notebook'
+    }, { pose: o.pose || 'reading', facing: o.facing, p: o.p, alpha: o.alpha, colors: o.colors }));
+  };
+
+  /* fig.team(ctx, x, y, scale, opts) -> { top: { x, y, w } }: 3–4 diverse people around a table.
+   * (x, y) = front center of the table on the floor; scale 1 = table 320 px wide.
+   * opts: n (4), seeds (array), p. The returned table top is where a card can be laid. */
+  fig.team = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1, n = o.n || 4, p = o.p == null ? 1 : o.p, m = M();
+    var poses = ['presenting', 'writing', 'pointing', 'reading'];
+    var roles = ['directiva', 'docente', 'desarrollador', 'servidor'];
+    var hairs = ['short', 'long', 'curly', 'bun'];
+    for (var i = 0; i < n; i++) {
+      var u = n === 1 ? 0 : i / (n - 1) - 0.5;
+      fig.person(ctx, x + u * 250 * s, y - 14 * s, 1.55 * s, {
+        role: roles[i % 4], seed: (o.seeds && o.seeds[i]) || ('team' + i), pose: poses[i % 4], hair: hairs[i % 4], skin: [0, 3, 1, 4][i % 4],
+        facing: u < 0 ? 1 : -1, p: seg(p, i * 0.1, 0.6 + i * 0.1)
+      });
+    }
+    // The table in front: a warm wooden top and a front panel down to the floor.
+    var tw = 340 * s, top = y - 76 * s;
+    fig.table(ctx, x, y, s, { w: 340, h: 76, p: seg(p, 0.4, 1), seed: 'team' });
+    return { top: { x: x, y: top, w: tw } };
+  };
+
+  /* fig.table(ctx, x, y, scale, opts) -> { top }: a warm table seen from the front. (x, y) = front
+   * center on the floor; opts.w, opts.h (px at scale 1: 340 × 76), color (madera), top (tierra),
+   * p, seed. */
+  fig.table = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1, w = (o.w || 340) * s, h = (o.h || 76) * s, m = M();
+    var d = cached('table|' + Math.round(w) + '|' + Math.round(h) + '|' + (o.seed || ''), function () {
+      var b = I().drawing('table:' + (o.seed || '') + w, { w: 3 / Math.max(0.5, s), jitter: 0.6 });
+      b.shape(box(-w / 2 + 10, -h + 14, w / 2 - 10, -4, 0.02), { fill: '@a', w: 3 });
+      b.shape(box(-w / 2, -h, w / 2, -h + 15, 0.03), { fill: '@b', w: 3.2 });
+      b.stroke([-w / 2 + 26, -h + 15, -w / 2 + 28, -2], { w: 2.4, profile: 'blunt' });
+      b.stroke([w / 2 - 26, -h + 15, w / 2 - 28, -2], { w: 2.4, profile: 'blunt' });
+      return b.done({ colors: { a: m.madera, b: m.tierra } });
+    });
+    I().draw(ctx, d, x, y, 1, { p: o.p, colors: o.colors, offset: 3 });
+    return { top: { x: x, y: y - h, w: w } };
+  };
+
+  /* fig.students(ctx, x, y, scale, opts): a small group of university students (backpacks,
+   * notebooks, phones). (x, y) = ground center; scale 1 = people ~95 px tall. opts: n (4), p. */
+  fig.students = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1, n = o.n || 4, p = o.p == null ? 1 : o.p;
+    var props = ['phone', 'notebook', 'book', 'phone', 'folder'];
+    var poses = ['standing', 'reading', 'walking', 'presenting', 'writing'];
+    for (var i = 0; i < n; i++) {
+      var u = n === 1 ? 0 : i / (n - 1) - 0.5;
+      fig.person(ctx, x + u * 46 * n * s, y + (i % 2) * 6 * s, s, {
+        role: 'estudiante', seed: 'student' + i + (o.seed || ''), pose: poses[i % 5], prop: props[i % 5], skin: (i * 2 + 1) % 5,
+        facing: u <= 0 ? 1 : -1, p: seg(p, i * 0.08, 0.7 + i * 0.08)
+      });
+    }
+  };
+
+  /* fig.youngLadder(ctx, x, y, scale, opts) -> { ladder: { x, top, bottom } }: a warm calligraphic
+   * career ladder whose first rung dissolves into dots, and a young person looking up at it from
+   * below. (x, y) = ladder foot on the ground; scale 1 = ladder 300 px tall. opts: p, seed. */
+  fig.youngLadder = function (ctx, x, y, scale, o) {
+    o = o || {};
+    var s = scale || 1, p = o.p == null ? 1 : o.p;
+    fig.sign(ctx, 'escalera-sin-peldano', x, y - 125 * s, 270 * s, { seed: o.seed || 'career', p: seg(p, 0, 0.7), weight: 0.75 });
+    fig.person(ctx, x - 82 * s, y, 1.25 * s, { role: 'estudiante', seed: (o.seed || 'young') + 'p', pose: 'lookingUp', skin: 3, hair: 'curly', p: seg(p, 0.3, 1) });
+    return { ladder: { x: x, top: y - 250 * s, bottom: y } };
+  };
+
   /* @@figures-more@@ */
 })(typeof window !== 'undefined' ? window : globalThis);

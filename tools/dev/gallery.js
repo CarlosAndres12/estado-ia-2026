@@ -168,6 +168,36 @@
     });
   });
 
+  section('people', 3, function (ctx, o) {
+    var fig = E.figures, ink = E.ink;
+    ink.background(ctx, 'personas', { seed: 'gallery-people' });
+    if (o.page === 1) {
+      // La lectora in every pose, then at 80, 160 and 400 px tall.
+      ['reading', 'writing', 'asking', 'pointing', 'catching', 'tying', 'lookingUp', 'walking'].forEach(function (pose, i) {
+        fig.lectora(ctx, 80 + i * 92, 300, 2.2, { pose: pose, p: o.p });
+        devLabel(ctx, pose, 80 + i * 92, 320, { size: 11 });
+      });
+      fig.lectora(ctx, 70, 700, 0.8, { pose: 'writing', p: o.p });
+      fig.lectora(ctx, 180, 700, 1.6, { pose: 'asking', p: o.p, facing: -1 });
+      fig.lectora(ctx, 1000, 712, 4, { pose: 'reading', p: o.p });
+      return;
+    }
+    if (o.page === 2) {
+      var roles = ['directiva', 'servidor', 'docente', 'investigadora', 'medica', 'desarrollador', 'estudiante', 'campesina'];
+      var props = [null, 'folder', 'book', 'flask', 'clipboard', 'laptop', 'phone', null];
+      var poses = ['presenting', 'standing', 'pointing', 'reading', 'writing', 'reading', 'walking', 'waving'];
+      roles.forEach(function (role, i) {
+        fig.person(ctx, 80 + i * 158, 330, 2.6, { role: role, seed: 'g' + role, pose: poses[i], prop: props[i], p: o.p });
+        devLabel(ctx, role, 80 + i * 158, 350, { size: 11 });
+      });
+      for (var k = 0; k < 12; k++) fig.person(ctx, 60 + k * 100, 690, 1.5, { seed: 'crowd' + k, pose: fig.poses()[k % fig.poses().length], p: o.p });
+      return;
+    }
+    fig.team(ctx, 330, 420, 1, { p: o.p });
+    fig.students(ctx, 330, 690, 1.3, { p: o.p });
+    fig.youngLadder(ctx, 980, 680, 1.4, { p: o.p });
+  });
+
   section('machine', 1, function (ctx, o) {
     var fig = E.figures, chart = E.chart, ink = E.ink;
     ink.background(ctx, 'personas', { seed: 'gallery-machine' });
