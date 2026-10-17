@@ -40,7 +40,7 @@ exceeds it. Slicing into PRs is left to the user (each task commit is a candidat
 | ID | Task | Route (trigger evidence) | Status |
 |---|---|---|---|
 | T01 | Scaffold: branch, KB copy, tree, `index.html`, namespace contract, stubs, fonts, tools config, this doc | inline (mechanical, already understood) | done (2869e53, 958ffd8) |
-| T02 | Data layer + content checker: `kb-parse`, `load-data`, all `js/data/*` except `videos.js`, `check-content.mjs` | delegated writer (2+ non-trivial files, KB reading prepares the write) | running (wave 1, worktree) |
+| T02 | Data layer + content checker: `kb-parse`, `load-data`, all `js/data/*` except `videos.js`, `check-content.mjs` | delegated writer (2+ non-trivial files, KB reading prepares the write) | done (cherry-picked 414d2f2, 57b861d, 1e20899) |
 | T03 | Video scripts as data: `js/data/videos.js` (9 videos, prompt §13) | delegated writer (large transcription) | done (84e78b8) |
 | T04 | Drawing engine: rng, easing, palette + tokens.css, ink, chart, tags, figures, lamina layout, API doc | delegated writer (many non-trivial files) | running (wave 1, worktree) |
 | T05 | Video runtime: timeline, captions, narrator, player, recorder, render mode, CDP browser lib, snapshots | delegated writer (many non-trivial files) | running (wave 1, worktree) |
@@ -88,6 +88,12 @@ zero errors; 9 videos play in sync; 17 láminas render/print with corrected figu
 - Crash (2026-10-17): machine went down while T02/T04/T05/T11 ran (user: an audio check crashed it).
   New user rule: never run audio checks (check-voiceover, playback, STT) — only generate audio. Resumed
   T02, T04, T05 from their worktrees with low-load limits; T11 held until they land.
+
+- T02 done: data files (70 cifras incl. 9 ctx, 63 fuentes, 17 láminas, 7 sesiones), kb-parse, load-data,
+  check-content; on main tree with real videos.js: `node tools/check-content.mjs` → 0 errors, 0 warnings
+  (453 numbers checked); `node --test tools/test/` → 31 pass. Extra fields documented in
+  odd/spec/data-model.md (diagrama.tipo `barras`; tool copy lives in actividades.js entries).
+  Open: quiz hints are written by the worker → facilitator review; cuaderno cost amount/unit labels → T08.
 
 ## Next step
 
