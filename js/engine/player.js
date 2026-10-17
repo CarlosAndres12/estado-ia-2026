@@ -14,7 +14,8 @@
  * env.canvas(w, h) (an offscreen canvas at that scale whose context already draws in logical
  * units). `s` is timeline.state() (prompt §5.6) plus s.layers: what layers[sceneId](env)
  * returned, built lazily and kept in an LRU of current + next scene, the next one prefetched while
- * idle. setup(env) runs once per player after the fonts load; its results live in env.cache.
+ * idle; and s.state: what setup(env) returned (as láminas get it). setup runs once per player after
+ * the fonts load; modules may also keep results in env.cache.
  *
  * The player draws, over every scene: subtitles, the lettered chapter title, warning stamps for
  * `advertencia` lines, the "Ejemplo ilustrativo" stamp for `ilustrativo` lines, the glossary
@@ -179,143 +180,42 @@
     ctx.restore();
   }
 
-  var WARNING_SIZE = 112;
+  // Warning stamps press into the top-right corner for 3 s (tags.warningStamp: center anchor; its
+  // text is 0.072 × size, so the stamp is large enough to read on a projected video).
+  var WARNING_SIZE = 168, WARNING_GAP = 14, MARGIN = 26;
 
   function drawWarning(ctx, env, w, local) {
     var C = T().C;
-    var press = clamp01(local / 0.45);
-    var alpha = clamp01(Math.min(local / 0.12, (C.WARNING - local) / 0.45));
-    var cx = W - 30 - WARNING_SIZE / 2 - w.slot * (WARNING_SIZE + 16);
-    var cy = 30 + WARNING_SIZE / 2;
-    var tags = env.tags;
+    var cx = W - MARGIN - WARNING_SIZE / 2 - w.slot * (WARNING_SIZE + WARNING_GAP);
+    var cy = MARGIN + WARNING_SIZE / 2;
     ctx.save();
-    ctx.globalAlpha = alpha;
-    if (tags && typeof tags.warningStamp === 'function') {
-      try {
-        tags.warningStamp(ctx, w.n, cx, cy, WARNING_SIZE, press);
-        ctx.restore();
-        return;
-      } catch (err) { /* plain stamp below */ }
-    }
-    // TEMP fallback until engine merge: a round ink stamp with a crossed equals sign.
-    var col = CAP().colors(env);
-    var k = 1 + 0.3 * (1 - smooth(press));
-    var r = WARNING_SIZE / 2;
-    ctx.translate(cx, cy);
-    ctx.rotate((w.n % 2 ? -1 : 1) * 0.1);
-    ctx.scale(k, k);
-    ctx.beginPath();
-    ctx.arc(0, 0, r, 0, Math.PI * 2);
-    ctx.fillStyle = col.lienzo;
-    ctx.fill();
-    ctx.lineWidth = 5;
-    ctx.strokeStyle = col.tinta;
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(0, 0, r - 9, 0, Math.PI * 2);
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.lineWidth = 5;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(-18, -14); ctx.lineTo(18, -14);
-    ctx.moveTo(-18, -2); ctx.lineTo(18, -2);
-    ctx.moveTo(-10, 10); ctx.lineTo(10, -26);
-    ctx.stroke();
-    ctx.fillStyle = col.tinta;
-    ctx.font = CAP().font(15, 700);
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(txt('advertencia', { n: w.n }), 0, 24);
+    ctx.globalAlpha = clamp01((C.WARNING - local) / 0.45);
+    env.tags.warningStamp(ctx, w.n, cx, cy, WARNING_SIZE, clamp01(local / 1.2));
     ctx.restore();
   }
 
-  function drawIllustrative(ctx, env, local, dur, shift) {
-    var p = clamp01(local / 0.4);
-    var alpha = clamp01(Math.min(local / 0.2, (dur - local) / 0.3));
-    var tags = env.tags;
-    var right = W - 28 - shift * (WARNING_SIZE + 16);
+  // "Ejemplo ilustrativo" for the whole beat of an `ilustrativo` line, top-right (left of any
+  // warning stamp pressed at the same time). tags.illustrativeStamp is top-left anchored and, at
+  // p = 0, only returns its box.
+  var STAMP_SCALE = 1.25;
+
+  function drawIllustrative(ctx, env, local, dur, slots) {
+    var box = env.tags.illustrativeStamp(ctx, 0, 0, STAMP_SCALE, 0);
+    var right = W - MARGIN - slots * (WARNING_SIZE + WARNING_GAP);
     ctx.save();
-    ctx.globalAlpha = alpha;
-    if (tags && typeof tags.illustrativeStamp === 'function') {
-      try {
-        tags.illustrativeStamp(ctx, right - 190, 58, 1, p);
-        ctx.restore();
-        return;
-      } catch (err) { /* plain stamp below */ }
-    }
-    // TEMP fallback until engine merge: dashed label with a pencil sign.
-    var col = CAP().colors(env);
-    var label = txt('ilustrativo');
-    ctx.font = CAP().font(20, 700);
-    var w = ctx.measureText(label).width + 70, h = 46;
-    var x = right - w, y = 34;
-    CAP().roundRect(ctx, x, y, w, h, 10);
-    ctx.fillStyle = col.lienzo;
-    ctx.fill();
-    ctx.setLineDash([9, 6]);
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = col.tinta;
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.save();
-    ctx.translate(x + 26, y + h / 2);
-    ctx.rotate(-0.8);
-    ctx.lineWidth = 6;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(-11 * p, 0);
-    ctx.lineTo(9, 0);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(-15, 0); ctx.lineTo(-11, -3); ctx.lineTo(-11, 3);
-    ctx.closePath();
-    ctx.fillStyle = col.tinta;
-    ctx.fill();
-    ctx.restore();
-    ctx.fillStyle = col.tinta;
-    ctx.textBaseline = 'middle';
-    ctx.textAlign = 'left';
-    ctx.fillText(label, x + 50, y + h / 2 + 1);
+    ctx.globalAlpha = clamp01(Math.min(local / 0.2, (dur - local) / 0.3));
+    env.tags.illustrativeStamp(ctx, right - box.w, MARGIN + 8, STAMP_SCALE, clamp01(local / 0.6));
     ctx.restore();
   }
 
-  var NOTE_W = 320;
+  // Glossary margin note: the term and its KB definition, verbatim, for the line that first uses it.
+  var NOTE_W = 360, NOTE_TOP = MARGIN + WARNING_SIZE + 20;
 
   function drawGlossary(ctx, env, entry, local, dur) {
-    var p = clamp01(local / 0.5);
-    var alpha = clamp01(Math.min(local / 0.25, (dur - local) / 0.3));
-    var x = W - 28 - NOTE_W, y = 166;
-    var tags = env.tags;
     ctx.save();
-    ctx.globalAlpha = alpha;
-    if (tags && typeof tags.marginNote === 'function') {
-      try {
-        tags.marginNote(ctx, entry.termino, entry.definicion, x, y, NOTE_W, p);
-        ctx.restore();
-        return;
-      } catch (err) { /* plain note below */ }
-    }
-    // TEMP fallback until engine merge: a paper note with the term and its KB definition.
-    var cap = CAP();
-    var col = cap.colors(env);
-    var dFont = cap.font(20), tFont = cap.font(23, 700);
-    var lines = cap.layout(ctx, entry.definicion || '', dFont, NOTE_W - 36);
-    var h = 22 + 30 + lines.length * 26 + 20;
-    cap.roundRect(ctx, x, y, NOTE_W, h, 12);
-    ctx.fillStyle = col.lienzo;
-    ctx.fill();
-    ctx.lineWidth = 2.5;
-    ctx.strokeStyle = col.tinta;
-    ctx.stroke();
-    cap.drawSign(ctx, 'estrella', x + 26, y + 36, 24, { env: env });
-    ctx.fillStyle = col.tinta;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.font = tFont;
-    ctx.fillText(entry.termino || '', x + 46, y + 37);
-    ctx.font = dFont;
-    lines.forEach(function (line, i) { ctx.fillText(line, x + 18, y + 22 + 30 + 14 + i * 26); });
+    ctx.globalAlpha = clamp01(Math.min(local / 0.25, (dur - local) / 0.3));
+    env.tags.marginNote(ctx, entry.termino, entry.definicion, W - MARGIN - NOTE_W, NOTE_TOP, NOTE_W,
+      clamp01(local / 0.8), { scale: 1.2, sign: 'libreta' });
     ctx.restore();
   }
 
@@ -427,6 +327,7 @@
     var seg = this.tl.scenes[si];
     var s = this.states[si] = this.tl.state(si, localT, this.states[si]);
     s.layers = this.layers.get(si);
+    s.state = this.env.cache ? this.env.cache.get('setup') : undefined;
     var fn = this.mod && this.mod.scenes && this.mod.scenes[seg.id];
     ctx.save();
     ctx.fillStyle = CAP().colors(this.env).lienzo;
@@ -619,7 +520,8 @@
       g.closePath();
       g.fill();
     } else if (kind === 'star' || kind === 'spiral') {
-      CAP().drawSign(g, kind === 'star' ? 'estrella' : 'espiral', 0.5, 0.5, 0.92, { color: color });
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);    // engine signs draw in pixels
+      CAP().drawSign(g, kind === 'star' ? 'estrella-exito' : 'espiral', size / 2, size / 2, size * 0.92, { seed: 'feedback' });
     }
   }
 

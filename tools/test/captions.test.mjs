@@ -197,53 +197,15 @@ test('cueAt: the active chunk, its fade and the hold after the line', () => {
   assert.equal(C.cueAt(tl, l1.start + 0.5, out), out, 'reuses the object');
 });
 
-// A minimal 2D context that records calls, so draw functions can run without a DOM.
-function mockContext() {
-  const calls = [];
-  const ctx = {
-    calls, font: '', fillStyle: '', strokeStyle: '', globalAlpha: 1, lineWidth: 1, textAlign: 'left',
-    textBaseline: 'alphabetic', lineCap: 'butt', lineJoin: 'miter',
-    measureText: (text) => ({ width: String(text).length * 16 })
-  };
-  for (const name of ['save', 'restore', 'beginPath', 'closePath', 'moveTo', 'lineTo', 'arc', 'arcTo', 'quadraticCurveTo',
-    'bezierCurveTo', 'rect', 'fill', 'stroke', 'fillRect', 'strokeRect', 'clearRect', 'fillText', 'strokeText',
-    'translate', 'rotate', 'scale', 'setTransform', 'clip', 'setLineDash', 'drawImage', 'ellipse']) {
-    ctx[name] = (...args) => { calls.push([name, ...args]); };
+test('draw functions are exported (their pixels are checked by tools/snapshots.mjs)', () => {
+  const C = load(BOTH).engine.captions;
+  for (const name of ['drawSubtitle', 'drawCheckpoint', 'drawChapterTitle', 'drawSign', 'paperCard']) {
+    assert.equal(typeof C[name], 'function', name);
   }
-  return ctx;
-}
-
-test('draw functions paint the band, the checkpoint card and the chapter title', () => {
-  const EIA = load(BOTH);
-  const C = EIA.engine.captions;
-  const tl = EIA.engine.timeline.build(sampleVideo());
-  const copy = { lineal: 'Pausa el video y respondan en grupo', respuesta: 'Respuesta' };
-
-  const ctx = mockContext();
-  C.drawSubtitle(ctx, C.cueAt(tl, tl.lines[1].start + 0.5), {});
-  const texts = ctx.calls.filter((c) => c[0] === 'fillText').map((c) => c[1]).join(' ');
-  assert.match(texts, /qué mide exactamente/);
-  assert.ok(ctx.calls.some((c) => c[0] === 'fill'), 'draws the band');
-
-  const cp = { question: '¿Qué tipo de evidencia es?', options: ['Capacidad técnica', 'Uso declarado'], answer: 1, explain: 'Es uso declarado.' };
-  const q = mockContext();
-  C.drawCheckpoint(q, cp, 2.2, { copy });
-  const qText = q.calls.filter((c) => c[0] === 'fillText').map((c) => String(c[1])).join(' | ');
-  assert.match(qText, /Pausa el video y respondan en grupo/);
-  assert.match(qText, /Qué tipo de evidencia/);
-  assert.match(qText, /\b2\b/, 'countdown 3-2-1 shows 2 at 2.2 s');
-  const a = mockContext();
-  C.drawCheckpoint(a, cp, 5, { copy });
-  const aText = a.calls.filter((c) => c[0] === 'fillText').map((c) => String(c[1])).join(' | ');
-  assert.match(aText, /Respuesta/);
-  assert.match(aText, /Es uso declarado/);
-
-  const ch = mockContext();
-  C.drawChapterTitle(ch, 'Leer la fuente', 1.2, {});
-  assert.ok(ch.calls.length > 0);
-  const none = mockContext();
-  C.drawChapterTitle(none, 'Leer la fuente', 2.5, {});
-  assert.equal(none.calls.filter((c) => c[0] === 'fillText').length, 0, 'gone after 2 s');
+  // nothing to draw: no context is touched (no engine needed)
+  assert.equal(C.drawSubtitle(null, null, {}), undefined);
+  assert.equal(C.drawChapterTitle(null, 'Capítulo', 2.5, {}), undefined, 'gone after 2 s');
+  assert.equal(C.drawCheckpoint(null, null, 1, {}), undefined);
 });
 
 test('countdown digits follow the 4 s question phase', () => {

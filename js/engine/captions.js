@@ -23,7 +23,7 @@
  *   drawCheckpoint(ctx, checkpoint, localT, { env, copy, dur })   linear card: 4 s question with a
  *                                                   3-2-1 countdown, then the answer for 2 s
  *   drawChapterTitle(ctx, title, localT, { env })   lettered in the top-left corner for 2 s
- *   drawSign(ctx, name, cx, cy, size, { env, color })   'libreta' | 'estrella' | 'espiral'
+ *   drawSign(ctx, name, cx, cy, size, { env, p, seed })   'libreta' | 'estrella-exito' | 'espiral'
  *
  * Text drawn here comes from the data (voice lines, checkpoints, chapter titles) or from the copy
  * passed in `opts.copy` (EIA.data.course.ui.player.checkpoint); nothing is typed in this file. */
@@ -313,20 +313,20 @@
   // ---------------------------------------------------------------------------------------------
   // Shared drawing helpers
 
-  // Palette colors (prompt §3.9) read from palette.js when it exists.
-  var FALLBACK = { lienzo: '#F4EEDF', tinta: '#15120F', amarillo: '#F5C518', noche: '#0E1A3B', rojo: '#D7261E' };
+  // Palette colors (prompt §3.9, js/engine/palette.js).
   function colors(env) {
     var pal = (env && env.pal) || EIA.engine.palette;
-    var m = (pal && pal.mundo) || {};
-    var q = (pal && pal.maquina) || {};
     return {
-      // TEMP fallback until engine merge: the hex values of prompt §3.9 when palette.js is absent.
-      lienzo: m.lienzo || FALLBACK.lienzo,
-      tinta: m.tinta || FALLBACK.tinta,
-      amarillo: m.amarillo || FALLBACK.amarillo,
-      rojo: m.rojo || FALLBACK.rojo,
-      noche: q.noche || FALLBACK.noche
+      lienzo: pal.mundo.lienzo,
+      tinta: pal.mundo.tinta,
+      amarillo: pal.mundo.amarillo,
+      rojo: pal.mundo.rojo,
+      noche: pal.maquina.noche
     };
+  }
+
+  function engine(env, name) {
+    return (env && env[name]) || EIA.engine[name === 'fig' ? 'figures' : name];
   }
 
   function roundRect(ctx, x, y, w, h, r) {
@@ -344,98 +344,19 @@
     ctx.closePath();
   }
 
-  // A cream paper card with a thick ink outline (ink.card when the engine provides it).
+  // A cream paper card with a thick, slightly irregular ink outline.
   function paperCard(ctx, x, y, w, h, opts) {
-    var env = opts && opts.env;
-    var col = colors(env);
-    var ink = env && env.ink;
-    if (ink && typeof ink.card === 'function') {
-      try {
-        ink.card(ctx, x, y, w, h, { seed: (opts && opts.seed) || 'card', p: 1, fill: col.lienzo });
-        return;
-      } catch (err) { /* fall back to the plain card below */ }
-    }
-    // TEMP fallback until engine merge: plain rounded card.
-    ctx.fillStyle = col.lienzo;
-    roundRect(ctx, x, y, w, h, 18);
-    ctx.fill();
-    ctx.lineWidth = 5;
-    ctx.strokeStyle = col.tinta;
-    ctx.lineJoin = 'round';
-    ctx.stroke();
+    opts = opts || {};
+    engine(opts.env, 'ink').card(ctx, x, y, w, h, {
+      seed: opts.seed || 'card', weight: opts.weight || 5, radius: opts.radius || 18, peek: opts.peek, peekCorner: opts.peekCorner
+    });
   }
 
-  /* Small course signs: 'libreta' (the lectora's notebook), 'estrella' (a right answer, a bursting
-   * yellow star), 'espiral' (another try). figures.sign draws them once the engine is merged. */
+  /* Small course signs (figures.sign, centered on cx, cy): 'libreta' (the lectora's notebook),
+   * 'estrella-exito' (a right answer: a bursting yellow star), 'espiral' (another try). */
   function drawSign(ctx, name, cx, cy, size, opts) {
     opts = opts || {};
-    var env = opts.env;
-    var col = colors(env);
-    var fig = (env && env.fig) || EIA.engine.figures;
-    if (fig && typeof fig.sign === 'function') {
-      try {
-        fig.sign(ctx, name, cx, cy, size, { color: opts.color, p: opts.p == null ? 1 : opts.p, seed: opts.seed || name });
-        return;
-      } catch (err) { /* fall back below */ }
-    }
-    // TEMP fallback until engine merge: plain versions of the three signs.
-    var color = opts.color || col.tinta;
-    ctx.save();
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    if (name === 'libreta') {
-      var w = size * 0.74, h = size * 0.94, x = cx - w / 2, y = cy - h / 2;
-      ctx.strokeStyle = color;
-      ctx.fillStyle = color;
-      ctx.lineWidth = Math.max(1.5, size * 0.075);
-      roundRect(ctx, x, y, w, h, size * 0.1);
-      ctx.stroke();
-      for (var i = 0; i < 3; i++) {
-        ctx.beginPath();
-        ctx.arc(x, y + h * (0.24 + i * 0.26), size * 0.065, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.lineWidth = Math.max(1, size * 0.05);
-      for (var j = 0; j < 3; j++) {
-        var ly = y + h * (0.32 + j * 0.2);
-        ctx.beginPath();
-        ctx.moveTo(x + w * 0.28, ly);
-        ctx.lineTo(x + w * 0.8, ly);
-        ctx.stroke();
-      }
-    } else if (name === 'estrella') {
-      var rays = 8;
-      ctx.beginPath();
-      for (var k = 0; k < rays * 2; k++) {
-        var ang = -Math.PI / 2 + k * Math.PI / rays;
-        var rad = k % 2 === 0 ? size * (0.5 - (k % 4 === 0 ? 0 : 0.08)) : size * 0.2;
-        var px = cx + Math.cos(ang) * rad, py = cy + Math.sin(ang) * rad;
-        if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-      }
-      ctx.closePath();
-      ctx.fillStyle = opts.fill || col.amarillo;
-      ctx.fill();
-      ctx.lineWidth = Math.max(1.5, size * 0.06);
-      ctx.strokeStyle = color;
-      ctx.stroke();
-    } else if (name === 'espiral') {
-      ctx.beginPath();
-      var turns = 2.6, steps = 48;
-      for (var s = 0; s <= steps; s++) {
-        var a = s / steps * turns * Math.PI * 2;
-        var rr = size * 0.46 * (s / steps);
-        var sx = cx + Math.cos(a) * rr, sy = cy + Math.sin(a) * rr;
-        if (s === 0) ctx.moveTo(sx, sy); else ctx.lineTo(sx, sy);
-      }
-      ctx.lineWidth = Math.max(1.5, size * 0.07);
-      ctx.strokeStyle = color;
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(cx + size * 0.46 * Math.cos(turns * Math.PI * 2), cy + size * 0.46 * Math.sin(turns * Math.PI * 2), size * 0.06, 0, Math.PI * 2);
-      ctx.fillStyle = color;
-      ctx.fill();
-    }
-    ctx.restore();
+    engine(opts.env, 'fig').sign(ctx, name, cx, cy, size, { p: opts.p == null ? 1 : opts.p, seed: opts.seed || name });
   }
 
   // Text layouts are measured once per string and font (prompt §14: no per-frame measuring).
@@ -499,7 +420,7 @@
       ctx.fillText(L.lines[i], tx, y + K.PAD_Y + i * L.lh + L.lh / 2);
     }
     if (cue.voice === 'lectora') {
-      drawSign(ctx, 'libreta', x + K.PAD_X + K.SIGN / 2, y + K.PAD_Y + L.lh / 2, K.SIGN, { env: opts.env, color: col.lienzo });
+      drawSign(ctx, 'libreta', x + K.PAD_X + K.SIGN / 2, y + K.PAD_Y + L.lh / 2, K.SIGN, { env: opts.env, seed: 'lectora' });
     }
     ctx.restore();
   }
@@ -560,7 +481,7 @@
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.translate(0, rise);
-    paperCard(ctx, x, y, L.CW, L.h, { env: opts.env, seed: 'checkpoint:' + (cp.question || '').length });
+    paperCard(ctx, x, y, L.CW, L.h, { env: opts.env, seed: 'checkpoint-card', peek: col.amarillo, peekCorner: 'bl' });
 
     var cx = x + L.PAD;
     var cy = y + L.PAD;
@@ -581,7 +502,7 @@
       if (answer && !right) ctx.globalAlpha = alpha * 0.45;
       var mx = cx + 20, my = cy + L.oLh / 2;
       if (right) {
-        drawSign(ctx, 'estrella', mx, my, 40, { env: opts.env });
+        drawSign(ctx, 'estrella-exito', mx, my, 44, { env: opts.env, seed: 'checkpoint-right' });
       } else {
         ctx.beginPath();
         ctx.arc(mx, my, 11, 0, Math.PI * 2);
@@ -629,59 +550,21 @@
   // ---------------------------------------------------------------------------------------------
   // Chapter title: lettered in the top-left corner for 2 s when a chapter starts
 
-  function letterWidth(ink, ctx, title, size) {
-    if (ink && typeof ink.measureLetter === 'function') {
-      try {
-        var m = ink.measureLetter(ctx, title, { size: size });
-        var w = typeof m === 'number' ? m : m && m.width;
-        if (w > 0) return w;
-      } catch (err) { /* measured below */ }
-    }
-    ctx.font = font(size, 700, K.DISPLAY);
-    return ctx.measureText(title).width;
-  }
-
   function drawChapterTitle(ctx, title, localT, opts) {
     if (!title || !(localT >= 0 && localT < K.CHAPTER)) return;
     opts = opts || {};
-    var env = opts.env;
-    var col = colors(env);
-    var ink = env && env.ink;
-    var size = 28;
-    var write = clamp01(localT / 0.9);
-    var alpha = clamp01(Math.min(localT / 0.15, (K.CHAPTER - localT) / 0.4));
-    var tw = cached('chw|' + title, function () { return letterWidth(ink, ctx, title, size); });
-    var x = 30, y = 26, h = 50, w = Math.ceil(tw + 40);
-
+    var ink = engine(opts.env, 'ink');
+    var col = colors(opts.env);
+    var lo = { size: 30, maxWidth: 620, maxLines: 1, fit: true, minSize: 22, underline: false, seed: 'chapter:' + title };
+    var L = ink.measureLetter(ctx, title, lo);
+    var pad = 16, x = 28, y = 24;
+    var w = Math.ceil(L.w + 2 * pad), h = Math.ceil(L.h + 2 * pad - 8);
     ctx.save();
-    ctx.globalAlpha = alpha * 0.92;
-    ctx.fillStyle = col.lienzo;
-    roundRect(ctx, x, y, w * (0.25 + 0.75 * clamp01(localT / 0.3)), h, 12);
-    ctx.fill();
-    ctx.globalAlpha = alpha;
-    ctx.lineWidth = 2.5;
-    ctx.strokeStyle = col.tinta;
-    ctx.stroke();
-
-    var tx = x + 20, ty = y + h / 2;
-    var lettered = false;
-    if (ink && typeof ink.letter === 'function') {
-      try {
-        ink.letter(ctx, title, tx, ty + size * 0.35, { size: size, p: write, seed: 'chapter:' + title, color: col.tinta });
-        lettered = true;
-      } catch (err) { lettered = false; }
-    }
-    if (!lettered) {
-      // TEMP fallback until engine merge: plain display type revealed left to right.
-      ctx.beginPath();
-      ctx.rect(tx - 2, y, (tw + 4) * write, h);
-      ctx.clip();
-      ctx.fillStyle = col.tinta;
-      ctx.font = font(size, 700, K.DISPLAY);
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(title, tx, ty + 1);
-    }
+    ctx.globalAlpha = clamp01(Math.min(localT / 0.15, (K.CHAPTER - localT) / 0.4));
+    ink.card(ctx, x, y, w, h, { seed: 'chapter-card', weight: 3, radius: 12, p: clamp01(localT / 0.35), peek: col.rojo, peekCorner: 'tr' });
+    lo.p = clamp01((localT - 0.1) / 0.9);
+    lo.color = col.tinta;
+    ink.letter(ctx, title, x + pad, y + pad - 4, lo);
     ctx.restore();
   }
 

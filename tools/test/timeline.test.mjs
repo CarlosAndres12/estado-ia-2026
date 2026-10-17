@@ -234,7 +234,7 @@ test('the per-scene s object follows prompt §5.6', () => {
   const a = tl.scenes[0];
   const s0 = tl.state(0, 0);
   assert.deepEqual(Object.keys(s0).sort(),
-    ['at', 'dur', 'intro', 'layers', 'line', 'lineP', 'lines', 'outro', 'p', 'rotulos', 't'].sort());
+    ['at', 'dur', 'intro', 'layers', 'line', 'lineP', 'lines', 'outro', 'p', 'rotulos', 'state', 't'].sort());
   assert.equal(s0.t, 0);
   assert.equal(s0.p, 0);
   assert.equal(s0.intro, 0);

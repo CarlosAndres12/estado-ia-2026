@@ -331,7 +331,7 @@
     var s = {
       t: 0, p: 0, dur: seg.dur, intro: 0, outro: 0,
       lines: seg.local, line: -1, lineP: 0, at: null,
-      rotulos: seg.rotulos, layers: null
+      rotulos: seg.rotulos, layers: null, state: null
     };
     // at(i): 0 before line i starts, 0 -> 1 while it plays, 1 after.
     s.at = function (i) {
@@ -345,8 +345,8 @@
   }
 
   /* The `s` object of prompt §5.6 for scene `sceneIndex` at scene-local time `localT` (clamped to
-   * the scene). Pass the previous result as `out` to reuse it with no allocation. `s.layers` is
-   * filled by the player with what the module's layers[sceneId](env) returned. */
+   * the scene). Pass the previous result as `out` to reuse it with no allocation. The player fills
+   * `s.layers` (what layers[sceneId](env) returned) and `s.state` (what setup(env) returned). */
   Timeline.prototype.state = function (sceneIndex, localT, out) {
     var seg = this.scenes[sceneIndex];
     var s = out || makeState(seg);
@@ -364,7 +364,6 @@
     }
     s.line = li;
     s.lineP = li < 0 ? 0 : s.at(li);
-    if (!out) s.layers = null;
     return s;
   };
 
