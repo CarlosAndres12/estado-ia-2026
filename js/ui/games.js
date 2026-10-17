@@ -264,5 +264,183 @@
     }
   };
 
-  ui.games = { sorter: sorter };
+  // =============================================================================================
+  // S2 · «Pasos que se acumulan» (prompt §10.4): P = p^n with independent steps, an illustrative
+  // example (permanent stamp), shown as a percentage and as a ruled ladder whose glow fades.
+
+  var pasos = {
+    // p: success per step in percent; n: steps (rounded). Inputs are clamped.
+    prob: function (p, n) {
+      var q = Math.min(1, Math.max(0, Number(p) / 100));
+      var k = Math.max(0, Math.round(Number(n) || 0));
+      return Math.pow(q, k);
+    },
+    // [P after step 1, …, P after step n]
+    serie: function (p, n) {
+      var out = [], k = Math.max(0, Math.round(Number(n) || 0));
+      for (var i = 1; i <= k; i++) out.push(pasos.prob(p, i));
+      return out;
+    },
+    /* formato(P) -> { decimal, porcentaje, aprox, texto }: "≈ 0,36 · 36%" (Spanish format, the
+     * presets' wording). Rounding never turns a probability into a certainty or into zero: more
+     * decimals appear near 0 and 1, and "< 0,01%" below what four decimals can show. */
+    formato: function (P) {
+      var fmt = EIA.util.formatNumber;
+      function show(value, base, maxD, unit) {
+        for (var d = base; d <= maxD; d++) {
+          var r = Number(value.toFixed(d));
+          if ((r > 0 || value <= 0) && (r < unit || value >= unit)) return { text: fmt(r, d), exact: Math.abs(r - value) < 1e-9 * unit, less: false };
+        }
+        return { text: '< ' + fmt(Math.pow(10, -maxD), maxD), exact: false, less: true };
+      }
+      P = Math.min(1, Math.max(0, Number(P) || 0));
+      var dec = show(P, 2, 4, 1);
+      var pct = show(P * 100, 0, 2, 100);
+      var aprox = !dec.exact || !pct.exact;
+      return {
+        decimal: dec.text,
+        porcentaje: pct.text + '%',
+        aprox: aprox,
+        texto: (aprox && !dec.less ? '≈ ' : '') + dec.text + ' · ' + pct.text + '%'
+      };
+    }
+  };
+
+  function drawLadder(ctx, w, hh, serie, o) {
+    var E = EIA.engine, ink = E.ink, pal = E.palette, maq = pal.maquina, m = pal.mundo;
+    ink.machineGrid(ctx, 0, 0, w, hh, { cell: 16 });
+    var left = 74, right = 22, top = 26, bottom = 44;
+    var x0 = left, x1 = w - right, y0 = top, y1 = hh - bottom, gap = y1 - y0;
+    var n = serie.length, step = (x1 - x0) / Math.max(1, n);
+    ink.rLine(ctx, x0 - 6, y0, x1 + 6, y0, { color: maq.linea, w: 1.4 });
+    ink.rLine(ctx, x0 - 6, y1, x1 + 6, y1, { color: maq.linea, w: 1.4 });
+    ctx.font = '400 13px "EIA Sans", system-ui, sans-serif';
+    ctx.fillStyle = m.lienzo;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(EIA.util.formatPercent(100), x0 - 12, y0);
+    ctx.fillText(EIA.util.formatPercent(0), x0 - 12, y1);
+    if (E.figures && E.figures.lamp) E.figures.lamp(ctx, 30, (y0 + y1) / 2, 0.34, { t: 0 });
+    var lw = Math.max(2, Math.min(10, step * 0.42));
+    for (var i = 0; i < n; i++) {
+      var x = x0 + (i + 0.5) * step, v = serie[i], yTop = y1 - v * gap;
+      ink.rLine(ctx, x, y0, x, y1, { color: maq.rejilla, w: Math.max(1.2, lw * 0.5) });
+      ink.glow(ctx, x, yTop, Math.max(10, lw * 2.6), maq.brilloVerde, 0.85 * v, true);
+      ink.rLine(ctx, x, y1, x, yTop, { color: pal.mix(maq.linea, maq.brilloVerde, v), w: lw, cap: 'butt' });
+    }
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = m.lienzo;
+    ctx.fillText(o.first, x0 + 0.5 * step, y1 + 10);
+    if (n > 1) {
+      var lastLabelW = ctx.measureText(o.last).width;
+      var lx = Math.min(x1 - lastLabelW / 2, x0 + (n - 0.5) * step);
+      if (lx - lastLabelW / 2 > x0 + 0.5 * step + ctx.measureText(o.first).width / 2 + 8) ctx.fillText(o.last, lx, y1 + 10);
+    }
+    if (n) {
+      var xl = x0 + (n - 0.5) * step, yl = y1 - serie[n - 1] * gap;
+      ctx.font = '700 17px "EIA Sans", system-ui, sans-serif';
+      ctx.textBaseline = 'bottom';
+      var tw = ctx.measureText(o.value).width;
+      ctx.textAlign = 'left';
+      var tx = Math.min(w - tw - 6, xl + 8);
+      ctx.fillText(o.value, tx, Math.max(18, yl - 6));
+    }
+  }
+
+  tools['s2-pasos'] = {
+    mount: function (el, o) {
+      var a = act(o.id || 's2-pasos');
+      if (!a) return null;
+      var kit = K(), c = a.ui || {}, fmt = EIA.util.formatNumber;
+      var id = kit.uid('pasos');
+      var state = { p: a.p.inicial, n: a.n.inicial };
+
+      function slider(spec, key, decimals) {
+        var inputId = id + '-' + key;
+        var out = h('output', { class: 'calc__value', for: inputId });
+        var input = h('input', {
+          type: 'range', id: inputId, class: 'calc__range', min: spec.min, max: spec.max, step: spec.paso, value: spec.inicial
+        });
+        function sync() {
+          state[key] = Number(input.value);
+          out.textContent = fmt(state[key], decimals) + (spec.unidad || '');
+          input.setAttribute('aria-valuetext', out.textContent);
+        }
+        input.addEventListener('input', function () { sync(); update(); });
+        sync();
+        return { input: input, out: out, sync: sync, el: h('div', { class: 'calc__field' }, [
+          h('label', { class: 'calc__label', for: inputId }, [h('span', { text: spec.label }), out]),
+          input
+        ]) };
+      }
+
+      var stamp = h('p', { class: 'calc__stamp', html: ui.ilustrativoHTML() + ' <span>' + EIA.markup.escape(a.sello.text) + '</span>' });
+      var sp = slider(a.p, 'p', 1), sn = slider(a.n, 'n', 0);
+      var presets = h('div', { class: 'calc__presets', role: 'group', 'aria-label': c.ejemplos }, [
+        h('span', { class: 'calc__presets-label', 'aria-hidden': 'true', text: c.ejemplos })
+      ].concat(a.presets.map(function (pr) {
+        var b = h('button', { type: 'button', class: 'btn btn--small', text: pr.label });
+        b.addEventListener('click', function () {
+          sp.input.value = pr.p; sn.input.value = pr.n;
+          sp.sync(); sn.sync(); update();
+        });
+        return b;
+      })));
+      var parts = String(a.formula || '').split('^');
+      var formula = h('p', { class: 'calc__formula', 'aria-hidden': 'true' }, [parts[0], parts[1] ? h('sup', { text: parts[1] }) : null]);
+      var resultLabel = h('p', { class: 'calc__result-label' });
+      var result = h('p', { class: 'calc__result', role: 'status', 'aria-live': 'polite', 'aria-atomic': 'true' });
+      var canvas = kit.canvas('calc__canvas');
+      var figure = h('figure', { class: 'calc__figure' }, [canvas, h('figcaption', { class: 'calc__caption' })]);
+      var table = h('table', {}, [
+        h('caption', { text: c.tabla }),
+        h('thead', {}, [h('tr', {}, (c.columnas || []).map(function (col) { return h('th', { scope: 'col', text: col }); }))]),
+        h('tbody')
+      ]);
+      var hidden = h('div', { class: 'visually-hidden' }, [table]);
+      var box = h('div', { class: 'calc' }, [
+        stamp,
+        h('div', { class: 'calc__controls' }, [sp.el, sn.el]),
+        presets,
+        h('div', { class: 'calc__out' }, [formula, resultLabel, result]),
+        figure,
+        hidden
+      ]);
+      el.appendChild(box);
+
+      var width = 0;
+      function draw() {
+        if (!width || !EIA.engine.ink) return;
+        var hh = Math.round(Math.max(200, Math.min(300, width * 0.36)));
+        var ctx = kit.fit(canvas, width, hh);
+        var serie = pasos.serie(state.p, state.n);
+        try {
+          drawLadder(ctx, width, hh, serie, {
+            first: kit.fmt(c.paso, { n: 1 }), last: kit.fmt(c.paso, { n: state.n }),
+            value: pasos.formato(serie[serie.length - 1]).porcentaje
+          });
+        } catch (err) { if (root.console) root.console.warn('[games] ladder: ' + err.message); }
+      }
+      function update() {
+        var P = pasos.prob(state.p, state.n);
+        var f = pasos.formato(P);
+        resultLabel.textContent = kit.fmt(c.resultado, { n: state.n });
+        result.textContent = f.texto;
+        figure.lastChild.textContent = kit.fmt(c.escalera, { n: state.n });
+        var body = table.querySelector('tbody');
+        body.innerHTML = '';
+        pasos.serie(state.p, state.n).forEach(function (v, i) {
+          body.appendChild(h('tr', {}, [h('td', { text: String(i + 1) }), h('td', { text: pasos.formato(v).porcentaje })]));
+        });
+        draw();
+      }
+      var stop = kit.observeSize(figure, function (w) { width = w; draw(); });
+      kit.engineReady().then(draw);
+      update();
+      return { destroy: function () { stop(); box.remove(); } };
+    }
+  };
+
+  ui.games = { sorter: sorter, pasos: pasos };
 })(typeof window !== 'undefined' ? window : globalThis);

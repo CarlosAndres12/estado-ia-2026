@@ -162,6 +162,15 @@ EIA.data.actividades = {
     sello: {
       text: 'Ejemplo ilustrativo: supone pasos independientes. No es un dato de las fuentes.',
       ilustrativo: true
+    },
+    // Tool copy (prompt §10.4), not KB text.
+    ui: {
+      ejemplos: 'Ejemplos',
+      resultado: 'Probabilidad de completar los {n} pasos sin un error',
+      escalera: 'Escalera de {n} pasos: el brillo de cada peldaño es la probabilidad de llegar hasta él sin un error.',
+      paso: 'Paso {n}',
+      tabla: 'La probabilidad, paso por paso',
+      columnas: ['Paso', 'Probabilidad de llegar sin un error']
     }
   },
   's2-picos-valles': {
