@@ -858,8 +858,8 @@ EIA.data.deck = [
           cifras: ['adop-1', 'adop-5'],
           signo: 'iceberg'
         },
-        { text: 'En el trabajo cambian tareas, no solo puestos.', cifras: [], signo: 'escalera' },
-        { text: 'En educación se evalúa el aprendizaje, no el texto.', cifras: [], signo: 'lancha' },
+        { text: 'En el trabajo cambian tareas, no solo puestos.', cifras: [], signo: 'escalera-sin-peldano' },
+        { text: 'En educación se evalúa el aprendizaje, no el texto.', cifras: [], signo: 'lancha-brujula' },
         { text: 'La gobernanza es proporcional al riesgo.', cifras: [], signo: 'volante' }
       ]
     },
