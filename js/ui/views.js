@@ -275,6 +275,17 @@
     el.__lazy = fn;
     lazyIO.observe(el);
   }
+  // Printing needs the lámina thumbnails that have not scrolled into view yet.
+  function flushThumbs(rootEl) {
+    if (!rootEl) return;
+    Array.prototype.forEach.call(rootEl.querySelectorAll('.lamina-thumb__canvas'), function (c) {
+      var job = c.__lazy;
+      if (!job) return;
+      c.__lazy = null;
+      if (lazyIO) lazyIO.unobserve(c);
+      try { job(); } catch (err) { warn('thumbnail', err); }
+    });
+  }
   var pumping = false;
   function pump() {
     if (pumping) return;
@@ -384,11 +395,12 @@
         e.figures.pattern(ctx, AGENDA_PATTERNS[i % AGENDA_PATTERNS.length], x0, top, bw, bh, { color: e.palette.mix(m.tinta, m.lienzo, 0.45), spacing: 15, seed: 'agenda-' + s.n + '-' + i });
         ctx.restore();
         e.ink.line(ctx, [x0, top, x0, top + bh], { w: 2.6, profile: 'even', seed: 'agenda-sep-' + s.n + '-' + i });
-        if (bw > 28) {
+        var nr = Math.min(13, (bw - 5) / 2);
+        if (nr >= 7) {
           var cx = x0 + bw / 2, cy = top + bh / 2;
-          e.ink.circle(ctx, cx, cy, 13, { fill: ui.decor.PAPEL, line: true, w: 2.2, seed: 'agenda-n-' + i, irr: 0.05 });
+          e.ink.circle(ctx, cx, cy, nr, { fill: ui.decor.PAPEL, line: true, w: nr > 10 ? 2.2 : 1.6, seed: 'agenda-n-' + i, irr: 0.05 });
           ctx.fillStyle = m.tinta;
-          ctx.font = '700 15px "EIA Sans", system-ui, sans-serif';
+          ctx.font = '700 ' + Math.round(nr * 1.15) + 'px "EIA Sans", system-ui, sans-serif';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText(String(i + 1), cx, cy + 1);
@@ -949,6 +961,7 @@
     var opened = !det.open;
     det.open = true;
     ui.reveal.show(viewEl);
+    flushThumbs(viewEl);
     doc.body.setAttribute('data-print', 'guia');
     viewEl.classList.add('is-print-target');
     function done() {
@@ -958,7 +971,7 @@
       root.removeEventListener('afterprint', done);
     }
     root.addEventListener('afterprint', done);
-    root.setTimeout(function () { root.print(); }, 60);
+    root.setTimeout(function () { root.print(); }, 250);
   }
 
   function renderSesion(el, n) {
@@ -1041,7 +1054,7 @@
     pf.appendChild(h('p', { html: mi(ev.proyecto.intro) }));
     pf.appendChild(h('ol', { class: 'questions' }, ev.proyecto.preguntas.map(function (q) {
       return h('li', { class: 'questions__item card card--thin reveal' }, [
-        h('p', {}, [h('strong', { text: q.titulo + ':' }), ' ', h('span', { html: mi(q.texto) })]),
+        h('p', {}, [h('strong', { text: q.n + '. ' + q.titulo + ':' }), ' ', h('span', { html: mi(q.texto) })]),
         q.hojas && q.hojas.length ? h('p', { class: 'questions__sheets' }, [h('span', { class: 'questions__label', text: t('page.proyecto.hojas') + ' ' })].concat(q.hojas.map(function (hid, i) {
           return [i ? ' · ' : '', h('a', { href: '#proyecto/hoja-' + hid, text: hojaTitle(hid) || hid })];
         }))) : null
@@ -1309,6 +1322,8 @@
     ui.popover.init();
     ui.nav.mount(doc.getElementById('site-header'));
     renderFooter(doc.getElementById('site-footer'));
+
+    root.addEventListener('beforeprint', function () { if (shown) flushThumbs(shown.el); });
 
     var skip = doc.querySelector('.skip-link');
     if (skip) skip.addEventListener('click', function (e) { e.preventDefault(); focusTarget(main); });

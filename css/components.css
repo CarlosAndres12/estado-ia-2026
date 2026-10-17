@@ -674,7 +674,7 @@ li.update--caja { margin-left: -1.4em; }
   .station { grid-template-columns: 60px minmax(0, 1fr); gap: var(--sp-3); }
   .station__sign { width: 56px; height: 56px; }
 }
-.station__card { padding: var(--sp-4) var(--sp-5); }
+.station__card { padding: var(--sp-4) var(--sp-5); max-width: 820px; }
 .station__title { font-size: clamp(1.35rem, 1rem + 1.2vw, 1.9rem); margin-bottom: var(--sp-3); }
 .station__title a { text-decoration: none; }
 .station__title a:hover { text-decoration: underline; }
@@ -895,8 +895,31 @@ li.update--caja { margin-left: -1.4em; }
 .ref__text { margin: 0; }
 .ref__sources { list-style: none; padding: 0; margin: var(--sp-3) 0 0; display: grid; gap: 0.4rem; }
 .ref__source { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.9rem; }
+@media (min-width: 760px) {
+  .ref__source { display: grid; grid-template-columns: minmax(9rem, 15rem) max-content minmax(0, 1fr); align-items: start; }
+  .ref__source > :only-child, .ref__source > .btn:first-child { grid-column: 2; }
+  .ref__label { padding-top: 0.55rem; }
+}
 .ref__label { font-weight: var(--fw-bold); }
-.ref__figs summary { display: inline-flex; align-items: center; min-height: 44px; font-weight: var(--fw-bold); cursor: pointer; }
+.ref__figs summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 44px;
+  font-weight: var(--fw-bold);
+  cursor: pointer;
+  list-style: none;
+}
+.ref__figs summary::-webkit-details-marker { display: none; }
+.ref__figs summary::before {
+  content: "";
+  width: 0.5em;
+  height: 0.5em;
+  border-right: 2.5px solid var(--tinta);
+  border-bottom: 2.5px solid var(--tinta);
+  transform: rotate(-45deg);
+}
+.ref__figs[open] summary::before { transform: rotate(45deg); }
 .ref__figs ul { margin: 0.2rem 0 0.4rem; font-size: 1rem; }
 
 .kb0__text { max-width: var(--text-max); }
@@ -940,7 +963,8 @@ li.update--caja { margin-left: -1.4em; }
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
 }
 .clase-options > li { margin: 0; }
-.clase-options__btn { width: 100%; justify-content: flex-start; min-height: 56px; font-size: 1.15rem; }
+.clase-options__btn { width: 100%; justify-content: flex-start; min-height: 56px; font-size: 1.15rem; text-align: left; }
+.view--clase .placeholder { margin-bottom: var(--sp-6); }
 
 .search__help { font-size: 1rem; color: var(--ink-muted); margin: var(--sp-2) 0; }
 .search__status { font-weight: var(--fw-bold); margin: var(--sp-2) 0; }

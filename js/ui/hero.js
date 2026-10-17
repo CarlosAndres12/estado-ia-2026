@@ -43,9 +43,9 @@
     var ink = E().ink, m = M(), pal = E().palette;
     var b = ink.drawing('hero:mass', { w: 4.4, jitter: 0.9 });
     b.shape([-262, 4, -244, 96, -196, 196, -108, 272, 6, 306, 128, 280, 216, 206, 266, 104, 276, 4], { fill: '@mass', w: 4.6 });
-    b.shape([-150, 120, -110, 86, -62, 104, -58, 150, -104, 170, -146, 158], { fill: '@deep', w: 2.6 });
-    b.shape([116, 192, 150, 168, 186, 186, 176, 222, 138, 230], { fill: '@red', w: 2.4 });
-    b.stroke([-20, 240, 24, 222, 70, 238, 112, 226], { w: 2.4, profile: 'hair' });
+    b.shape([-162, 196, -122, 170, -74, 186, -70, 232, -116, 254, -158, 242], { fill: '@deep', w: 2.6 });
+    b.shape([116, 196, 150, 172, 186, 190, 176, 226, 138, 234], { fill: '@red', w: 2.4 });
+    b.stroke([-20, 250, 24, 232, 70, 248, 112, 236], { w: 2.4, profile: 'hair' });
     var mass = b.done({ colors: { mass: pal.mix(m.celeste, m.azul, 0.32), deep: m.azul, red: m.rojo } });
     var tb = ink.drawing('hero:tip', { w: 4.2, jitter: 0.8 });
     tb.shape([-112, 4, -86, -54, -52, -112, -16, -164, 18, -138, 48, -92, 82, -46, 116, 4], { fill: '@tip', w: 4.6 });
@@ -92,8 +92,9 @@
     ctx.clip();
     ink.draw(ctx, g.mass, CX, TOP, 1, {});
     if (copy.masa) {
-      ink.letter(ctx, copy.masa.text, CX + 6, TOP + 112, {
-        size: 40, maxWidth: 430, maxLines: 2, fit: true, minSize: 26, align: 'center', color: m.lienzo,
+      // Above the halfway line, so the still frame (reduced motion) shows the whole text.
+      ink.letter(ctx, copy.masa.text, CX + 6, TOP + 40, {
+        size: 38, maxWidth: 440, maxLines: 2, fit: true, minSize: 26, align: 'center', color: m.lienzo,
         counters: 0, stars: false, underline: false, seed: 'hero-masa'
       });
     }
