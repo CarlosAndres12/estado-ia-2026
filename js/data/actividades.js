@@ -336,7 +336,7 @@ EIA.data.actividades = {
     ],
     claveTitulo: 'Clave orientativa para el docente',
     colores: [
-      { id: 'verde', label: 'Verde', signo: 'estrella' },
+      { id: 'verde', label: 'Verde', signo: 'estrella-visto' },
       { id: 'ambar', label: 'Ámbar', signo: 'medio-disco' },
       { id: 'rojo', label: 'Rojo', signo: 'cruz' }
     ],

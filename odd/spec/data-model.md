@@ -116,6 +116,17 @@ is the KB block verbatim; `hoja` is the notebook sheet it feeds.
 `banco`, `proyecto`, `glosario`, `preguntas`, `referencias`, `asistente`, `feedback`, `cuaderno`, `rubrica`,
 `laminas`, `modoClase`). Player copy (prompt §6–§7) belongs to the video-runtime owner (`ui.player`).
 
+## Interface copy added with the interactive tools (T08)
+
+| Where | Field | Meaning |
+|---|---|---|
+| `actividades.js`, each tool entry | `ui` | Copy specific to that tool (slider labels, stamps, layer names, buttons); the tool reads only from here and from `course.ui` |
+| `actividades.js`, notebook row sections | `fila` | Label of each row of a table-like sheet section |
+| `actividades.js`, `s4-tareas` / `s4-evaluacion` | `secciones` | Which notebook sections the session tool mounts |
+| `course.js` | `ui.quiz`, `ui.visor`, `ui.clase` | Quiz chrome, láminas viewer, Modo clase (slides, clock, notes drawer, facilitator window) |
+| `course.js` | `ui.cuaderno`, `ui.rubrica` | Team notebook and rubric chrome (also cost amount/unit labels the prompt does not quote) |
+| `actividades.js`, `s5-escalera.colores[].signo` | sign name | Must match the engine legend (`EIA.engine.palette.legend`), e.g. Verde = `estrella-visto` |
+
 ## Checklist after editing
 
 - [ ] `node tools/check-content.mjs` → 0 errors.
