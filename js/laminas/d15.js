@@ -13,7 +13,7 @@
  * drawn by the engine from the deck entry (Colombia is «adoptante»: the deck never says otherwise).
  *
  * Copy comes only from the deck entry. Static by default; in the 8 s ambient loop letters flow
- * through the lamp and a bird glides over the water (nothing moves when s.still).
+ * through the lamp and a bird glides over the bridge (nothing moves when s.still).
  */
 (function (root) {
   'use strict';
@@ -64,8 +64,8 @@
       // The small ruled lamp (the AI) shining over the bank of use.
       fig.lamp(ctx, leftX, by + LAMP.dy * k, LAMP.scale * k, { t: u * LAMP_CYCLE, glow: 1 });
 
-      // A bird gliding over the water (ambient only).
-      fig.sign(ctx, 'pajaro', bx - 40 * k + Math.sin(TAU * u) * 22 * k, by + 66 * k + Math.sin(TAU * u * 2) * 5 * k, 38 * k, { seed: 'd15-bird',
+      // A bird gliding over the bridge, above the sag of its cable (it moves in the ambient loop).
+      fig.sign(ctx, 'pajaro', bx + Math.sin(TAU * u) * 22 * k, by - 100 * k + Math.sin(TAU * u * 2) * 5 * k, 38 * k, { seed: 'd15-bird',
         colors: { a: m.amarillo } });
 
       // Each bank's name, brush-lettered above it: between the zone's edge and the bank's inner edge
