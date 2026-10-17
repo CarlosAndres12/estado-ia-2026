@@ -689,7 +689,8 @@
     var ink = env.ink, fig = env.fig, m = env.pal.mundo, q = env.pal.maquina;
     var e = inOut3(tm.open), w = FUE.w, h = FUE.h;
     var fx = FUE.x0 + i * FUE.step, fy = FUE.y + Math.abs(i - 2) * 16, fr = (i - 2) * 0.05;
-    var x = lerp(FUE.x0 + i * 4, fx, e), y = lerp(FUE.y + 20 - i * 3, fy, e), r = lerp(-0.12 + i * 0.018, fr, e);
+    // Closed, the five cards make a loose stack (each one shows an edge); open, they fan out.
+    var x = lerp(FUE.x0 + i * 10, fx, e), y = lerp(FUE.y + 22 - i * 7, fy, e), r = lerp(-0.13 + i * 0.035, fr, e);
     var lift = tm.active ? 1 : 0, navy = i === 4;
     ctx.save();
     ctx.translate(x, y - lift * 8);
