@@ -42,7 +42,7 @@ exceeds it. Slicing into PRs is left to the user (each task commit is a candidat
 | T01 | Scaffold: branch, KB copy, tree, `index.html`, namespace contract, stubs, fonts, tools config, this doc | inline (mechanical, already understood) | done (2869e53, 958ffd8) |
 | T02 | Data layer + content checker: `kb-parse`, `load-data`, all `js/data/*` except `videos.js`, `check-content.mjs` | delegated writer (2+ non-trivial files, KB reading prepares the write) | done (cherry-picked 414d2f2, 57b861d, 1e20899) |
 | T03 | Video scripts as data: `js/data/videos.js` (9 videos, prompt §13) | delegated writer (large transcription) | done (84e78b8) |
-| T04 | Drawing engine: rng, easing, palette + tokens.css, ink, chart, tags, figures, lamina layout, API doc | delegated writer (many non-trivial files) | running (wave 1, worktree) |
+| T04 | Drawing engine: rng, easing, palette + tokens.css, ink, chart, tags, figures, lamina layout, API doc | delegated writer (many non-trivial files) | done (cherry-picked 0149682..a019a98 → 73f2246) |
 | T05 | Video runtime: timeline, captions, narrator, player, recorder, render mode, CDP browser lib, snapshots | delegated writer (many non-trivial files) | running (wave 1, worktree) |
 | T06 | V02 end to end + art review against prompt §3 | delegated writer | pending |
 | T07 | Page shell: router, markup, views, nav, hero, chips, citations/popovers, banco, glossary, FAQ, references, asistente, footer, CSS | delegated writer | pending |
@@ -104,6 +104,15 @@ zero errors; 9 videos play in sync; 17 láminas render/print with corrected figu
   profile `power-saver` (platform `quiet`); verified (cpuset 0-9, Tctl 43.6 °C). Concurrency policy: at most
   two workers, only one of them rendering with Chromium. Running: T04 (rendering), T11 (no Chromium, no
   audio checks). T05 waits for T04.
+
+- T04 done: engine merged (rng, easing, palette, ink, chart, tags, figures, lamina; tokens.css; engine-api.md;
+  gallery + self-test). Parent re-run: `gallery.html?test=1` → SUMMARY 50 passed, 0 failed; `git fsck
+  --connectivity-only` clean, 0 empty objects. Real `index.html?lamina=d07` renders the frame (titular,
+  proportional funnel with tags, idea central) with no console errors; illustration waits for T09.
+  Known art weaknesses (worker): lettering is jittered Noto Serif Display, strokes smoother than real brush,
+  sparse places, stylized landmass. Scene objects without helpers (compose from primitives): service-window
+  counter, threat map, V07 star/weather/molecule charts, ruled manuscript.
+- T05 resumed after merge of the feature branch into its worktree (TEMP fallbacks → real engine).
 
 ## Next step
 
