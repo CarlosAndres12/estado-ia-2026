@@ -2012,6 +2012,50 @@ html:not(.has-decor) .feedback--casi .feedback__sign { border-style: dotted; }
   transform: rotate(-1deg);
 }
 .sticky-note__pin { flex: none; width: 1.4rem; height: 1.4rem; background: var(--sign-lapiz-mono, none) no-repeat center / contain; }
+
+/* ---- Rubric (prompt §10.9): one level per criterion, honest score meter -------------------- */
+
+.rubric { display: grid; gap: var(--sp-4); }
+.rubric__kb-note, .rubric__help, .rubric__who { margin: 0; }
+.rubric__who { font-weight: var(--fw-bold); }
+.rubric-table--pick { min-width: 60rem; }
+.rubric-table--pick th[scope="row"] { min-width: 9rem; }
+.rubric-table--pick .rubric__peso { vertical-align: top; }
+.rubric__cell { padding: 0.3rem; }
+.rubric__option {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 92px;
+  height: 100%;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.98rem;
+  line-height: 1.35;
+  border: 2px dashed transparent;
+  border-radius: 10px 14px 9px 15px;
+  cursor: pointer;
+}
+.rubric__option:hover { background: var(--wash-ocre); border-color: var(--line-soft); }
+.rubric__radio { position: absolute; top: 0.5rem; left: 0.6rem; width: 28px; height: 28px; margin: 0; opacity: 0; }
+.rubric__mark { flex: none; width: 28px; height: 28px; border: 2.5px solid var(--tinta); border-radius: 50%; }
+.rubric__radio:focus-visible + .rubric__mark { outline: var(--focus-ring); outline-offset: 3px; }
+.rubric__option:has(.rubric__radio:checked) { font-weight: var(--fw-bold); background: var(--wash-amarillo); border: 2.5px solid var(--tinta); }
+.rubric__option:has(.rubric__radio:checked) .rubric__mark { border-color: transparent; background: var(--exito, var(--tinta)) no-repeat center / contain; transform: scale(1.25); }
+.rubric__result { display: grid; gap: var(--sp-2); max-width: 780px; }
+.rubric__score { margin: 0; font-family: var(--font-display); font-weight: var(--fw-black); font-size: clamp(1.5rem, 1.2rem + 1.4vw, 2.2rem); }
+.rubric__meter { display: block; height: 1.15rem; overflow: hidden; background: var(--papel); border: 2.5px solid var(--tinta); border-radius: 999px; }
+.rubric__meter-fill { display: block; width: 0; height: 100%; background: var(--amarillo); transition: width 220ms ease-out; }
+.rubric__pending { margin: 0; color: var(--ink-muted); }
+.rubric__disclaimer { display: flex; align-items: center; gap: 0.6rem; margin: 0; font-style: italic; font-weight: var(--fw-bold); }
+.rubric__disclaimer-sign { flex: none; width: 2rem; height: 2rem; background: var(--sign-lapiz-mono, none) no-repeat center / contain; }
+.rubric__actions { margin: 0; }
+.rubric__retro { display: grid; gap: var(--sp-4); }
+.rubric__crit { min-width: 0; margin: 0; padding: var(--sp-3) var(--sp-4) var(--sp-4); background: var(--papel); border: 2px solid var(--tinta); border-radius: var(--radius-hand-2); }
+.rubric__crit-title { padding: 0 0.3rem; font-family: var(--font-display); font-weight: var(--fw-black); font-size: 1.15rem; }
+.rubric__crit-level { font-family: var(--font-sans); font-weight: var(--fw-regular); font-size: 1rem; color: var(--ink-muted); }
+.rubric__crit-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: var(--sp-3); }
+.questions__sheets a.has-content::after { content: ""; display: inline-block; width: 1.1em; height: 1.1em; margin-left: 0.25em; vertical-align: -0.15em; background: var(--exito, none) no-repeat center / contain; }
 .has-motion .sticky-note { animation: eia-note 260ms ease-out; }
 @keyframes eia-note {
   from { opacity: 0; transform: rotate(-4deg) translateY(-4px); }

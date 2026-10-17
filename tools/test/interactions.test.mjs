@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { loadData } from '../lib/load-data.mjs';
 
 const root = new URL('../../', import.meta.url).pathname;
-const EIA = await loadData({ root, extra: ['js/core/markup.js', 'js/ui/quiz.js', 'js/ui/games.js', 'js/ui/worksheets.js'] });
+const EIA = await loadData({ root, extra: ['js/core/markup.js', 'js/ui/quiz.js', 'js/ui/games.js', 'js/ui/worksheets.js', 'js/ui/rubrica.js'] });
 // Values created inside the vm carry another realm's prototypes; compare them as plain data.
 const plain = (v) => JSON.parse(JSON.stringify(v));
 
@@ -130,4 +130,33 @@ test('the notebook copies as plain text with its sheet titles and labels', () =>
   assert.match(text, /Ficha del caso de uso/);
   assert.match(text, /La tarea que hace la IA y la que sigue haciendo una persona\./);
   assert.match(text, /La IA resume; la persona decide\./);
+});
+
+// -------------------------------------------------------------------------------------------------
+// Rubric (prompt §10.9, KB §11): Σ peso × fracción del nivel (4 = 100%, 3 = 75%, 2 = 50%, 1 = 25%).
+
+test('the rubric score adds each weight times the fraction of the chosen level', () => {
+  const R = EIA.ui.rubrica;
+  const ids = EIA.data.rubrica.criterios.map((c) => c.id);
+  const all = (n) => Object.fromEntries(ids.map((id) => [id, n]));
+  assert.equal(R.score(all(4)), 100);
+  assert.equal(R.score(all(3)), 75);
+  assert.equal(R.score(all(2)), 50);
+  assert.equal(R.score(all(1)), 25);
+  assert.equal(R.score({}), 0);
+  // evidencia 20×1 + capacidad 15×0,75 + valor 20×0,5 + personas 15×0,25 + gobernanza 20×1 + defensa 10×0,75
+  assert.equal(R.score({ evidencia: 4, capacidad: 3, valor: 2, personas: 1, gobernanza: 4, defensa: 3 }), 72.5);
+});
+
+test('the rubric ignores levels and criteria it does not know', () => {
+  const R = EIA.ui.rubrica;
+  assert.equal(R.score({ evidencia: 5, capacidad: 0, valor: 'x', otra: 4, gobernanza: 2 }), 10);
+});
+
+test('the rubric writes its score in Spanish format, out of 100', () => {
+  const R = EIA.ui.rubrica;
+  assert.equal(R.formato(72.5), '72,5');
+  assert.equal(R.formato(86.25), '86,25');
+  assert.equal(R.formato(100), '100');
+  assert.equal(R.texto({ evidencia: 4, capacidad: 3, valor: 2, personas: 1, gobernanza: 4, defensa: 3 }), 'Puntaje de la rúbrica: 72,5/100');
 });

@@ -935,7 +935,26 @@ EIA.data.course.ui.quiz = {
     rubrica: 'Rúbrica: autoevaluación del equipo',
     nivelElegido: 'Nivel elegido',
     sinNivel: 'sin elegir',
+    conContenido: 'ya tiene contenido',
     vacio: '—'
   };
   Object.keys(add).forEach(function (k) { if (!(k in cq)) cq[k] = add[k]; });
 })(EIA.data.course.ui.cuaderno = EIA.data.course.ui.cuaderno || {});
+// Completes ui.rubrica (puntaje, nota, evidencia and accion above are the prompt's words).
+(function (r) {
+  var add = {
+    region: 'Rúbrica interactiva',
+    elegir: 'Elijan un nivel por criterio. El puntaje se calcula solo con los niveles elegidos.',
+    nivel: '{criterio}: {nivel}',
+    peso: '{peso}%',
+    pendientes: 'Faltan criterios por calificar: {n}.',
+    completa: 'Todos los criterios tienen un nivel.',
+    limpiar: 'Borrar los niveles elegidos',
+    retro: 'Retroalimentación por criterio',
+    retroAyuda: 'Nombren el nivel actual con una evidencia tomada del texto del equipo y propongan una acción concreta para subir un nivel.',
+    cuaderno: 'Se guarda con el cuaderno de «{equipo}».',
+    sinNombre: 'Equipo sin nombre',
+    elegido: 'Nivel elegido'
+  };
+  Object.keys(add).forEach(function (k) { if (!(k in r)) r[k] = add[k]; });
+})(EIA.data.course.ui.rubrica = EIA.data.course.ui.rubrica || {});
