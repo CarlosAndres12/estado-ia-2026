@@ -25,6 +25,8 @@ and free, AI small, cool and ruled.
   `index.html` script order, `js/main.js` boot dispatch, CSS owner sections in `css/components.css`.
 - Commits: Conventional Commits, no AI attribution (user rule). Push/PR are the user's decision.
 - RDD (receipt-driven development): `off` (decided by global) → no native review ceremony; ordinary checks.
+- User decisions (2026-10-17): narration with **Edge TTS** (free; `es-MX-JorgeNeural` narrador, `es-MX-DaliaNeural`
+  lectora) instead of Azure; the user is away — continue autonomously without blocking questions.
 - Parallel writers run in isolated git worktrees (prompt §15 allows parallel agents); parent merges.
 
 ## Delivery strategy
@@ -47,7 +49,7 @@ exceeds it. Slicing into PRs is left to the user (each task commit is a candidat
 | T08 | Interactions: quizzes, games, calculator, embudo, cuaderno, rubric, Ley de IA timeline, indicadores, timer, láminas viewer, Modo clase, print | delegated writer | pending |
 | T09 | Láminas D01–D17 | delegated writers (parallel, worktrees) | pending |
 | T10 | Videos V01, V03–V09 | delegated writers (parallel, worktrees) | pending |
-| T11 | Voice-over tooling (normalizer, SSML, Azure adapter, generator with `--dry-run`, check-voiceover) | delegated writer | pending |
+| T11 | Voice-over tooling with **Edge TTS** (user decision; Azure kept optional): normalizer, SSML, Edge bridge + adapter, alignment, generator, listening sheet | delegated writer (many non-trivial files) | running (worktree) |
 | T12 | Optional MP4 export (`render-videos.mjs`) | delegated writer | pending |
 | T13 | README (Spanish), acceptance checks (prompt §16), final fixes | delegated verifier + writer | pending |
 
