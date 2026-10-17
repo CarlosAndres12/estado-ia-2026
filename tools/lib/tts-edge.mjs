@@ -30,20 +30,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { edgeSsml, signedPercent, signedHz } from './ssml.mjs';
+import { TtsError, withRetry } from './tts-common.mjs';
 
+export { TtsError };
 export const BRIDGE = fileURLToPath(new URL('./edge-bridge.py', import.meta.url));
 export const OUTPUT_FORMAT = 'audio-24khz-48kbitrate-mono-mp3';
 const TICKS_PER_SECOND = 1e7;
-
-export class TtsError extends Error {
-  constructor(message, { kind = 'unknown', retry = false, status } = {}) {
-    super(message);
-    this.name = 'TtsError';
-    this.kind = kind;
-    this.retry = retry;
-    if (status != null) this.status = status;
-  }
-}
 
 /** The Python interpreter that has edge-tts, and where that choice came from. */
 export function findPython({ python, env = process.env, platform = process.platform } = {}) {
@@ -122,25 +114,11 @@ export function createEdgeTts(config = {}, deps = {}) {
   const retries = Number.isInteger(config.retries) ? config.retries : 4;
   const backoffMs = config.backoffMs || 1000;
   const run = deps.run || ((request) => runBridge(found.python, request, { timeoutMs: timeoutMs + 30000 }));
-  const sleep = deps.sleep || ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
-  const log = deps.log || (() => {});
-
-  async function withRetry(label, request) {
-    for (let attempt = 1; ; attempt++) {
-      try {
-        return { reply: await run(request), attempts: attempt };
-      } catch (err) {
-        const error = err instanceof TtsError ? err : new TtsError(err.message, { retry: true });
-        if (!error.retry || attempt > retries) {
-          error.message = `${label}: ${error.message}` + (attempt > 1 ? ` (after ${attempt} attempts)` : '');
-          throw error;
-        }
-        const wait = Math.min(30000, backoffMs * 2 ** (attempt - 1));
-        log(`${label}: ${error.message}; retrying in ${wait / 1000} s`);
-        await sleep(wait);
-      }
-    }
-  }
+  const retry = { retries, backoffMs, sleep: deps.sleep, log: deps.log };
+  const request = async (label, req) => {
+    const { value, attempts } = await withRetry(label, () => run(req), retry);
+    return { reply: value, attempts };
+  };
 
   return {
     name: 'edge',
@@ -154,16 +132,16 @@ export function createEdgeTts(config = {}, deps = {}) {
     },
 
     async listVoices() {
-      const { reply } = await withRetry('Edge voice list', { op: 'voices' });
+      const { reply } = await request('Edge voice list', { op: 'voices' });
       return reply.voices || [];
     },
 
     async synthesize({ voice, text, rate, pitch }, outFile) {
-      const request = {
+      const req = {
         op: 'synthesize', text, voice, out: path.resolve(outFile),
         rate: signedPercent(rate), pitch: signedHz(pitch), timeout: Math.round(timeoutMs / 1000)
       };
-      const { reply, attempts } = await withRetry(`Edge TTS ${voice}`, request);
+      const { reply, attempts } = await request(`Edge TTS ${voice}`, req);
       const words = (reply.boundaries || []).map((b) => ({
         text: b.text, start: b.offset / TICKS_PER_SECOND, dur: b.duration / TICKS_PER_SECOND
       }));
