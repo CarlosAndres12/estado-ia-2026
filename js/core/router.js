@@ -35,6 +35,7 @@
   function parse(hash) {
     var raw = String(hash == null ? '' : hash).trim();
     if (raw.charAt(0) === '#') raw = raw.slice(1);
+    raw = raw.split('?')[0];
     var whole = decode(raw);
     if (whole === null) {
       // A malformed escape: keep the route part if it decodes on its own.

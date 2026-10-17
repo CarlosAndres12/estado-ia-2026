@@ -354,7 +354,7 @@
       list.appendChild(h('li', { class: 'laminas__item' }, [a]));
       lazy(canvas, function () {
         ui.decor.fontsReady().then(function () {
-          try { drawLamina(canvas, id); } catch (err) { warn('lámina ' + id, err); }
+          try { drawLamina(canvas, id); } catch (err) { warn('lamina thumbnail ' + id, err); }
         });
       }, 300);
     });
@@ -447,6 +447,8 @@
   function agendaTable(s) {
     var cols = ui.tv('page.sesion.agendaColumnas') || [];
     var n = s.n;
+    // The KB "Recurso" cell keeps its own text; recognized values only become links to what they name
+    // (a lámina, the session's activities, KB §3 = #evidencia, the final project).
     function recurso(text) {
       var m = /^Diapositiva (\d{1,2})$/.exec(text);
       if (m) {

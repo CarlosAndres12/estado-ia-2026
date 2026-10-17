@@ -120,9 +120,13 @@
     }
   }
 
+  // The sticky header's resting height (bar + nav), without the search panel or the open mobile
+  // menu: scroll-padding and the search panel's max-height depend on it.
   function publishHeight() {
     var hh = els.header.offsetHeight || 0;
-    doc.documentElement.style.setProperty('--header-h', hh + 'px');
+    if (els.search && !els.search.hidden) hh -= els.search.offsetHeight;
+    if (isCompact() && els.nav && !els.nav.hidden) hh -= els.nav.offsetHeight;
+    doc.documentElement.style.setProperty('--header-h', Math.max(48, hh) + 'px');
   }
 
   // ---------------------------------------------------------------------------------------------

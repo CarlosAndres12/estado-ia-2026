@@ -67,6 +67,11 @@ test('a block keeps only safe id characters and stops at the next slash', () => 
   assert.deepEqual(plain(R.parse('#s3/<img onerror=x>')), { route: 's3', block: '', known: true });
 });
 
+test('a query string inside the hash is ignored', () => {
+  assert.deepEqual(plain(R.parse('#s3/actividad?utm=x')), { route: 's3', block: 'actividad', known: true });
+  assert.deepEqual(plain(R.parse('#cifras?x')), { route: 'cifras', block: '', known: true });
+});
+
 test('a malformed escape does not throw', () => {
   assert.deepEqual(plain(R.parse('#s3/%E0%A4%A')), { route: 's3', block: '', known: true });
 });

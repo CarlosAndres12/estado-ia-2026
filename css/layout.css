@@ -225,7 +225,7 @@
 
 /* Search panel (inside the sticky header). */
 .search {
-  max-height: calc(100vh - var(--header-h, 64px));
+  max-height: calc(100vh - var(--header-h, 64px) - 8px);
   overflow-y: auto;
   border-top: 2px solid var(--line-soft);
 }

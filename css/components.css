@@ -388,7 +388,18 @@ html:not(.has-decor) .estado__sign { width: 0.7em; height: 0.7em; border: 2px so
 .pop__link { display: inline-flex; align-items: center; min-height: 44px; font-weight: var(--fw-bold); }
 .pop__link--quiet { font-weight: var(--fw-regular); }
 .pop__text { font-size: 1.05rem; }
-.pop--termino { font-style: normal; }
+/* Glossary notes read as handwritten margin notes with a small sign (prompt §3.11). */
+.pop--termino .pop__body { position: relative; padding-left: 2.7rem; }
+.pop--termino .pop__body::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.15rem;
+  width: 2.1rem;
+  height: 2.1rem;
+  background: var(--sign-libreta-mono, none) no-repeat center / contain;
+}
+.pop--termino .pop__text { font-style: italic; }
 @media (max-width: 420px) {
   .pop__dl { grid-template-columns: 1fr; }
 }
