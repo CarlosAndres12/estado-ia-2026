@@ -1379,6 +1379,8 @@ EIA.data.videos = [
         min: 16,
         seVe: 'Un cometa con cola de puntos cruza hacia una señal de camino «2030», con el distintivo «Proyección»; suben flotando signos de competencias, «IA y datos», «redes y ciberseguridad» y «alfabetización tecnológica»; a su lado, signos humanos cálidos: «pensamiento creativo», «resiliencia», «flexibilidad» y «colaboración».',
         rotulos: {
+          cifra: { text: '39%', cifras: ['trab-5'] },
+          etiqueta: { text: 'de las competencias centrales cambiará hacia 2030' },
           senal: { text: '2030' },
           chip: { text: 'Proyección' },
           iaDatos: { text: 'IA y datos' },
@@ -1406,6 +1408,7 @@ EIA.data.videos = [
         min: 18,
         seVe: 'Siete tarjetas pequeñas se abren como una mano de cartas, cada una con un signo y un rótulo breve: «Comprender», «Formular», «Verificar», «Proteger», «Diseñar y supervisar», «Documentar» y «Evaluar».',
         rotulos: {
+          titulo: { text: 'siete capacidades de alfabetización avanzada' },
           comprender: { text: 'Comprender' },
           formular: { text: 'Formular' },
           verificar: { text: 'Verificar' },
@@ -1431,6 +1434,7 @@ EIA.data.videos = [
         min: 14,
         seVe: 'La tarjeta del caso del equipo se divide en seis a ocho tarjetas de tareas, y cada una recibe uno de tres sellos: «La IA apoya», «La IA podría realizarla» o «La persona es indispensable»; una tarjeta lleva un pequeño signo de escalera: «escalón de entrada».',
         rotulos: {
+          tarjeta: { text: 'Nuestro caso de uso' },
           apoya: { text: 'La IA apoya' },
           podriaRealizarla: { text: 'La IA podría realizarla' },
           indispensable: { text: 'La persona es indispensable' },

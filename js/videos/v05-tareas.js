@@ -67,7 +67,12 @@
     desigual: { administrativas: [0, 'Las ocupaciones administrativas', 'chunk'], medios: [0, 'medios', 'word'], software: [0, 'software', 'word'],
       finanzas: [0, 'finanzas', 'word'], mundo: [1, '4,7%', 'chunk'], altos: [1, '9,6%', 'chunk'] },
     entrada: { entrada: [0, 'puestos de entrada', 'word'], cifra: [0, 'casi 20%', 'chunk'], patron: [0, 'aunque las pérdidas', 'chunk'],
-      automatizando: [1, 'se están automatizando', 'chunk'] }
+      automatizando: [1, 'se están automatizando', 'chunk'] },
+    competencias: { cifra: [0, '39%', 'chunk'], iaDatos: [0, 'IA y datos', 'word'], redes: [0, 'redes y ciberseguridad', 'word'],
+      alfabetizacion: [0, 'alfabetización tecnológica', 'word'], pensamiento: [1, 'pensamiento creativo', 'word'], resiliencia: [1, 'resiliencia', 'word'],
+      flexibilidad: [1, 'flexibilidad', 'word'], colaboracion: [1, 'colaboración', 'word'] },
+    'tareas-caso': { desagreguen: [0, 'en tareas', 'word'], apoya: [0, 'apoya', 'word'], podria: [0, 'podría realizarla', 'word'],
+      indispensable: [0, 'indispensable', 'word'], escalon: [1, 'escalón de entrada', 'word'], preservarlo: [1, 'ese aprendizaje', 'chunk'] }
   };
 
   // The scene's cues as shares of their lines, read from the player's s.cue (subtitle timing: the
@@ -854,18 +859,333 @@
   }
 
   // ---------------------------------------------------------------------------------------------
+  // 6 · competencias — a comet with a dotted tail crosses the sky toward a small road sign «2030»,
+  // with the chip «Proyección»; «39%» lands whole with its label and tag (trab-5). Skill signs drift
+  // up as they are named: «IA y datos», «redes y ciberseguridad», «alfabetización tecnológica»;
+  // beside them, warm human signs: «pensamiento creativo», «resiliencia», «flexibilidad»,
+  // «colaboración».
+
+  var COMP = {
+    horizon: 0.55,
+    sign: { x: 1156, y: 400, k: 0.9 },
+    chip: { x: 952, y: 296 },
+    number: { x: 92, y: 112, size: 104 }, label: { x: 336, y: 130, w: 330, size: 27 }, tag: { x: 104, y: 262 },
+    flight: 0.82,
+    // [rótulo key, sign kind, x, y]: the three fastest-growing skills, then the human ones.
+    skills: [['iaDatos', 'lampara', 75, 444, 'iaDatos'], ['redes', 'candado', 345, 444, 'redes'], ['alfabetizacion', 'portatil', 787, 444, 'alfabetizacion'],
+      ['pensamientoCreativo', 'espiral', 61, 530, 'pensamiento'], ['resiliencia', 'brote', 468, 530, 'resiliencia'],
+      ['flexibilidad', 'cabellos', 718, 530, 'flexibilidad'], ['colaboracion', 'corazon', 981, 530, 'colaboracion']]
+  };
+
+  // Point at share u of a sampled path, with its unit normal and heading.
+  function pathAt(g, u, outp) {
+    var d = clamp01(u) * g.len, lo = 0, hi = g.n - 1;
+    while (lo < hi) {
+      var mid = (lo + hi + 1) >> 1;
+      if (g.s[mid] <= d) lo = mid; else hi = mid - 1;
+    }
+    var i = Math.min(lo, g.n - 2), sl = g.s[i + 1] - g.s[i] || 1, f = clamp01((d - g.s[i]) / sl);
+    var dx = g.x[i + 1] - g.x[i], dy = g.y[i + 1] - g.y[i], dl = Math.sqrt(dx * dx + dy * dy) || 1;
+    outp.x = g.x[i] + dx * f; outp.y = g.y[i] + dy * f;
+    outp.nx = -dy / dl; outp.ny = dx / dl; outp.a = Math.atan2(dy, dx);
+    return outp;
+  }
+  function samplePath(ink, ctrl, step) {
+    var p = ink.smoothPath(ctrl, false, step || 5), acc = new Float32Array(p.n);
+    for (var i = 1; i < p.n; i++) acc[i] = acc[i - 1] + Math.sqrt(Math.pow(p.x[i] - p.x[i - 1], 2) + Math.pow(p.y[i] - p.y[i - 1], 2));
+    return { x: p.x, y: p.y, s: acc, n: p.n, len: acc[p.n - 1] || 1 };
+  }
+  var Q2 = {};
+
+  // A skill's sign, about 48 px, centred at (x, y).
+  function skillSign(ctx, s, env, kind, x, y, p) {
+    var fig = env.fig, m = env.pal.mundo, ink = env.ink;
+    switch (kind) {
+      case 'lampara': fig.lamp(ctx, x, y, 0.4, { t: s.t, p: p }); break;
+      case 'candado': fig.lock(ctx, x, y + 2, 0.56, { seed: 'v05:candado', p: p }); break;
+      case 'portatil': joinerSign(ctx, env, 'software', x, y + 2, p); break;
+      case 'espiral': fig.sign(ctx, 'espiral', x, y, 50, { seed: 'v05:creativo', p: p }); break;
+      case 'brote':
+        ink.blob(ctx, x - 12, y + 2, 9, 20, { fill: m.verde, w: 2.4, irr: 0.15, rot: -0.5, n: 8, seed: 'v05:hoja-a', p: p });
+        ink.blob(ctx, x + 12, y - 4, 9, 22, { fill: env.pal.mix(m.verde, m.amarillo, 0.3), w: 2.4, irr: 0.15, rot: 0.45, n: 8, seed: 'v05:hoja-b', p: p });
+        ink.line(ctx, [x, y + 24, x - 1, y + 6, x + 2, y - 10], { w: 3, profile: 'lift', seed: 'v05:tallo', p: p });
+        break;
+      case 'cabellos': fig.sign(ctx, 'cabellos', x, y, 54, { seed: 'v05:flexible', p: p }); break;
+      case 'corazon': fig.sign(ctx, 'corazon-mano', x, y, 46, { seed: 'v05:colabora', p: p }); break;
+    }
+  }
+
+  function competencias(ctx, s, env) {
+    var C = cuesOf(s, 'competencias'), st = s.state.comp, ink = env.ink, fig = env.fig, m = env.pal.mundo;
+    ground(ctx, s, env, 'territorio');
+    var a0 = s.at(0), a1 = s.at(1), intro = out3(s.intro), win = landWindow(C.cifra);
+    floaters(ctx, s, env, [['estrella', 700, 64, 30, { a: m.amarillo }], ['estrella', 1210, 120, 26], ['estrella', 860, 330, 22]], intro);
+    fig.roadSign(ctx, COMP.sign.x, COMP.sign.y, COMP.sign.k, { text: rot(s, 'senal'), p: out3(seg(s.intro, 0.2, 1)), seed: 'v05:senal' });
+    env.tags.chip(ctx, 'proyeccion', rot(s, 'chip'), { x: COMP.chip.x, y: COMP.chip.y, size: 22, pill: true, p: out3(seg(s.intro, 0.4, 1)) });
+    // The comet flies most of its arc before the figure lands, then drifts on toward the sign.
+    var tLand = lineT(s, 0, win[1]);
+    var u = COMP.flight * inOut3(seg(s.t, 0.2, tLand)) + (1 - COMP.flight) * seg(s.t, tLand, s.dur);
+    if (u > 0) {
+      var g = st.path, per = 22 / g.len;
+      for (var i = 16; i >= 7; i--) {
+        var ub = u - i * per;
+        if (ub <= 0) continue;
+        pathAt(g, ub, Q2);
+        ink.dot(ctx, Q2.x, Q2.y, Math.max(1.3, 5.6 - (i - 7) * 0.45) * (0.8 + 0.2 * Math.sin(s.t * 2.2 + i)), m.tinta);
+      }
+      pathAt(g, u, Q1);
+      // The sign's head is off its centre: place the head on the path.
+      var ro = Q1.a + 0.686, hx = 44 * Math.cos(ro) + 36 * Math.sin(ro), hy = 44 * Math.sin(ro) - 36 * Math.cos(ro);
+      fig.sign(ctx, 'cometa', Q1.x - hx, Q1.y - hy + Math.sin(s.t * 0.9) * 3, 200, { seed: 'v05:cometa', rot: ro });
+    }
+    // «39%», whole, by its chunk; label and tag with it.
+    var np = beat(a0, win[0], win[1]);
+    if (np > 0) {
+      var N = COMP.number, LB = COMP.label;
+      var L = hero(ctx, env, rot(s, 'cifra'), N.x, N.y, N.size, { seed: 'v05:39', p: np });
+      ink.text(ctx, rot(s, 'etiqueta'), LB.x, LB.y, { size: LB.size, weight: 700, maxWidth: LB.w, lineHeight: 1.16, p: seg(np, 0.3, 1) });
+      // The thread leaves the number's lower-left corner, so it never crosses the label.
+      sourceTag(ctx, env, 'trab-5', COMP.tag.x, COMP.tag.y, { x: N.x + 14, y: N.y + L.h - 16 }, np);
+    }
+    // The skills drift up as they are named, and settle.
+    for (i = 0; i < COMP.skills.length; i++) {
+      var sk = COMP.skills[i], line = i < 3 ? a0 : a1, cue = C[sk[4]];
+      var e = beat(line, cue - 0.05, cue + 0.06);
+      if (e <= 0) continue;
+      var ee = out3(e), y = lerp(sk[3] + 70, sk[3], ee) + noise(s.t * 0.25 + i, 'v05:sube' + i) * 3 * calm(s);
+      ctx.save();
+      ctx.globalAlpha *= clamp01(e * 2);
+      skillSign(ctx, s, env, sk[1], sk[2] + 28, y, 1);
+      ink.text(ctx, rot(s, sk[0]), sk[2] + 66, y - 17, { size: 27, weight: 700 });
+      ctx.restore();
+    }
+  }
+
+  // ---------------------------------------------------------------------------------------------
+  // 7 · siete — seven small cards fan out like a hand of cards as the base report's seven
+  // capacities are named, each with a sign and its short label: «Comprender», «Formular»,
+  // «Verificar», «Proteger», «Diseñar y supervisar», «Documentar», «Evaluar».
+
+  var SIETE = {
+    pivot: { x: 640, y: 706 }, r: 430, w: 132, h: 188,
+    angles: [-0.96, -0.64, -0.32, 0, 0.32, 0.64, 0.96],
+    keys: ['comprender', 'formular', 'verificar', 'proteger', 'disenarSupervisar', 'documentar', 'evaluar'],
+    cues: [[0, 'comprender'], [0, 'formular'], [0, 'verificar'], [1, 'proteger'], [1, 'diseñar y supervisar'], [1, 'documentar'], [1, 'evaluar']],
+    blobs: ['amarillo', 'rojo', 'verde', 'azul', 'celeste', 'amarillo', 'rojo'],
+    title: { x: 64, y: 40, size: 44 }
+  };
+
+  function capacityIcon(ctx, s, env, i, p) {
+    var fig = env.fig, ink = env.ink;
+    switch (i) {
+      case 0:   // understanding what the AI can and cannot do: the lamp inside its limits
+        ink.dotted(ctx, s.state.siete.ring, { closed: true, r: 2, gap: 9, seed: 'v05:limites', p: p });
+        fig.lamp(ctx, 0, 0, 0.42, { t: s.t, p: p });
+        break;
+      case 1: fig.key(ctx, 4, 0, 0.8, { seed: 'v05:llave', p: p }); break;
+      case 2: ink.line(ctx, [-26, -2, -8, 18, 28, -24], { w: 9, profile: 'blunt', seed: 'v05:visto', p: p }); break;
+      case 3: fig.lock(ctx, 0, 2, 0.74, { seed: 'v05:protege', p: p }); break;
+      case 4: fig.steeringWheel(ctx, -4, -4, 0.2, { seed: 'v05:supervisa', p: p }); break;
+      case 5: fig.sheet(ctx, 0, 0, 0.96, { seed: 'v05:documenta', p: p }); break;
+      case 6: fig.balance(ctx, 0, 30, 0.22, { seed: 'v05:evalua', p: p }); break;
+    }
+  }
+
+  function siete(ctx, s, env) {
+    var st = s.state.siete, ink = env.ink, m = env.pal.mundo, S = SIETE, i;
+    ground(ctx, s, env);
+    var intro = out3(s.intro), a0 = s.at(0), lines = [s.at(0), s.at(1)];
+    floaters(ctx, s, env, [['estrella', 1180, 90, 40], ['luna', 1100, 200, 40], ['pajaro', 96, 220, 54]], intro);
+    label(ctx, env, rot(s, 'titulo'), S.title.x, S.title.y, S.title.size, { seed: 'v05:siete', underline: true, maxWidth: 1100, p: beat(a0, 0.01, 0.3) });
+    var cp = out3(beat(a0, 0.02, 0.12));
+    if (cp <= 0) return;
+    for (i = 0; i < 7; i++) {
+      var cue = s.cue ? s.cue(S.cues[i][0], S.cues[i][1], 'word') : null;
+      var open = inOut3(beat(lines[S.cues[i][0]], (cue == null ? 0.5 : cue) - 0.04, (cue == null ? 0.5 : cue) + 0.06));
+      var a = lerp((i - 3) * 0.02, S.angles[i], open), r = lerp(S.r * 0.92, S.r, open);
+      var cx = S.pivot.x + Math.sin(a) * r, cy = S.pivot.y - Math.cos(a) * r + (1 - open) * 30;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(a);
+      ink.card(ctx, -S.w / 2, -S.h / 2, S.w, S.h, { seed: 'v05:capacidad' + i, weight: 3.8, radius: 11, p: cp });
+      var ip = seg(open, 0.35, 1);
+      if (ip > 0) {
+        ink.blob(ctx, 0, -38, 42, 36, { fill: m[S.blobs[i]], line: false, seed: 'v05:capfondo' + i, irr: 0.2, n: 9, p: ip, fillAlpha: 0.55 });
+        ctx.save();
+        ctx.translate(0, -38);
+        capacityIcon(ctx, s, env, i, ip);
+        ctx.restore();
+        ink.text(ctx, rot(s, S.keys[i]), 0, 22, { size: 21, weight: 700, align: 'center', maxWidth: S.w - 16, lineHeight: 1.08, p: ip });
+      }
+      ctx.restore();
+    }
+  }
+
+  // ---------------------------------------------------------------------------------------------
+  // 8 · tareas-caso — the team's case card «Nuestro caso de uso» splits into seven task cards; each
+  // gets one of three stamps, shown with their meaning: «La IA apoya» (the lamp beside a person),
+  // «La IA podría realizarla» (the lamp alone), «La persona es indispensable» (a person alone). One
+  // card gets a small ladder sign, «escalón de entrada», and a warm ring: that learning is kept.
+
+  var CASO = {
+    card: { x: 640, y: 136, w: 340, h: 150 },
+    tasks: { y: 302, w: 128, h: 158, x0: 124, dx: 172, n: 7 },
+    stampOf: [0, 2, 1, 0, 2, 1, 0],          // which stamp each task card gets (any mix: the cards are blank)
+    entry: 2,                                // the task card that is an entry step
+    legend: { y: 486, xs: [70, 400, 800], r: 36 },
+    keys: ['apoya', 'podriaRealizarla', 'indispensable'],
+    cues: ['apoya', 'podría realizarla', 'indispensable']
+  };
+
+  // A stamp: an ink ring with its sign — the lamp beside a person, the lamp, or a person.
+  function caseStamp(ctx, s, env, kind, x, y, r, p) {
+    if (p <= 0) return;
+    var ink = env.ink, fig = env.fig, m = env.pal.mundo, k = r / 30;
+    var press = seg(p, 0, 0.5), land = 1 + 0.25 * (1 - press) * (1 - press);
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(land, land);
+    ctx.globalAlpha *= clamp01(press * 1.6);
+    ink.circle(ctx, 0, 0, r, { fill: m.lienzo, w: 3 * k, seed: 'v05:sello' + kind });
+    if (kind === 0) {
+      fig.person(ctx, 9 * k, 17 * k, 0.36 * k, { role: 'persona', pose: 'standing', seed: 'v05:sello-persona', skin: 2, hair: 'bob', mono: true });
+      fig.lamp(ctx, -11 * k, -2 * k, 0.17 * k, { t: s.t });
+    } else if (kind === 1) {
+      fig.lamp(ctx, 0, 0, 0.26 * k, { t: s.t });
+    } else {
+      fig.person(ctx, 0, 18 * k, 0.4 * k, { role: 'persona', pose: 'standing', seed: 'v05:sello-persona', skin: 2, hair: 'bob', mono: true });
+    }
+    ctx.restore();
+  }
+
+  function tareasCaso(ctx, s, env) {
+    var C = cuesOf(s, 'tareas-caso'), st = s.state.caso, ink = env.ink, fig = env.fig, m = env.pal.mundo, K = CASO, T = K.tasks, i;
+    ground(ctx, s, env);
+    var a0 = s.at(0), a1 = s.at(1), intro = out3(s.intro);
+    floaters(ctx, s, env, [['estrella', 1170, 80, 40], ['sol', 96, 96, 48, { a: m.rojo }]], intro);
+    // The case card, then its split into seven task cards on «desagreguen la ocupación en tareas».
+    var split = inOut3(beat(a0, C.desagreguen - 0.02, C.desagreguen + 0.14));
+    var cardA = 1 - seg(split, 0.3, 0.8);
+    if (cardA > 0) {
+      var Cd = K.card;
+      ctx.save();
+      ctx.globalAlpha *= cardA;
+      ink.card(ctx, Cd.x - Cd.w / 2, Cd.y - Cd.h / 2, Cd.w, Cd.h, { seed: 'v05:caso', weight: 4.4, radius: 12, p: intro });
+      label(ctx, env, rot(s, 'tarjeta'), Cd.x, Cd.y - Cd.h / 2 + 18, 32, { align: 'center', seed: 'v05:caso-titulo', counters: 0.25, p: seg(s.intro, 0.3, 1) });
+      for (var r2 = 0; r2 < 2; r2++) ink.line(ctx, st.rule[r2], { w: 1.8, profile: 'even', seed: 'v05:renglon' + r2, color: env.pal.mix(m.tinta, m.lienzo, 0.55) });
+      ctx.restore();
+    }
+    if (split > 0) {
+      for (i = 0; i < T.n; i++) {
+        var e = inOut3(seg(split, i * 0.05, 0.6 + i * 0.05)), tx = lerp(K.card.x, T.x0 + i * T.dx, e), ty = lerp(K.card.y, T.y, e);
+        var tilt = lerp(0, (i % 2 ? 0.04 : -0.04), e);
+        ctx.save();
+        ctx.translate(tx, ty);
+        ctx.rotate(tilt);
+        ink.card(ctx, -T.w / 2, -T.h / 2, T.w, T.h, { seed: 'v05:tarea-caso' + i, weight: 3.4, radius: 10, p: e });
+        ctx.save();
+        ctx.globalAlpha *= seg(e, 0.5, 1);
+        for (var r3 = 0; r3 < 2; r3++) ink.line(ctx, st.lines[r3], { w: 1.8, profile: 'even', seed: 'v05:tarea-renglon' + i + r3, color: env.pal.mix(m.tinta, m.lienzo, 0.5) });
+        ctx.restore();
+        ctx.restore();
+      }
+    }
+    // «¿la IA apoya, podría realizarla o la persona es indispensable?»: the legend, then the stamps.
+    var Lg = K.legend, firstCue = C.apoya;
+    for (i = 0; i < 3; i++) {
+      var lp = beat(a0, C[['apoya', 'podria', 'indispensable'][i]] - 0.03, C[['apoya', 'podria', 'indispensable'][i]] + 0.05);
+      caseStamp(ctx, s, env, i, Lg.xs[i] + Lg.r, Lg.y, Lg.r, lp);
+      if (lp > 0) ink.text(ctx, rot(s, K.keys[i]), Lg.xs[i] + Lg.r * 2 + 14, Lg.y - 15, { size: 25, weight: 700, p: seg(lp, 0.3, 1) });
+    }
+    for (i = 0; i < T.n; i++) {
+      var sp = beat(a0, firstCue + 0.06 + i * 0.035, firstCue + 0.14 + i * 0.035);
+      if (sp > 0) caseStamp(ctx, s, env, K.stampOf[i], T.x0 + i * T.dx + 14, T.y + 36, 34, sp);
+    }
+    // «escalón de entrada»: a small ladder sign on one card, then a warm ring that keeps it.
+    var ep = beat(a1, C.escalon - 0.04, C.escalon + 0.08);
+    if (ep > 0) {
+      var ex = T.x0 + K.entry * T.dx;
+      fig.sign(ctx, 'escalera', ex - 22, T.y - 12, 62, { seed: 'v05:escalon', p: ep });
+      label(ctx, env, rot(s, 'escalonEntrada'), ex, T.y - T.h / 2 - 54, 26, { align: 'center', seed: 'v05:escalon-texto', p: seg(ep, 0.2, 1) });
+    }
+    var kp = beat(a1, C.preservarlo - 0.04, C.preservarlo + 0.12);
+    if (kp > 0) {
+      var kx = T.x0 + K.entry * T.dx;
+      ink.glow(ctx, kx, T.y, 110, m.amarillo, 0.4 * kp);
+      ink.line(ctx, st.keep, { w: 4.4, profile: 'swell', seed: 'v05:preserva', closed: true, p: kp });
+    }
+  }
+
+  // ---------------------------------------------------------------------------------------------
+  // 9 · cierre — back at the ladder: two people hold a new first rung of another shape (a red wavy
+  // plank) and set it where the old one dissolved; the young person steps up onto it. Final title
+  // «En el trabajo cambian tareas, no solo puestos.»; a soft fade to the page.
+
+  var CIERRE = {
+    title: { x: 668, y: 92, w: 560, size: 50 },
+    helpers: [{ dx: -64, skin: 4, hair: 'short', cloth: 'verde', seed: 'v05:ayuda1', facing: 1 },
+      { dx: 66, skin: 0, hair: 'ponytail', cloth: 'azul', seed: 'v05:ayuda2', facing: -1 }],
+    young: { dx: -132, k: 1.62 },
+    fade: 1.4
+  };
+
+  function cierre(ctx, s, env) {
+    var st = s.state.ladder, ink = env.ink, fig = env.fig, m = env.pal.mundo;
+    ground(ctx, s, env);
+    var a = s.at(0), intro = out3(s.intro);
+    floaters(ctx, s, env, [['sol', 590, 132, 64, { a: m.rojo }], ['estrella', 214, 150, 42, { a: m.amarillo }], ['pajaro', 1010, 410, 64],
+      ['estrella', 1170, 340, 34], ['espiral', 830, 470, 40]], intro);
+    // The new rung blooms in the helpers' hands; the old dots fade as it settles.
+    var rung = seg(s.t, 0.4, 2.2), settle = seg(s.t, 2.0, 3.4);
+    drawLadder(ctx, s, env, st, { p: 1, gone: 1 - settle, drift: false });
+    if (rung > 0) ink.draw(ctx, st.newRung, LAD.x, LAD.y - (1 - out3(rung)) * 20, 1, { p: rung });
+    var cu = rungUp(ENT.climber.rung), cx = LAD.x + (ladL(cu) + ladR(cu)) / 2;
+    fig.person(ctx, cx, LAD.y - cu - 2, ENT.climber.k, { role: 'persona', pose: 'waving', facing: 1, seed: 'v05:escala', skin: 1, hair: 'bun',
+      cloth: m.rojo, legs: m.tinta });
+    for (var i = 0; i < CIERRE.helpers.length; i++) {
+      var hp = CIERRE.helpers[i];
+      fig.person(ctx, LAD.x + hp.dx, LAD.y, 1.24, { role: 'persona', pose: 'standing', facing: hp.facing, seed: hp.seed, skin: hp.skin,
+        hair: hp.hair, cloth: m[hp.cloth], p: out3(seg(s.t, 0.1 + i * 0.2, 1.2 + i * 0.2)) });
+    }
+    // The young person steps up onto the new rung once it is set.
+    var step = inOut3(seg(s.t, 3.6, 5.0));
+    var yx = lerp(LAD.x + CIERRE.young.dx, LAD.x + (st.l0 + st.r0) / 2, step), yy = lerp(LAD.y, LAD.y - st.up0 + 8, step) - Math.sin(Math.PI * step) * 26;
+    fig.person(ctx, yx, yy, CIERRE.young.k, { role: 'estudiante', pose: 'lookingUp', facing: 1, seed: 'v05:joven', skin: 3, hair: 'curly',
+      cloth: m.amarillo, legs: m.azul });
+    var T = CIERRE.title;
+    ink.letter(ctx, rot(s, 'titulo'), T.x, T.y, { size: T.size, maxWidth: T.w, maxLines: 3, seed: 'v05:titulo-final', counters: 0.25, stars: false,
+      p: beat(a, 0.02, 0.7) });
+    // Soft fade to the page in the last moments.
+    var f = seg(s.t, s.dur - CIERRE.fade, s.dur);
+    if (f > 0) {
+      ctx.save();
+      ctx.globalAlpha = inOut3(f);
+      ctx.fillStyle = m.lienzo;
+      ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+    }
+  }
+
+  // ---------------------------------------------------------------------------------------------
   // setup(): geometry built once (seeded), shared by every frame.
 
   function setup(env) {
     var m = env.pal.mundo;
-    var color = env.pal.mix(m.azul, m.lienzo, 0.42), ladder = ladderSetup(env);
+    var ink = env.ink, cc = CASO.card, color = env.pal.mix(m.azul, m.lienzo, 0.42), ladder = ladderSetup(env);
     // entrada: the hypothesis arrow, from the dots of the lost rung to the lamp.
     ladder.hypArrow = [LAD.x + ladder.r0 + 10, LAD.y - ladder.up0 + 6, LAD.x + ladder.r0 + 70, LAD.y - ladder.up0 - 30, ENT.lamp.x - 34, ENT.lamp.y + 4];
     return {
       oficina: { desk: deskSetup(env) },
       expo: { big: fieldGeom(1000, EXPO.field.R), small: fieldGeom(100, EXPO.small.R), color: color },
       desigual: { field: fieldGeom(1000, DES.fields.R), color: color, divider: [640, 96, 642, 250, 638, 404] },
-      ladder: ladder
+      ladder: ladder,
+      comp: { path: samplePath(ink, [-160, 214, 200, 86, 560, 46, 860, 70, 1010, 176], 4) },
+      siete: { ring: ink.ellipsePoints(0, 0, 40, 34, 24, 0) },
+      caso: {
+        rule: [ink.wavePoints(cc.x - 120, cc.y + 14, cc.x + 120, 1.2, 70, 0.3), ink.wavePoints(cc.x - 120, cc.y + 40, cc.x + 80, 1.2, 64, 1.1)],
+        lines: [ink.wavePoints(-44, -52, 44, 1.2, 40, 0.3), ink.wavePoints(-44, -30, 30, 1.2, 36, 1.1)],
+        keep: ink.ellipsePoints(CASO.tasks.x0 + CASO.entry * CASO.tasks.dx, CASO.tasks.y, 92, 108, 24, 0.06)
+      }
     };
   }
 
@@ -879,14 +1199,22 @@
       exposicion: groundLayer('personas', {}),
       'tres-conceptos': groundLayer('personas', {}),
       desigual: groundLayer('personas', {}),
-      entrada: groundLayer('personas', {})
+      entrada: groundLayer('personas', {}),
+      competencias: groundLayer('territorio', { seed: 'v05:cielo', horizon: COMP.horizon, contours: false }),
+      siete: groundLayer('personas', {}),
+      'tareas-caso': groundLayer('personas', {}),
+      cierre: groundLayer('personas', {})
     },
     scenes: {
       oficina: oficina,
       exposicion: exposicion,
       'tres-conceptos': tresConceptos,
       desigual: desigual,
-      entrada: entrada
+      entrada: entrada,
+      competencias: competencias,
+      siete: siete,
+      'tareas-caso': tareasCaso,
+      cierre: cierre
     }
   };
 })(typeof window !== 'undefined' ? window : globalThis);
