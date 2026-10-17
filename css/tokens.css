@@ -1,2 +1,94 @@
 /* Design tokens: palettes (mirror of js/engine/palette.js), evidence colors, type scale, spacing.
- * Owner: T04 (engine). Pending. */
+ * Owner: T04 (engine). Change a color here and in js/engine/palette.js together.
+ * Text is always tinta on lienzo (or lienzo on noche); saturated colors are for shapes, never body
+ * text (prompt §3.9). The five evidence colors mean the five evidence types and nothing else. */
+
+:root {
+  /* Mundo — the warm world */
+  --lienzo: #F4EEDF;
+  --lienzo-ocre: #E7D3A8;
+  --tinta: #15120F;
+  --rojo: #D7261E;
+  --amarillo: #F5C518;
+  --azul: #1C3F95;            /* azul ultramar */
+  --verde: #1E8A4C;
+  --celeste: #86BEE3;
+  --tierra: #C68A2E;
+  --siena: #94461C;
+  --madera: #6B4426;
+  --oro: #E2B33C;
+
+  /* Pieles — five skin tones, light to deep */
+  --piel-1: #F2CDAE;
+  --piel-2: #DDA77A;
+  --piel-3: #B97B4B;
+  --piel-4: #8A5634;
+  --piel-5: #5C3A24;
+
+  /* Máquina — the AI's world and controlled conditions */
+  --noche: #0E1A3B;
+  --linea: #A9D6FF;
+  --rejilla: #2A3D6E;
+  --brillo-verde: #46F0B0;
+  --brillo-magenta: #F45CCF;
+
+  /* Evidencia — the five evidence types only (always with sign + label) */
+  --ev-capacidad: #0072B2;
+  --ev-uso: #E69F00;
+  --ev-resultado: #009E73;
+  --ev-expectativa: #CC79A7;
+  --ev-proyeccion: #D55E00;
+
+  /* Clinical traffic light (Mundo colors, always with position, sign and label) */
+  --semaforo-rojo: var(--rojo);
+  --semaforo-ambar: var(--amarillo);
+  --semaforo-verde: var(--verde);
+
+  /* Semantic aliases */
+  --color-fondo: var(--lienzo);
+  --color-texto: var(--tinta);
+  --color-texto-suave: #4A4239;       /* tinta mixed 25% toward lienzo; AA on lienzo */
+  --color-linea: var(--tinta);
+  --color-fondo-maquina: var(--noche);
+  --color-texto-maquina: var(--lienzo);
+
+  /* Typography (self-hosted, css/fonts.css) */
+  --font-sans: "EIA Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "EIA Display", Georgia, "Times New Roman", serif;
+
+  /* Type scale (body ≥ 18 px, prompt §3.10); ratio ≈ 1.25 */
+  --fs-xs: 0.875rem;   /* 14px — fine print, source tags */
+  --fs-sm: 1rem;       /* 16px — captions */
+  --fs-base: 1.125rem; /* 18px — body */
+  --fs-md: 1.25rem;    /* 20px */
+  --fs-lg: 1.5rem;     /* 24px — h4 */
+  --fs-xl: 1.875rem;   /* 30px — h3, canvas subtitles */
+  --fs-2xl: 2.375rem;  /* 38px — h2 */
+  --fs-3xl: 3rem;      /* 48px — h1 */
+  --fs-display: clamp(2.5rem, 6vw, 4.5rem);  /* view titles */
+  --lh-tight: 1.15;
+  --lh-snug: 1.3;
+  --lh-body: 1.55;
+  --fw-regular: 400;
+  --fw-bold: 700;
+  --fw-black: 900;
+
+  /* Spacing scale (4 px base) */
+  --sp-1: 0.25rem;  /* 4px */
+  --sp-2: 0.5rem;   /* 8px */
+  --sp-3: 0.75rem;  /* 12px */
+  --sp-4: 1rem;     /* 16px */
+  --sp-5: 1.5rem;   /* 24px */
+  --sp-6: 2rem;     /* 32px */
+  --sp-7: 3rem;     /* 48px */
+  --sp-8: 4rem;     /* 64px */
+  --sp-9: 6rem;     /* 96px */
+
+  /* Lines and shapes */
+  --brush-outline: 3px;           /* thick card outline (the canvas brush outline is drawn on top) */
+  --radius-card: 14px;
+  --radius-chip: 999px;
+  --measure: 68ch;                /* comfortable line length for body text */
+  --touch-target: 44px;           /* minimum touch target (prompt §14) */
+  --focus-ring: 3px solid var(--azul);
+}
