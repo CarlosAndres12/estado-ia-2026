@@ -315,7 +315,9 @@
   function riverDrawing(env, river) {
     var ink = env.ink, m = env.pal.mundo, V = VALLE;
     var b = ink.drawing('v04:rio', { w: 4.2, jitter: 0.6 });
-    b.shape(bandPoints(river, V.hw, V.hw, 44), { fill: m.celeste, w: 3.4 });
+    // The river's width is the unit the wider stream of capital is compared with: its field keeps
+    // to its banks (no fill jitter), so the two widths read in their exact ratio.
+    b.shape(bandPoints(river, V.hw, V.hw, 44), { fill: m.celeste, w: 3.4, jitter: 0, fillJitter: 0, fillScale: 0 });
     b.blob(V.pool.cx, V.pool.cy, V.pool.rx, V.pool.ry, { fill: m.celeste, w: 4.2, irr: 0.06, n: 12 });
     b.stroke(ink.wavePoints(V.pool.cx - 120, V.pool.cy + 16, V.pool.cx + 40, 3, 52, 0.6), { w: 2.2, profile: 'hair', color: m.lienzo });
     b.shape(V.channel, { fill: m.celeste, w: 2.6 });
@@ -614,7 +616,8 @@
       if (lp > 0) ink.text(ctx, text, COSTO.label.x, y + bh / 2 - COSTO.label.size * 0.62, { size: COSTO.label.size, weight: 700, color: m.lienzo, maxWidth: COSTO.label.w, p: lp });
     }
     var tagP = beat(a0, win[0] - 0.04, win[0] + 0.04);
-    if (tagP > 0) env.tags.sourceTag(ctx, 'eco-6', { x: COSTO.tag.x, y: COSTO.tag.y, anchor: { x: B.x + bw + 2, y: COSTO.rows[0] + bh / 2 }, p: tagP, scale: 1.04 });
+    // The tag's ink thread would vanish on navy: it ties to the panel's edge, on the cream page.
+    if (tagP > 0) env.tags.sourceTag(ctx, 'eco-6', { x: COSTO.tag.x, y: COSTO.tag.y, anchor: { x: P.x + P.w + 3, y: COSTO.rows[0] + bh / 2 }, p: tagP, scale: 1.04 });
     // Line 2: «experimentos, datos, evaluaciones e iteraciones» under the rest of the blocks.
     var rp = beat(a1, C.resto, C.resto + 0.14);
     if (rp > 0) {
@@ -805,7 +808,7 @@
     // The lectora comes to look at the bars once they have all landed (she is whole before her
     // question, and in the poster frame), puzzled, and asks.
     var lpL = out3(seg(s.t, lineT(s, 1, 0.66), lineT(s, 1, 0.94)));
-    if (lpL > 0) env.fig.lectora(ctx, F.lectora.x, F.lectora.y, F.lectora.k, { pose: 'asking', facing: -1, p: lpL });
+    if (lpL > 0) env.fig.lectora(ctx, F.lectora.x, F.lectora.y, F.lectora.k, { pose: s.line >= 2 ? 'asking' : 'reading', facing: -1, p: lpL });
     // Line 4: cut lines between the bars, and the caution of lámina D7 under the funnel.
     if (split > 0) {
       for (var c = 0; c < st.cuts.length; c++) ink.dotted(ctx, st.cuts[c], { r: 2, gap: 10, seed: 'v04:corte' + c, p: split });
@@ -926,10 +929,10 @@
   };
 
   function actualizacion(ctx, s, env) {
-    var C = cuesOf(s, 'actualizacion'), st = s.state.act, ink = env.ink, fig = env.fig, m = env.pal.mundo, A = ACT;
+    var C = cuesOf(s, 'actualizacion'), st = s.state.act, ink = env.ink, fig = env.fig, A = ACT;
     bg(ctx, s, env);
     var intro = out3(s.intro), a0 = s.at(0), a1 = s.at(1);
-    floaters(ctx, s, env, [['estrella', 640, 70, 34], ['luna', 650, 520, 34, m.amarillo]], intro);
+    floaters(ctx, s, env, [['estrella', 640, 70, 34], ['espiral', 650, 524, 34]], intro);
     // The course's page: its session sign and our notes; then the edition the course uses.
     var P1 = A.page1;
     fig.notebookPage(ctx, P1.x, P1.y, P1.w, P1.h, { seed: 'v04:pagina-curso', tilt: P1.tilt, p: intro });
@@ -944,8 +947,9 @@
       ctx.save();
       ctx.translate((1 - sl) * 620, 0);
       fig.notebookPage(ctx, P2.x, P2.y, P2.w, P2.h, { seed: 'v04:pagina-2026', tilt: P2.tilt });
-      ink.letter(ctx, rot(s, 'pagina'), P2.x + 66, P2.y + 64, { size: A.title.size, maxWidth: A.title.w, maxLines: 2, seed: 'v04:encuesta-2026',
-        counters: 0, stars: false, underline: false, p: seg(sl, 0.5, 1) });
+      // The title holds a year: it fades in whole (written on, «2026» would pass through «20»).
+      letterFade(ctx, env, rot(s, 'pagina'), P2.x + 66, P2.y + 64, { size: A.title.size, maxWidth: A.title.w, maxLines: 2, seed: 'v04:encuesta-2026',
+        counters: 0, stars: false, underline: false, p: 1 }, seg(sl, 0.5, 1), 'encuesta-2026');
       env.tags.updateRibbon(ctx, P2.x + P2.w - 168, P2.y - 14, 1.1, seg(sl, 0.6, 1));
       var winU = landWindow(C.uso), winE = landWindow(C.escala);
       var fp = [beat(a0, winU[0], winU[1]), beat(a0, winE[0], winE[1]), beat(a0, winE[0] + 0.03, winE[1] + 0.03)];
@@ -1443,7 +1447,7 @@
     var corp = capScene ? valuesIn(env.chart, capScene.rotulos.inversionCorporativa.text)[0] : null;
     var wideHw = VALLE.hw * (priv && corp ? corp.value / priv.value : 1);
     var wb = ink.drawing('v04:rio-ancho', { w: 3.4, jitter: 0.5 });
-    wb.shape(bandPoints(river, wideHw, wideHw, 44), { fill: pal.mix(m.celeste, m.lienzo, 0.3), line: false });
+    wb.shape(bandPoints(river, wideHw, wideHw, 44), { fill: pal.mix(m.celeste, m.lienzo, 0.3), line: false, jitter: 0, fillJitter: 0, fillScale: 0, exact: true });
     st.capital = {
       path: river, river: riverDrawing(env, river), wide: wb.done(), wideHw: wideHw,
       gateRing: ink.ellipsePoints(1139, 479, 30, 44, 18, 0.05).concat([1169, 481, 1168, 470]),
