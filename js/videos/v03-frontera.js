@@ -427,7 +427,8 @@
       var RL = ink.text(ctx, rot(s, 'referencia'), G.ref.x, G.ref.y, { size: 21, weight: 700, color: m.lienzo, p: rp });
       ink.text(ctx, rot(s, 'picoGpqa'), G.title.x, G.title.y, { size: 21, weight: 700, color: m.lienzo, maxWidth: G.title.w, lineHeight: 1.12,
         p: beat(a1, C.gpqa - 0.02, C.gpqa + 0.05) });
-      sourceTag(ctx, env, 'cap-3', CORD.tag.x, CORD.tag.y, { x: G.ref.x + RL.w + 4, y: G.ref.y + 13 }, rp);
+      // The tag comes with the mark, from the moment it starts to grow.
+      sourceTag(ctx, env, 'cap-3', CORD.tag.x, CORD.tag.y, { x: G.ref.x + RL.w + 4, y: G.ref.y + 13 }, beat(a1, win[0], win[0] + 0.05));
     }
     // Competition mathematics: its own small panel over the second lit peak.
     var M = CORD.mate, mp = inOut3(beat(a1, C.mate - 0.03, C.mate + 0.04));
@@ -483,13 +484,12 @@
     }
     // The bar lands by the chunk that says 88,2%; then the title, the bracket and the tag.
     var win = landWindow(C.cifra), bp = beat(a, win[0], win[1]);
-    chart.bar(ctx, { value: v, scale: chart.scale(100, 0, CASI.H), orient: 'v', x: CASI.bar.x, baseY: CASI.zero, h: CASI.bar.w,
+    var gb = chart.bar(ctx, { value: v, scale: chart.scale(100, 0, CASI.H), orient: 'v', x: CASI.bar.x, baseY: CASI.zero, h: CASI.bar.w,
       style: 'ruled', labels: false, seed: 'v03:mmmu', p: bp });
+    // The tag comes with the mark (tied to its value edge as it grows); the title once it lands.
+    if (bp > 0) sourceTag(ctx, env, 'cap-3', CASI.tag.x, CASI.tag.y, { x: CASI.bar.x + CASI.bar.w, y: gb.y0 + 1 }, beat(a, win[0], win[0] + 0.05));
     var tp = seg(a, win[1], win[1] + 0.04);
-    if (tp > 0) {
-      ink.text(ctx, rot(s, 'mmmu'), CASI.title.x, CASI.title.y, { size: 32, weight: 700, color: m.lienzo, p: tp });
-      sourceTag(ctx, env, 'cap-3', CASI.tag.x, CASI.tag.y, { x: CASI.bar.x + CASI.bar.w, y: yB + 1 }, tp);
-    }
+    if (tp > 0) ink.text(ctx, rot(s, 'mmmu'), CASI.title.x, CASI.title.y, { size: 32, weight: 700, color: m.lienzo, p: tp });
     var gp = seg(a, win[1] + 0.01, Math.max(win[1] + 0.06, C.brecha));
     if (gp > 0) {
       var bx = CASI.bar.x + CASI.bar.w + 5, G = CASI.gapLabel;
@@ -515,7 +515,7 @@
     panel: { x: 30, y: 20, w: 912, h: 228 }, zeroX: 54, len: 360, barH: 20,
     rows: { t1: 32, b1: 62, t2: 98, b2a: 128, b2b: 160 },
     tag5: { x: 646, y: 28 }, tag6: { x: 646, y: 122 },
-    descend: 170, bottoms: [{ x: 400, y: 540 }, { x: 800, y: 520 }],
+    descend: 170, bottoms: [{ x: 400, y: 540 }, { x: 800, y: 520 }], wash: [40, 330],
     mean: { y: 318, x0: 40, x1: 884 }
   };
 
@@ -526,7 +526,18 @@
     // The descent: the slopes rise past the frame until the valleys fill it.
     var e = inOut3(seg(s.t, 0.15, Math.max(1.8, lineT(s, 0, 0.12))));
     var dy = VAL.descend * (1 - e) + noise(s.t * 0.05, 'v03:vy') * 2 * calm(s);
-    ink.draw(ctx, st.deep, 0, dy, 1, {});
+    // The gap between the outer slopes, washed in deep blue that thickens toward the bottom.
+    var deepCol = env.pal.mix(m.azul, m.tinta, 0.35), wash = ctx.createLinearGradient(0, VAL.wash[0] + dy, 0, VAL.wash[1] + dy);
+    wash.addColorStop(0, env.pal.rgba(deepCol, 0));
+    wash.addColorStop(0.55, env.pal.rgba(deepCol, 0.75));
+    wash.addColorStop(1, deepCol);
+    ctx.save();
+    ctx.fillStyle = wash;
+    ctx.beginPath();
+    for (i = 0; i < st.gap.length; i += 2) ctx[i ? 'lineTo' : 'moveTo'](st.gap[i], st.gap[i + 1] + dy);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
     var col = env.pal.mix(m.azul, q.noche, 0.6);
     for (i = 0; i < 2; i++) ink.glow(ctx, VAL.bottoms[i].x, VAL.bottoms[i].y - 90 + dy, 150, col, 0.55 + 0.35 * e);
     ctx.save();
@@ -556,24 +567,23 @@
     var zp = beat(a0, 0.02, 0.06);
     if (zp > 0) chart.baseline(ctx, VAL.zeroX, R.b1 - 6, lerp(R.b1 - 6, R.b2b + VAL.barH + 6, zp), { style: 'ruled', p: 1 });
     // Row 1: astrophysics, on the screen by the time its chunk shows.
-    var w1 = landWindow(C.astro), b1 = beat(a0, w1[0], w1[1]);
+    var w1 = landWindow(C.astro), b1 = beat(a0, w1[0], w1[1]), vAstro = piece(astro, ':', 1);
     ink.text(ctx, piece(astro, ':', 0), VAL.zeroX, R.t1, { size: 20, weight: 700, color: m.lienzo, p: beat(a0, 0, 0.04) });
-    var g1 = chart.bar(ctx, { text: piece(astro, ':', 1), scale: sc, y: R.b1, h: VAL.barH, style: 'ruled', labels: false, seed: 'v03:astro', p: b1 });
-    var l1 = seg(a0, w1[1], w1[1] + 0.03), L1 = null;
-    if (l1 > 0) L1 = ink.text(ctx, piece(astro, ':', 1), g1.x1 + 30, R.b1 - 1, { size: 20, weight: 700, color: m.lienzo, p: l1 });
-    if (L1) sourceTag(ctx, env, 'cap-5', VAL.tag5.x, VAL.tag5.y, { x: g1.x1 + 34 + L1.w, y: R.b1 + 10 }, l1);
+    chart.bar(ctx, { text: vAstro, scale: sc, y: R.b1, h: VAL.barH, style: 'ruled', labels: false, seed: 'v03:astro', p: b1 });
+    // Value labels sit after each bar's final edge; tags come with the marks as they start to grow.
+    var x1 = sc(val(env, vAstro)) + 30;
+    var L1 = ink.text(ctx, vAstro, x1, R.b1 - 1, { size: 20, weight: 700, color: m.lienzo, p: seg(a0, w1[1], w1[1] + 0.03) });
+    sourceTag(ctx, env, 'cap-5', VAL.tag5.x, VAL.tag5.y, { x: x1 + 4 + L1.w, y: R.b1 + 10 }, beat(a0, w1[0], w1[0] + 0.04));
     // Row 2: PaperArena, the agent and the experts on the same scale.
     var w2 = landWindow(C.paper);
     ink.text(ctx, piece(paper, ':', 0), VAL.zeroX, R.t2, { size: 20, weight: 700, color: m.lienzo, p: beat(a0, w2[0] - 0.06, w2[0] - 0.02) });
-    var ga = chart.bar(ctx, { text: agent, scale: sc, y: R.b2a, h: VAL.barH, style: 'ruled', labels: false, seed: 'v03:agente', p: beat(a0, w2[0], w2[1] - 0.02) });
-    var gb = chart.bar(ctx, { text: experts, scale: sc, y: R.b2b, h: VAL.barH, style: 'ruled', color: m.amarillo, labels: false, seed: 'v03:expertos',
+    chart.bar(ctx, { text: agent, scale: sc, y: R.b2a, h: VAL.barH, style: 'ruled', labels: false, seed: 'v03:agente', p: beat(a0, w2[0], w2[1] - 0.02) });
+    chart.bar(ctx, { text: experts, scale: sc, y: R.b2b, h: VAL.barH, style: 'ruled', color: m.amarillo, labels: false, seed: 'v03:expertos',
       p: beat(a0, w2[0] + 0.02, w2[1]) });
-    var l2 = seg(a0, w2[1], w2[1] + 0.03);
-    if (l2 > 0) {
-      ink.text(ctx, agent, ga.x1 + 12, R.b2a - 1, { size: 19, weight: 700, color: m.lienzo, p: l2 });
-      var LB = ink.text(ctx, experts, gb.x1 + 12, R.b2b - 1, { size: 19, weight: 700, color: m.lienzo, p: l2 });
-      sourceTag(ctx, env, 'cap-6', VAL.tag6.x, VAL.tag6.y, { x: gb.x1 + 16 + LB.w, y: R.b2b + 10 }, l2);
-    }
+    var l2 = seg(a0, w2[1], w2[1] + 0.03), xb = sc(val(env, experts)) + 12;
+    ink.text(ctx, agent, sc(val(env, agent)) + 12, R.b2a - 1, { size: 19, weight: 700, color: m.lienzo, p: l2 });
+    var LB = ink.text(ctx, experts, xb, R.b2b - 1, { size: 19, weight: 700, color: m.lienzo, p: l2 });
+    sourceTag(ctx, env, 'cap-6', VAL.tag6.x, VAL.tag6.y, { x: xb + 4 + LB.w, y: R.b2b + 10 }, beat(a0, w2[0], w2[0] + 0.04));
     // Each row is tied to its valley by a thin ruled leader.
     var lk = [[beat(a0, w1[1], w1[1] + 0.06), 132, 0], [seg(a0, w2[1] + 0.01, w2[1] + 0.08), 420, 1]];
     for (i = 0; i < 2; i++) {
@@ -720,8 +730,10 @@
       if (vp > 0) ink.text(ctx, rot(s, G.value), G.x, SAT.gy + SAT.r * 0.6, { size: 22, weight: 700, color: m.lienzo, align: 'center', p: vp });
       if (i === 2 && end && e >= 1) tip = end;
     }
-    var tp = beat(a0, landEnd - 0.07, landEnd);
-    if (tp > 0) sourceTag(ctx, env, 'cap-4', SAT.tag.x, SAT.tag.y, tip || { x: SAT.gauges[2].x + 40, y: SAT.gy - 50 }, tp);
+    // One tag for the three gains, from the moment the first arrow starts to grow; its thread ends
+    // on the tip of the SWE-bench arrow once that one has landed.
+    var tp = beat(a0, landEnd - 0.17, landEnd - 0.12);
+    if (tp > 0) sourceTag(ctx, env, 'cap-4', SAT.tag.x, SAT.tag.y, tip || { x: SAT.gauges[2].x + SAT.r * 0.5, y: SAT.gy - SAT.r * 0.6 }, tp);
 
     // A separate dial with every mark filled: saturated, it blurs and no longer tells systems apart.
     var S = SAT.sat, sp = beat(a1, 0, 0.06);
@@ -901,8 +913,9 @@
       ink.rLine(ctx, lx - ESC.w, escY(vRef), lerp(lx - ESC.w, P.x + P.w - 18, rl), escY(vRef), { color: q.brilloVerde, w: 1.6, dash: [5, 5] });
       var RL = ink.text(ctx, rot(s, 'referenciaEtiqueta'), lx + ESC.w / 2 + 14, escY(vRef) - 30, { size: 19, italic: true, color: m.lienzo, p: rl });
       ink.text(ctx, rot(s, 'referenciaHumana'), lx + ESC.w / 2 + 22 + RL.w, escY(vRef) - 34, { size: 26, weight: 700, color: m.lienzo, p: rl });
-      sourceTag(ctx, env, 'cap-1', ESC.tags[0].x, ESC.tags[0].y, { x: P.x + 24 + NL.w, y: P.y + 30 }, rl);
     }
+    // The tag comes with the rungs (the marks of the values), tied to the ladder's name.
+    sourceTag(ctx, env, 'cap-1', ESC.tags[0].x, ESC.tags[0].y, { x: P.x + 24 + NL.w, y: P.y + 30 }, seg(lp, 0.35, 0.6));
     // The lamp climbs from the first rung to the cracked one while it is said.
     var climb = inOut3(beat(a0, C.sube - 0.06, C.sube + 0.04));
     ladderLamp(ctx, env, s, lx, lerp(v12, v66, climb), seg(lp, 0.6, 1));
@@ -933,8 +946,9 @@
     if (rl2 > 0) {
       ink.text(ctx, from, lx2 + ESC.w / 2 + 14, escY(v20) - 15, { size: 24, weight: 700, color: m.lienzo, p: rl2 });
       ink.text(ctx, to, lx2 + ESC.w / 2 + 14, escY(v77) - 15, { size: 24, weight: 700, color: m.lienzo, p: rl2 });
-      sourceTag(ctx, env, 'cap-2', ESC.tags[1].x, ESC.tags[1].y, { x: P2.x + 24 + NL2.w, y: P2.y + 30 }, rl2);
     }
+    // Its tag comes with its name («Terminal-Bench 2.0» already carries a number).
+    sourceTag(ctx, env, 'cap-2', ESC.tags[1].x, ESC.tags[1].y, { x: P2.x + 24 + NL2.w, y: P2.y + 30 }, seg(e2, 0.5, 1));
     var climb2 = inOut3(beat(a1, C.sube2 - 0.12, C.sube2 + 0.02));
     ladderLamp(ctx, env, s, lx2, lerp(v20, v77, climb2), seg(lp2, 0.6, 1));
   }
@@ -984,11 +998,9 @@
       ctx.strokeRect(x, y, G.win, G.win);
       ctx.restore();
     }
-    var lp = seg(a, win[1], win[1] + 0.05);
-    if (lp > 0) {
-      var L = EMP.label, LT = ink.text(ctx, rot(s, 'escalan'), L.x, L.y, { size: 30, weight: 700, maxWidth: L.w, lineHeight: 1.15, p: lp });
-      sourceTag(ctx, env, 'adop-2', EMP.tag2.x, EMP.tag2.y, { x: L.x + 4, y: L.y + LT.h - 2 }, lp);
-    }
+    // The label once the windows are lit; the tag from the first lit window on.
+    var L = EMP.label, LT = ink.text(ctx, rot(s, 'escalan'), L.x, L.y, { size: 30, weight: 700, maxWidth: L.w, lineHeight: 1.15, p: seg(a, win[1], win[1] + 0.05) });
+    sourceTag(ctx, env, 'adop-2', EMP.tag2.x, EMP.tag2.y, { x: L.x + 4, y: L.y + LT.h - 2 }, beat(a, win[0], win[0] + 0.05));
     // The card: the sentence and the 10% ceiling, nothing invented under it.
     var cp = beat(a, C.ninguna - 0.06, C.ninguna + 0.02);
     if (cp <= 0) return;
@@ -1016,8 +1028,9 @@
       ctx.lineTo(x10, T.y + T.h + 12);
       ctx.stroke();
       ctx.restore();
-      sourceTag(ctx, env, 'adop-3', EMP.tag3.x, EMP.tag3.y, { x: x10, y: T.y + T.h + 12 }, tp);
     }
+    // The sentence holds the number: its tag comes with it.
+    sourceTag(ctx, env, 'adop-3', EMP.tag3.x, EMP.tag3.y, { x: x10, y: T.y + T.h + 12 }, sp);
   }
 
   // ---------------------------------------------------------------------------------------------
@@ -1253,7 +1266,9 @@
   var PEL = {
     hill: { base: 640, h: 400, cx: 760, w: 470 },
     lead: { start: 606, end: 716 }, gap: { start: 112, end: 64 }, k: 0.72,
-    tag: { x: 470, y: 30 },
+    // The lamps and their tag appear while "los modelos convergen" is said, once the chapter title
+    // (2 s, top-left, where the tag goes) has gone: share of line 0.
+    appear: 0.085, tag: { x: 470, y: 30 },
     post: { x: 1010, top: 104, gap: 40 }, words: ['costo', 'latencia', 'confiabilidad', 'privacidad', 'integracion', 'apertura']
   };
   function hillY(x) { var H2 = PEL.hill, u = (x - H2.cx) / H2.w; return H2.base - H2.h * Math.exp(-u * u); }
@@ -1276,12 +1291,12 @@
       ctx.save();
       ctx.translate(x, y + 2);
       ctx.rotate(Math.atan(hillSlope(x)));
-      fig.lampOnWheels(ctx, 0, 0, PEL.k, { pattern: pats[i % pats.length], t: s.t + i * 0.7, p: seg(s.t, 0.9 + i * 0.12, 1.7 + i * 0.12) });
+      fig.lampOnWheels(ctx, 0, 0, PEL.k, { pattern: pats[i % pats.length], t: s.t + i * 0.7, p: beat(a0, PEL.appear + i * 0.012, PEL.appear + 0.06 + i * 0.012) });
       ctx.restore();
       if (i === n - 1) rear = { x: x - 20, y: y - 94 };
     }
     // The six lamps are the six developers of the line: their source tag, tied to the pack.
-    var tp = beat(a0, C.convergen - 0.03, C.convergen + 0.06);
+    var tp = beat(a0, PEL.appear, PEL.appear + 0.06);
     if (tp > 0) sourceTag(ctx, env, 'ctx-modelos-convergen', PEL.tag.x, PEL.tag.y, rear, tp);
     // The signpost beyond the top, one board per word as it is said.
     var Ps = PEL.post, pp = beat(a1, 0, 0.08);
@@ -1370,7 +1385,7 @@
       for (var c = 0; c < shown; c++) ink.rRect(ctx, R.cells + c * R.pitch, y0, R.pitch - 2, R.h, { fill: q.noche, color: q.linea, w: 1 });
     }
     if (beat(a0, w2[0], w2[1]) > 0) chart.baseline(ctx, R.cells - 4, R.y0 - 8, R.y0 + 2 * R.dy + R.h + 8, { p: beat(a0, w2[0], w2[1]) });
-    var tp10 = seg(a0, w2[1], w2[1] + 0.04);
+    var tp10 = beat(a0, w2[0], w2[0] + 0.04);
     if (tp10 > 0) sourceTag(ctx, env, 'cap-10', CON.tag10.x, CON.tag10.y, { x: R.x + 2, y: R.y0 + 2 * R.dy + R.h }, tp10);
     // The ruled box: three words go in as they are said; then the lid comes down over them and
     // they sink inside, out of sight.
@@ -1460,7 +1475,7 @@
         ink.rRect(ctx, x, y, G.w, G.h, { fill: api ? q.noche : env.pal.mix(q.noche, m.lienzo, 0.86), color: api ? q.linea : q.rejilla, w: 1.2, p: cp });
         if (api && cp >= 1) ink.text(ctx, rot(s, 'api'), x + G.w / 2, y + G.h / 2 - 7, { size: 11, weight: 700, color: m.lienzo, align: 'center' });
       }
-      sourceTag(ctx, env, 'cap-11', ABI.tag11.x, ABI.tag11.y, { x: G.x + 2, y: G.y - 2 }, seg(ge, 0.7, 1));
+      sourceTag(ctx, env, 'cap-11', ABI.tag11.x, ABI.tag11.y, { x: G.x + 2, y: G.y - 2 }, seg(ge, 0, 0.3));
     }
     // Part 3: open weights are not open code, data or process.
     var bp = beat(a1, C.pesos - 0.04, C.pesos + 0.04);
@@ -1612,12 +1627,10 @@
       { fill: env.pal.mix(m.verde, m.amarillo, 0.3), w: 5.2, fillJitter: 3, fillScale: 0.006 });
     sl.shape([350, 820, 400, 540, 470, 420, 548, 324, 590, 298, 622, 302, 690, 382, 760, 470, 800, 520, 850, 820],
       { fill: m.siena, w: 5.2, fillJitter: 3, fillScale: 0.006 });
-    var dv = ink.drawing('v03:valles-cerca', { w: 4, jitter: 0.6 });
-    dv.shape([180, -160, 1120, -160, 1100, 260, 800, 570, 400, 590, 200, 260], { fill: deepCol, w: 4.2, fillJitter: 2, fillScale: 0.004 });
     var meanPts = [];
     for (i = 0; i <= 14; i++) meanPts.push(lerp(VAL.mean.x0, VAL.mean.x1, i / 14), VAL.mean.y + Math.sin(i * 1.7) * 1.5);
     st.val = {
-      slopes: sl.done(), deep: dv.done(), mean: meanPts,
+      slopes: sl.done(), gap: [180, -160, 1120, -160, 1100, 260, 800, 570, 400, 590, 200, 260], mean: meanPts,
       mist: [ink.wavePoints(362, 420, 452, 3, 38, 0.2), ink.wavePoints(382, 482, 428, 2.5, 30, 1.1),
         ink.wavePoints(716, 400, 832, 3, 40, 0.7), ink.wavePoints(762, 460, 814, 2.5, 30, 1.6), ink.wavePoints(560, 262, 640, 3, 40, 2.2)]
     };
