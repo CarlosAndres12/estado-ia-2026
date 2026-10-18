@@ -294,11 +294,11 @@
   var PUB = {
     floor: 452,
     table: { x: 150, y: 334 },
-    scope: { x: 84, y: 452, k: 0.86, angle: 0.62 },
-    micro: { x: 440, y: 290, k: 0.46 },
-    lamp: { x: 330, y: 312, k: 0.26 },
-    stacks: [{ key: 'pila2024', x: 640 }, { key: 'pila2025', x: 812 }], sw: 120, H: 290,
-    tag: { x: 960, y: 104 },
+    scope: { x: 78, y: 452, k: 0.7, angle: 0.62 },
+    micro: { x: 340, y: 290, k: 0.46 },
+    lamp: { x: 274, y: 312, k: 0.26 },
+    stacks: [{ key: 'pila2024', x: 604 }, { key: 'pila2025', x: 832 }], sw: 120, H: 290,
+    tag: { x: 964, y: 20 },
     strip: { x: 120, len: 760, h: 24, rows: { banda: 488, antes: 528 } },
     tag2: { x: 918, y: 478 },
     birds: 14
@@ -363,7 +363,8 @@
     var tops = [];
     for (i = 0; i < 2; i++) {
       var S = PUB.stacks[i];
-      var g = paperStack(ctx, env, S.x, rot(s, S.key), sc, gp, 'v07:pila' + i);
+      var g = paperStack(ctx, env, S.x, rot(s, S.key), sc, gp, 'v07:pila' + i), pv = env.chart.parseValue(rot(s, S.key));
+      g.full = pv ? sc(pv.value) - sc(0) : 0;
       tops.push(g);
     }
     for (i = 0; i < st.flights.length; i++) {
@@ -380,7 +381,7 @@
     var labP = seg(a0, g1, g1 + 0.04), L2025 = null;
     for (i = 0; i < 2; i++) {
       var Sx = PUB.stacks[i].x + PUB.sw / 2, top = PUB.floor - (tops[i].full || 0);
-      var L = ink.text(ctx, rot(s, PUB.stacks[i].key), Sx, top - 44, { size: 29, weight: 700, align: 'center', p: labP });
+      var L = ink.text(ctx, rot(s, PUB.stacks[i].key), Sx, top - 44, { size: 28, weight: 700, align: 'center', p: labP });
       if (i === 1) L2025 = { x: Sx + L.w / 2, y: top - 30 };
     }
     if (L2025) tag(ctx, env, 'cien-1', PUB.tag.x, PUB.tag.y, { x: L2025.x + 4, y: L2025.y }, seg(a0, g1 - 0.03, g1 + 0.04));
@@ -401,7 +402,8 @@
     var wA = landWindow(C.antes), ap = beat(a1, wA[0], wA[1]);
     var gA = chart.bar(ctx, { text: mAntes, scale: sc2, y: R.antes, h: T.h, color: m.azul, labels: false, seed: 'v07:2010', p: ap });
     ink.text(ctx, mAntes, gA.x1 + 30, R.antes - 1, { size: 22, weight: 700, p: seg(a1, wA[1], wA[1] + 0.04) });
-    tag(ctx, env, 'cien-2', PUB.tag2.x, PUB.tag2.y, { x: band.x1 + 6, y: R.banda + T.h / 2 }, seg(a1, wB[0], wB[1] + 0.03));
+    var LBd = ink.measureText(ctx, mBand, { size: 22, weight: 700 });
+    tag(ctx, env, 'cien-2', PUB.tag2.x, PUB.tag2.y, { x: band.x1 + 22 + LBd.w, y: R.banda + T.h / 2 }, seg(a1, wB[0], wB[1] + 0.03));
   }
 
   // ---------------------------------------------------------------------------------------------
@@ -470,10 +472,10 @@
   var LAB = {
     panel: { x: 40, y: 40, w: 840, h: 432 },
     floor: 440, H100: 280, barW: 48,
-    valleys: [{ x0: 150, x1: 340, name: 'astrofisica', bars: [245] }, { x0: 404, x1: 694, name: 'paperArena', bars: [476, 614] }],
+    valleys: [{ x0: 150, x1: 340, name: 'astrofisica', bars: [245] }, { x0: 404, x1: 694, name: 'paperArena', bars: [466, 616] }],
     peak: { neck: 772, top: 84 },
     chemLabel: { x: 752, y: 60, w: 300 },
-    tags: { chem: { x: 900, y: 44 }, astro: { x: 70, y: 486 }, paper: { x: 420, y: 486 } }
+    tags: { chem: { x: 900, y: 44 }, astro: { x: 230, y: 486 }, paper: { x: 526, y: 486 } }
   };
   function labY(v) { return LAB.floor - v / 100 * LAB.H100; }
 
@@ -531,7 +533,7 @@
         color: i ? m.amarillo : q.linea, labels: false, seed: 'v07:arena' + i, p: bp });
       var lp = seg(a1, w2[1], w2[1] + 0.03);
       ink.text(ctx, vals[i].raw, bx, g.y0 - 30, { size: 21, weight: 700, color: m.lienzo, align: 'center', p: lp });
-      ink.text(ctx, rot(s, roles[i]), bx, LAB.floor + 7, { size: 16, color: m.lienzo, align: 'center', p: lp });
+      ink.text(ctx, rot(s, roles[i]), bx, LAB.floor + 4, { size: 15, color: m.lienzo, align: 'center', maxWidth: 170, p: lp });
       if (i === 0 && lp > 0) env.fig.lamp(ctx, bx, g.y0 - 52, 0.2, { t: s.t, p: lp });
     }
     if (beat(a1, w2[0], w2[1]) > 0) ink.rLine(ctx, mid, LAB.floor + 26, mid, P.y + P.h, { color: q.linea, w: 1.2 });
@@ -546,7 +548,7 @@
   var CIC = {
     card: { x: 108, y: 196, w: 1064, h: 136 },
     bar: { x: 132, y: 222, w: 1016, h: 84, tip: 26, gap: 10, size: 25 },
-    scope: { x: 186, y: 562, k: 1.0, angle: 0.98 },
+    scope: { x: 214, y: 566, k: 0.78, angle: 0.9 },
     people: [{ x: 862, role: 'investigadora', pose: 'writing', skin: 4, hair: 'curly', prop: 'notebook', tool: 'pen' },
       { x: 1060, role: 'docente', pose: 'pointing', skin: 1, hair: 'bun', tool: 'lens' }],
     feet: 568, k: 1.72
@@ -662,10 +664,10 @@
   // nearly empty, and the sentence of the second line is lettered.
 
   var MAN = {
-    desk: { x: 420, y: 566, k: 0.96 },
-    page: { x: 318, y: 126, w: 196, h: 238 },
-    mark: { x: 432, y: 300, w: 150, h: 50, rot: -0.12 },
-    drawer: { x: 950, y: 420, k: 1.6 },
+    desk: { x: 420, y: 566, k: 0.82 },
+    page: { x: 318, y: 154, w: 196, h: 238 },
+    mark: { x: 432, y: 328, w: 150, h: 50, rot: -0.12 },
+    drawer: { x: 950, y: 392, k: 1.6 },
     tag: { x: 590, y: 196 },
     idea: { y: 24, size: 50 },
     pile: [[-30, 10, -0.08], [26, 4, 0.06], [-56, 18, -0.14], [50, 14, 0.11]]
@@ -727,7 +729,7 @@
     var D = MAN.drawer, dp = beat(a0, C.pero - 0.02, C.pero + 0.12);
     if (dp > 0) {
       var da = fig.drawer(ctx, D.x, D.y + Math.sin(s.t * 0.7) * 1.2 * calm(s), D.k, { cards: 3, seed: 'v07', p: dp });
-      ink.text(ctx, rot(s, 'cajon'), da.label.x, da.label.y - 6, { size: 23, weight: 700, align: 'center', maxWidth: 320, lineHeight: 1.18, p: seg(dp, 0.4, 1) });
+      ink.text(ctx, rot(s, 'cajon'), da.label.x, da.label.y - 6, { size: 23, weight: 700, align: 'center', maxWidth: 440, lineHeight: 1.18, p: seg(dp, 0.4, 1) });
       // «pocos»: a soft light over the nearly empty drawer.
       var pk = beat(a0, C.pocos - 0.02, C.pocos + 0.08);
       if (pk > 0) ink.glow(ctx, D.x - 10, D.y - 60, 120, m.amarillo, 0.35 * pk);
@@ -845,18 +847,18 @@
   // tick at the cut, the label «hasta −83%» over the part that goes.
 
   var VER = {
-    track: { x: 560, y: 102, len: 640, h: 44 },
-    desk: { x: 900, y: 566, k: 0.62 },
-    medica: { x: 930, y: 552, k: 2.2 },
-    lamp: { x: 812, y: 414, k: 0.3 },
-    tag: { x: 880, y: 166 }
+    track: { x: 170, y: 318, len: 800, h: 50 },
+    desk: { x: 1110, y: 566, k: 0.6 },
+    medica: { x: 1130, y: 552, k: 2.3 },
+    lamp: { x: 1016, y: 418, k: 0.32 },
+    tag: { x: 650, y: 400 }
   };
 
   function verde(ctx, s, env) {
     var C = cuesOf(s, 'verde'), ink = env.ink, fig = env.fig, chart = env.chart, m = env.pal.mundo, video = s.state.video;
     bg(ctx, s, env);
     var intro = out3(seg(s.t, 0, 1.1)), a = s.at(0);
-    floaters(ctx, s, env, [['luna', 300, 430, 42, m.azul], ['estrella', 520, 520, 30, 'mono']], intro);
+    floaters(ctx, s, env, [['luna', 1150, 90, 42, m.azul], ['estrella', 760, 120, 30, 'mono'], ['espiral', 300, 500, 30, 'mono']], intro);
     smallLight(ctx, s, env, 'verde', video);
     // The doctor behind her desk, writing; the small lamp beside her notebook.
     var M = VER.medica;
@@ -867,7 +869,7 @@
     var T = VER.track, pv = chart.parseValue(rot(s, 'marca')), cutShare = pv ? Math.abs(pv.value) / 100 : 0;
     var bp = seg(s.t, 0.5, lineT(s, 0, 0.12)), win = landWindow(C.cifra), cut = beat(a, win[0], win[1]);
     var sc = chart.scale(100, T.x, T.len), xCut = sc(100 * (1 - cutShare * out3(cut)));
-    ink.text(ctx, rot(s, 'barra'), T.x, T.y - 38, { size: 22, weight: 700, p: bp });
+    ink.text(ctx, rot(s, 'barra'), T.x, T.y + T.h + 16, { size: 22, weight: 700, p: bp });
     if (bp > 0) {
       chart.baseline(ctx, T.x, T.y - 10, T.y + T.h + 10, { p: bp });
       chart.bar(ctx, { value: 100 * bp, scale: sc, y: T.y, h: T.h, color: m.verde, labels: false, seed: 'v07:tiempo', p: 1, cap: cut >= 1 ? 'max' : 'exact' });
@@ -884,13 +886,10 @@
     var lp = seg(a, win[1], win[1] + 0.04);
     if (lp > 0) {
       var mid = (xCut + T.x + T.len) / 2, LM = ink.text(ctx, rot(s, 'marca'), mid, T.y - 48, { size: 38, weight: 700, align: 'center', p: lp });
-      ink.text(ctx, rot(s, 'hasta'), xCut, T.y + T.h + 18, { size: 24, italic: true, weight: 700, align: 'center', p: lp });
+      ink.text(ctx, rot(s, 'hasta'), xCut + 14, T.y + T.h / 2 - 15, { size: 24, italic: true, weight: 700, p: lp });
       void LM;
     }
-    tag(ctx, env, 'med-1', VER.tag.x, VER.tag.y, { x: (xCut + T.x + T.len) / 2 + 60, y: T.y + T.h + 2 }, seg(a, win[1] - 0.03, win[1] + 0.04), { mono: true });
-    // «notas clínicas»: a few lines appear in her notebook's light.
-    var np = beat(a, C.notas - 0.03, C.notas + 0.1);
-    if (np > 0) ink.glow(ctx, M.x - 30, M.y - 130, 60, m.amarillo, 0.3 * np);
+    tag(ctx, env, 'med-1', VER.tag.x, VER.tag.y, { x: VER.tag.x + 16, y: T.y + T.h + 2 }, seg(a, win[1] - 0.03, win[1] + 0.04), { mono: true });
   }
 
   // ---------------------------------------------------------------------------------------------
@@ -925,6 +924,10 @@
       if (!v || bp <= 0) continue;
       chart.bar(ctx, { value: v.value, cap: v.approx ? 'approx' : 'exact', scale: sc, y: R.by, h: AMB.bh, style: 'ruled', color: i ? m.amarillo : q.linea,
         labels: false, seed: 'v07:ambar' + i, p: bp });
+      if (v.approx && bp >= 1) {
+        // «~»: the dotted end cap, drawn in cream so it reads on the ruled fill.
+        for (var d = 0; d < 5; d++) ink.dot(ctx, sc(v.value), R.by + (d + 0.5) * AMB.bh / 5, 2.4, m.lienzo);
+      }
       var Lr = ink.text(ctx, text, AMB.zero, R.ly, { size: 21, weight: 700, color: m.lienzo, p: seg(a0, w[1], w[1] + 0.03) });
       if (i === 0 && seg(a0, w[1], w[1] + 0.03) > 0) fig.lamps(ctx, AMB.zero + Lr.w + 44, R.ly + 12, 0.2, { n: 3, gap: 110, t: s.t, p: seg(a0, w[1], w[1] + 0.05) });
     }
@@ -957,8 +960,8 @@
     tag3: { x: 340, y: 266 },
     card: { x: 640, y: 168, w: 590, h: 200 },
     track: { x: 668, len: 534, y: 300, h: 26 },
-    tag4: { x: 650, y: 384 },
-    tally: { x: 150, y: 226, cols: 50, pitch: 9 },
+    tag4: { x: 712, y: 384 },
+    tally: { x: 150, y: 226, cols: 50, pitch: 8.4 },
     tag5: { x: 150, y: 484 },
     box: { x: 680, y: 112, w: 552, h: 300 },
     bar: { x: 708, y: 300, len: 496, h: 36 },
@@ -1107,14 +1110,14 @@
         ctx.fillStyle = m.tinta;
         for (i = 0; i < 12; i++) { ctx.beginPath(); ctx.arc(T.x + (i + 0.5) * gw / 12, T.y + gh + 6, 2.2, 0, TAU); ctx.fill(); }
       }
-      tag(ctx, env, 'med-5', ROJ.tag5.x, ROJ.tag5.y + (rows - 28) * T.pitch, { x: T.x + 8, y: T.y + gh + 10 }, seg(a1, w5[0], w5[1] + 0.03), { mono: true });
+      tag(ctx, env, 'med-5', ROJ.tag5.x, ROJ.tag5.y, { x: T.x + 8, y: T.y + gh + 10 }, seg(a1, w5[0], w5[1] + 0.03), { mono: true });
     }
     // A separate panel with its own date: 1.016 authorizations, and among the devices with clinical
     // studies (a bar of its own: their number is not drawn), the 2,4% with randomized trials.
     var w6 = landWindow(C.panel), pp = beat(a1, w6[0], w6[1]);
     if (pp <= 0) return;
     var B = ROJ.box, R = ROJ.bar;
-    ink.card(ctx, B.x, B.y, B.w, B.h, { seed: 'v07:panel2024', weight: 4, radius: 14, p: pp, peek: m.celeste, peekCorner: 'tl' });
+    ink.card(ctx, B.x, B.y, B.w, B.h, { seed: 'v07:panel2024', weight: 4, radius: 14, p: pp, peek: m.celeste, peekCorner: 'br' });
     var hp = seg(a1, w6[1], w6[1] + 0.03);
     ink.text(ctx, rot(s, 'fecha'), B.x + 28, B.y + 22, { size: 23, italic: true, weight: 700, p: hp });
     hero(ctx, env, rot(s, 'autorizaciones'), B.x + 28, B.y + 58, 46, { seed: 'v07:1016', p: hp, maxWidth: B.w - 56 });
@@ -1221,7 +1224,14 @@
     fig.hospital(ctx, ANT.hospital.x, ANT.hospital.y, ANT.hospital.k, { ground: false, seed: 'v07', p: intro });
     // The path: D12's three stations draw on from the start; two more join on their words.
     var pathP = seg(s.t, 0.6, lineT(s, 0, Math.max(0.15, C.s0)));
-    ink.dotted(ctx, st.loop, { r: 2.6, gap: 13, seed: 'v07:camino', p: pathP });
+    // Until the two new stations join, D12's path goes straight from the second station to the last.
+    var join = beat(a0, C.s3 + 0.02, C.s3 + 0.12);
+    if (join < 1) {
+      ctx.save();
+      ctx.globalAlpha *= 1 - join;
+      ink.dotted(ctx, st.loop, { r: 2.6, gap: 13, seed: 'v07:camino', p: pathP });
+      ctx.restore();
+    }
     var labels = st.stations, joinAt = [null, null, C.s2, C.s3, null], named = [C.s0, C.s1, C.s2, C.s3, C.s4];
     for (i = 0; i < 5; i++) {
       var sl = ANT.slots[i], w = ANT.card.w, h = ANT.card.h, cp, dy = 0;
@@ -1234,7 +1244,7 @@
       o.p = seg(cp, 0.4, 1);
       ink.text(ctx, labels[i], sl[0], sl[1] - lay.h / 2 + dy + 1, o);
     }
-    for (i = 0; i < st.arrows.length; i++) ink.arrow(ctx, st.arrows[i], { w: 3, headSize: 11, seed: 'v07:flecha' + i, p: seg(pathP, 0.4 + i * 0.1, 0.7 + i * 0.08) * (i === 1 || i === 2 ? beat(a0, C.s3 + 0.02, C.s3 + 0.1) : i === 3 ? 1 : 1) });
+    for (i = 0; i < st.arrows.length; i++) ink.arrow(ctx, st.arrows[i], { w: 3, headSize: 11, seed: 'v07:flecha' + i, p: i === 0 ? seg(pathP, 0.4, 0.8) : join });
     var lp = out3(beat(a1, 0, 0.15));
     if (lp > 0) fig.lectora(ctx, ANT.lectora.x, ANT.lectora.y, ANT.lectora.k, { pose: 'asking', facing: -1, p: lp });
   }
@@ -1294,10 +1304,7 @@
         [nk - 4, LAB.peak.top, nk, LAB.peak.top + 4, nk, 250, 706, F - 4, 712, F, 842, F, 848, F - 4, nk + 22, 250, nk + 22, LAB.peak.top + 4, nk + 26, LAB.peak.top]
       ],
       liquids: [
-        { pts: [56, 400, 72, 400, 72, F, 56, F] },
-        { pts: [90, 380, 144, 380, 144, F, 90, F] },
-        { pts: [354, 330, 394, 330, 394, F, 354, F] },
-        { pts: [nk - 18 - 22, 330, nk + 22 + 40, 330, 848, F - 4, 842, F, 712, F, 706, F - 4], peak: true }
+        { pts: [744, 330, 817, 330, 848, F - 4, 842, F, 712, F, 706, F - 4], peak: true }
       ]
     };
 
@@ -1364,7 +1371,7 @@
     var camino = pieces(rotText(video, 'antes-de-escalar', 'camino'), '→');
     st.stations = [camino[0] || '', camino[1] || '', rotText(video, 'antes-de-escalar', 'representatividad'), rotText(video, 'antes-de-escalar', 'interaccion'), camino[2] || ''];
     var sl = ANT.slots;
-    st.loop = [sl[0][0], sl[0][1] - 34, 150, 330, sl[1][0], sl[1][1] + 34, 420, 110, sl[2][0], sl[2][1] + 34, 860, 110, sl[3][0], sl[3][1] + 34, 1130, 330, sl[4][0], sl[4][1] - 34];
+    st.loop = [sl[1][0] + 122, sl[1][1] - 8, 640, 40, sl[3][0] - 122, sl[3][1] - 8, 1104, 330, sl[4][0] + 10, sl[4][1] - 36];
     st.arrows = [
       [sl[0][0] - 10, sl[0][1] - 36, 176, 330, sl[1][0] - 20, sl[1][1] + 36],
       [sl[1][0] + 122, sl[1][1] - 8, 420, 112, sl[2][0] - 122, sl[2][1] + 4],
