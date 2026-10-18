@@ -592,17 +592,33 @@
   // Timeline: a paper strip with dated pins at positions proportional to time.
 
   var MESES = { enero: 0, febrero: 1, marzo: 2, abril: 3, mayo: 4, junio: 5, julio: 6, agosto: 7, septiembre: 8, setiembre: 8, octubre: 9, noviembre: 10, diciembre: 11 };
-  /* chart.parseDate('2 de agosto de 2025' | '2025-08-02' | 2025) -> days since 1970-01-01 (UTC). */
+  // Short Spanish month names as data writes them («Ago 2027», «sept. 2026»).
+  var MESES_CORTOS = { ene: 0, feb: 1, mar: 2, abr: 3, may: 4, jun: 5, jul: 6, ago: 7, sep: 8, sept: 8, set: 8, oct: 9, nov: 10, dic: 11 };
+  function monthIndex(word) {
+    var w = String(word).toLowerCase().replace(/\.$/, '');
+    return MESES[w] != null ? MESES[w] : MESES_CORTOS[w] != null ? MESES_CORTOS[w] : null;
+  }
+  /* chart.parseDate('2 de agosto de 2025' | 'Ago 2027' | 'agosto de 2025' | '2025-08-02' | 2025)
+   * -> days since 1970-01-01 (UTC). When a text holds several dates («Ago 2027: plazo para los
+   * modelos previos a agosto de 2025») the leading one wins; a month without a day is its 1st. */
   chart.parseDate = function (d) {
     if (typeof d === 'number') return d > 3000 ? d : Date.UTC(d, 0, 1) / 864e5;
-    var s = String(d), m = /(\d{4})-(\d{2})-(\d{2})/.exec(s);
-    if (m) return Date.UTC(+m[1], +m[2] - 1, +m[3]) / 864e5;
-    m = /(\d{1,2})\s+de\s+([a-záéíóú]+)\s+de\s+(\d{4})/i.exec(s);
-    if (m && MESES[m[2].toLowerCase()] != null) return Date.UTC(+m[3], MESES[m[2].toLowerCase()], +m[1]) / 864e5;
-    m = /([a-záéíóú]+)\s+de\s+(\d{4})/i.exec(s);
-    if (m && MESES[m[1].toLowerCase()] != null) return Date.UTC(+m[2], MESES[m[1].toLowerCase()], 1) / 864e5;
-    m = /(\d{4})/.exec(s);
-    return m ? Date.UTC(+m[1], 0, 1) / 864e5 : NaN;
+    var s = String(d), best = null;
+    function offer(index, len, day) { if (isFinite(day) && (!best || index < best.index || (index === best.index && len > best.len))) best = { index: index, len: len, day: day }; }
+    var re, m, mi;
+    re = /(\d{4})-(\d{2})-(\d{2})/g;
+    while ((m = re.exec(s))) offer(m.index, m[0].length, Date.UTC(+m[1], +m[2] - 1, +m[3]) / 864e5);
+    re = /(\d{1,2})\s+de\s+([a-záéíóú]+\.?)\s+(?:de\s+|del\s+)?(\d{4})/gi;
+    while ((m = re.exec(s))) if ((mi = monthIndex(m[2])) != null) offer(m.index, m[0].length, Date.UTC(+m[3], mi, +m[1]) / 864e5);
+    re = /([a-záéíóú]+\.?)\s+(?:de\s+|del\s+)?(\d{4})/gi;
+    while ((m = re.exec(s))) if ((mi = monthIndex(m[1])) != null) offer(m.index, m[0].length, Date.UTC(+m[2], mi, 1) / 864e5);
+    re = /\d{4}/g;
+    while ((m = re.exec(s))) {
+      // A bare year counts only where no fuller date already covers it.
+      var covered = best && m.index >= best.index && m.index < best.index + best.len;
+      if (!covered) offer(m.index, 4, Date.UTC(+m[0], 0, 1) / 864e5);
+    }
+    return best ? best.day : NaN;
   };
 
   chart.geom.timeline = function (o) {

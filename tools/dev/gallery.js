@@ -478,6 +478,8 @@
     var pins = chart.geom.timeline({ x: 0, w: 1000, from: '1 de enero de 2024', to: '1 de enero de 2029', items: [{ text: '1 de agosto de 2024' }, { text: '2 de agosto de 2025' }, { text: '2 de agosto de 2028' }] });
     var dd1 = chart.parseDate('1 de agosto de 2024'), dd2 = chart.parseDate('2 de agosto de 2025'), dd3 = chart.parseDate('2 de agosto de 2028');
     log(Math.abs((pins[1].x - pins[0].x) / (pins[2].x - pins[0].x) - (dd2 - dd1) / (dd3 - dd1)) < 1e-9, 'timeline pins proportional to dates');
+    var pdA = chart.parseDate('Ago 2027: plazo para los modelos previos a agosto de 2025'), pdB = chart.parseDate('sept. 2026');
+    log(pdA === Date.UTC(2027, 7, 1) / 864e5 && pdB === Date.UTC(2026, 8, 1) / 864e5, 'parseDate reads the leading date and short months («Ago 2027: … agosto de 2025» -> 2027-08-01)');
     var lad = E.figures.ruledLadder(ctx, 200, 600, 1, { max: 100, h: 360, rungs: [{ value: 12 }, { value: 66.3 }], panel: false });
     log(Math.abs(lad.rungs[1] - (600 - 0.663 * 360)) < 1e-9, 'ruled ladder rung for 66,3 at exact height');
     var cb = E.figures.computeBlock(ctx, 0, 0, 1, { fraction: 0.096 });
