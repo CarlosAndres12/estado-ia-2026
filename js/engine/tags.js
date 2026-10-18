@@ -197,7 +197,7 @@
     }
     var h = padT + (chip.h ? chip.h + 3 * k : 0) + labelSize * 1.2 * labelLines.length + (scopeLines.length ? 4 * k + scopeLines.length * scopeSize * 1.25 : 0) + padB;
     var w = padL + contentW + padR;
-    var out = { tc: tc, k: k, w: w, h: h, padL: padL, padT: padT, chip: chip, chipSize: chipSize, labelSize: labelSize,
+    var out = { tc: tc, k: k, w: w, h: h, padL: padL, padR: padR, padT: padT, chip: chip, chipSize: chipSize, labelSize: labelSize,
       scopeSize: scopeSize, scopeLines: scopeLines, labelW: labelW, labelLines: labelLines };
     try { if (!document.fonts || document.fonts.check(fontSans(labelSize, 700))) tagLayoutCache.set(key, out); } catch (e) { /* no DOM */ }
     return out;
@@ -211,16 +211,21 @@
   // Luggage-tag outline (chamfered at the hole end). Arrays are cached by size so the brush
   // geometry built from them is reused frame after frame.
   var tagShapes = new Map();
-  function tagShape(w, h, k) {
-    var key = Math.round(w * 2) + 'x' + Math.round(h * 2) + 'x' + k;
+  function tagShape(w, h, k, right) {
+    var key = Math.round(w * 2) + 'x' + Math.round(h * 2) + 'x' + k + (right ? 'r' : '');
     var pts = tagShapes.get(key);
     if (!pts) {
       var c = Math.min(13 * k, h * 0.32);
       pts = [c, 0, w * 0.5, -0.6, w, 0, w + 0.6, h * 0.5, w, h, w * 0.5, h + 0.6, c, h, 0, h - c, -0.5, h * 0.5, 0, c];
+      // Hole on the right: the same luggage tag mirrored (chamfer at the right end).
+      if (right) for (var i = 0; i < pts.length; i += 2) pts[i] = w - pts[i];
       tagShapes.set(key, pts);
     }
     return pts;
   }
+
+  // The hole end: 'left' (default) or 'right' (a tag hanging to the left of its number).
+  function holeRight(o) { return o.hole === 'right'; }
 
   /* tags.sourceTag(ctx, cifraId | [ids], opts) -> { x, y, w, h, hole } | null
    * opts: x, y (top-left), or near: { x, y, side: 'right' | 'left' | 'below' | 'above', gap } to place
@@ -242,7 +247,9 @@
     }
     var anchor = o.anchor || (o.near ? { x: o.near.x, y: o.near.y } : null);
     var p = o.p == null ? 1 : o.p;
-    var hole = { x: x + 15 * k, y: y + h / 2 };
+    var right = holeRight(o), hx = right ? w - 15 * k : 15 * k, hy = h / 2;
+    var cx0 = right ? l.padR : l.padL;   // content left edge (the wide pad is the hole end)
+    var hole = { x: x + hx, y: y + hy };
     if (p <= 0) return { x: x, y: y, w: w, h: h, hole: hole, label: l.tc.label, lines: l.labelLines };
     var m = M(), ink = I();
     var seed = 'tag:' + l.tc.key;
@@ -253,7 +260,7 @@
     ctx.rotate(tilt);
     var a0 = ctx.globalAlpha;   // a caller's fade (e.g. a card fading in) applies to the whole tag
     // Paper and outline.
-    var shape = tagShape(w, h, k);
+    var shape = tagShape(w, h, k, right);
     var pf = seg(p, 0, 0.25);
     ink.shape(ctx, shape, { fill: m.lienzo, line: false, tex: false, edge: false, offset: 0, fillScale: 0, fillJitter: 0, seed: seed + 'f', p: pf, exact: true });
     ctx.save();
@@ -263,7 +270,6 @@
     ctx.restore();
     ink.shape(ctx, shape, { line: true, w: 3.2 * k, seed: seed + 'o' + Math.round(w) + 'x' + Math.round(h), p: seg(p, 0, 0.55), fillScale: 0 });
     // Punched hole with a reinforcement ring.
-    var hx = 15 * k, hy = h / 2;
     ctx.globalAlpha = a0 * seg(p, 0.2, 0.4);
     ctx.fillStyle = m.lienzoOcre;
     ctx.beginPath(); ctx.arc(hx, hy, 4.6 * k, 0, TAU); ctx.fill();
@@ -274,7 +280,7 @@
     var tp = seg(p, 0.3, 0.8), cy = l.padT;
     if (tp > 0) {
       if (l.chip.h) {
-        tags.chip(ctx, l.tc.chip.clase, l.tc.chip.label, { x: l.padL, y: cy, size: l.chipSize, mono: !!o.mono, p: tp });
+        tags.chip(ctx, l.tc.chip.clase, l.tc.chip.label, { x: cx0, y: cy, size: l.chipSize, mono: !!o.mono, p: tp });
         cy += l.chip.h + 3 * k;
       }
       ctx.globalAlpha = a0 * tp;
@@ -282,14 +288,14 @@
       ctx.textBaseline = 'alphabetic';
       ctx.font = fontSans(l.labelSize, 700);
       for (var lj = 0; lj < l.labelLines.length; lj++) {
-        ctx.fillText(l.labelLines[lj], l.padL, cy + l.labelSize * 0.95);
+        ctx.fillText(l.labelLines[lj], cx0, cy + l.labelSize * 0.95);
         cy += l.labelSize * 1.2;
       }
       if (l.scopeLines.length) {
         cy += 4 * k;
         ctx.font = fontSans(l.scopeSize, 400, true);
         ctx.fillStyle = P().mix(m.tinta, m.lienzo, 0.18);
-        for (var i = 0; i < l.scopeLines.length; i++) ctx.fillText(l.scopeLines[i], l.padL, cy + l.scopeSize * 0.95 + i * l.scopeSize * 1.25);
+        for (var i = 0; i < l.scopeLines.length; i++) ctx.fillText(l.scopeLines[i], cx0, cy + l.scopeSize * 0.95 + i * l.scopeSize * 1.25);
       }
       ctx.globalAlpha = a0;
     }
@@ -297,7 +303,7 @@
     var ep = seg(p, 0.55, 0.95);
     if (l.tc.estado && ep > 0) {
       if (l.tc.estado === 'actualizacion' && o.ribbon !== false) tags.updateRibbon(ctx, w - 70 * k, -13 * k, 0.62 * k, ep);
-      else tags.estadoSign(ctx, l.tc.estado, w - 4 * k, 2 * k, 21 * k, { p: ep });
+      else tags.estadoSign(ctx, l.tc.estado, right ? 4 * k : w - 4 * k, 2 * k, 21 * k, { p: ep });
     }
     ctx.restore();
 
@@ -310,7 +316,7 @@
         var dx = hxW - anchor.x, dy = hyW - anchor.y, dist = Math.sqrt(dx * dx + dy * dy) || 1;
         var sag = Math.min(26 * k, dist * 0.18);
         var pts = [anchor.x, anchor.y, anchor.x + dx * 0.5 + (-dy / dist) * sag * 0.3, anchor.y + dy * 0.5 + sag, hxW, hyW];
-        ink.line(ctx, pts, { w: 2 * k, profile: 'hair', seed: seed + 'th', p: thp, color: m.tinta, dot: 1.6 });
+        ink.line(ctx, pts, { w: 2 * k, profile: 'hair', seed: seed + 'th', p: thp, color: o.threadColor || m.tinta, dot: 1.6 });
       }
     }
     return { x: x, y: y, w: w, h: h, hole: hole, label: l.tc.label, lines: l.labelLines };
@@ -336,12 +342,12 @@
       else { x = o.near.x - 24 * k; y = o.near.y - gapN - h; }
     }
     var anchor = o.anchor || (o.near ? { x: o.near.x, y: o.near.y } : null);
-    var p = o.p == null ? 1 : o.p, hx = 15 * k, hy = h / 2;
+    var right = holeRight(o), p = o.p == null ? 1 : o.p, hx = right ? w - 15 * k : 15 * k, hy = h / 2;
     var hole = { x: x + hx, y: y + hy };
     if (p <= 0) return { x: x, y: y, w: w, h: h, hole: hole };
     var seed = 'label-tag:' + (o.seed || text);
     var tilt = o.tilt == null ? E.rng.create(seed).jitter(0.018) : o.tilt;
-    var shape = tagShape(w, h, k);
+    var shape = tagShape(w, h, k, right);
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(tilt);
@@ -360,7 +366,7 @@
     ctx.strokeStyle = m.tinta; ctx.lineWidth = 1.4 * k;
     ctx.beginPath(); ctx.arc(hx, hy, 6.4 * k, 0, TAU); ctx.stroke();
     ctx.globalAlpha = a0;
-    ink.text(ctx, String(text == null ? '' : text), padL, padT, { size: size, weight: 700, maxWidth: (o.maxWidth || 300) * k - padL - padR, lineHeight: 1.22, p: seg(p, 0.3, 0.8) });
+    ink.text(ctx, String(text == null ? '' : text), right ? padR : padL, padT, { size: size, weight: 700, maxWidth: (o.maxWidth || 300) * k - padL - padR, lineHeight: 1.22, p: seg(p, 0.3, 0.8) });
     ctx.restore();
     if (anchor) {
       var thp = seg(p, 0.45, 1);
@@ -370,7 +376,7 @@
         var dx = hxW - anchor.x, dy = hyW - anchor.y, dist = Math.sqrt(dx * dx + dy * dy) || 1;
         var sag = Math.min(26 * k, dist * 0.18);
         var pts = [anchor.x, anchor.y, anchor.x + dx * 0.5 + (-dy / dist) * sag * 0.3, anchor.y + dy * 0.5 + sag, hxW, hyW];
-        ink.line(ctx, pts, { w: 2 * k, profile: 'hair', seed: seed + 'th', p: thp, color: m.tinta, dot: 1.6 });
+        ink.line(ctx, pts, { w: 2 * k, profile: 'hair', seed: seed + 'th', p: thp, color: o.threadColor || m.tinta, dot: 1.6 });
       }
     }
     return { x: x, y: y, w: w, h: h, hole: hole };
