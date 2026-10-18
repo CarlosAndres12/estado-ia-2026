@@ -307,10 +307,11 @@
       ctx.restore();
       sourceTag(ctx, env, 'ries-2', FAM.tag.x, FAM.tag.y, { x: FAM.tag.x + 18, y: R.y + R.h - 4 }, rp, { scope: true });
     }
-    // The three columns draw on from «tres familias» on, one after the other.
+    // The three columns rise slowly while the report is introduced (risks grow with capabilities),
+    // one after the other, and stand complete when «tres familias» is said.
     var cueF = [C.f0, C.f1, C.f2];
     for (var i = 0; i < FAM.cols.length; i++) {
-      var col = FAM.cols[i], cp = beat(a0, C.familias - 0.06 + i * 0.03, C.familias + 0.05 + i * 0.03);
+      var c0 = Math.min(C.informe + 0.04 + i * 0.12, C.familias - 0.2), cp = beat(a0, c0, C.familias - 0.01);
       if (s.line >= 1) cp = 1;
       if (cp <= 0) continue;
       ink.draw(ctx, st.pillars[i], col.x, FAM.foot, FAM.k, { p: cp, colors: { a: m[col.color], stone: m.lienzoOcre, paper: m.lienzo } });
