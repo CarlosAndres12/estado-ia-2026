@@ -269,8 +269,8 @@
   // columns draw on, and each takes its risk-family sign and its name as it is said.
 
   var FAM = {
-    report: { x: 70, y: 150, w: 170, h: 214 },
-    tag: { x: 64, y: 396 },
+    report: { x: 64, y: 130, w: 190, h: 236 },
+    tag: { x: 60, y: 398 },
     cols: [{ x: 380, color: 'rojo' }, { x: 580, color: 'amarillo' }, { x: 780, color: 'azul' }],
     foot: 470, k: 1, sign: 88, label: { y: 490, size: 27, w: 196 }
   };
@@ -300,7 +300,7 @@
       ink.card(ctx, -R.w / 2, -R.h / 2, R.w, R.h, { seed: 'v08:informe', weight: 4, radius: 8, p: rp, peek: m.azul, peekCorner: 'bl' });
       for (var j = 0; j < st.reportLines.length; j++) ink.line(ctx, st.reportLines[j], { w: 2.4, profile: 'even', seed: 'v08:informe' + j, p: seg(rp, 0.4 + j * 0.08, 0.7 + j * 0.06) });
       ctx.restore();
-      sourceTag(ctx, env, 'ries-2', FAM.tag.x, FAM.tag.y, { x: R.x + 40, y: R.y + R.h - 6 }, rp, { scope: true });
+      sourceTag(ctx, env, 'ries-2', FAM.tag.x, FAM.tag.y, { x: FAM.tag.x + 18, y: R.y + R.h - 4 }, rp, { scope: true });
     }
     // The three columns draw on from «tres familias» on, one after the other.
     var cueF = [C.f0, C.f1, C.f2];
@@ -318,7 +318,7 @@
     }
     // «Incluyen…»: a loose calligraphic bracket gathers the three families.
     var bp = beat(a1, C.incluyen - 0.02, C.incluyen + 0.12);
-    if (bp > 0) ink.line(ctx, st.bracket, { w: 3.4, profile: 'swell', seed: 'v08:llave', dot: 'detached', p: bp });
+    if (bp > 0) ink.line(ctx, st.bracket, { w: 3.4, profile: 'swell', seed: 'v08:llave', p: bp });
   }
 
   // ---------------------------------------------------------------------------------------------
@@ -330,7 +330,8 @@
   function respuestaLayer(env) {
     var c = env.canvas(W, H), g = c.getContext('2d'), ink = env.ink, m = env.pal.mundo;
     ink.background(g, 'personas', { seed: 'v08:pagina' });
-    ink.wash(g, 70, 96, 1140, 396, { color: m.lienzoOcre, alpha: 0.55, seed: 'v08:pared' });
+    // The workshop wall: one soft biomorphic ochre field (no ruled edge).
+    ink.shape(g, ink.blobPoints(env.rng('v08:pared'), 640, 300, 600, 210, 14, 0.06, 0), { fill: m.lienzoOcre, fillAlpha: 0.6, line: false, seed: 'v08:pared' });
     ink.line(g, [70, 494, 400, 498, 800, 492, 1210, 497], { w: 4, profile: 'swell', seed: 'v08:repisa' });
     RESP.xs.forEach(function (x, i) {
       ink.circle(g, x, RESP.hookY, 6, { fill: m.tinta, line: false, seed: 'v08:clavo' + i });
@@ -408,12 +409,12 @@
 
   var DIAL_MAX = 500;   // where the unlabeled scale ends (as in lámina D13): not a value
   var INC = {
-    board: { x: 150, y: 96, w: 620, h: 430 },
-    plate: { x: 300, y: 120, w: 320, h: 50 },
-    dial: { x: 460, y: 352, r: 136 },
-    big: { x: 820, y: 116, size: 118 },
-    tag: { x: 812, y: 296 },
-    lectora: { x: 1150, y: 560, k: 2.3 }
+    board: { x: 120, y: 78, w: 590, h: 452 },
+    plate: { x: 255, y: 466, w: 320, h: 48 },
+    dial: { x: 415, y: 306, r: 126 },
+    big: { x: 792, y: 258, size: 100 },
+    tag: { x: 760, y: 40 },
+    lectora: { x: 1172, y: 560, k: 2.1 }
   };
 
   // A dial rótulo («362 (2025)»): its number big, the rest smaller after it (as in lámina D13).
@@ -505,10 +506,11 @@
     var Lb = null;
     if (np > 0) Lb = hero(ctx, env, rot(s, 'aumento'), INC.big.x, INC.big.y, INC.big.size, { seed: 'v08:55', p: np });
     // One ries-1 tag from the first number on, with its scope; threads to each number.
+    // The tag sits above-right of every number, so each thread leaves its hole leftward or down.
     if (l233 > 0 && dl.antes) {
       var tg = sourceTag(ctx, env, 'ries-1', INC.tag.x, INC.tag.y, dl.antes.right, l233, { scope: true, scale: 1.08 });
       if (dl.despues && l362 > 0) extraThread(ctx, env, tg, dl.despues.right, 'inc362', l362);
-      if (Lb && np > 0) extraThread(ctx, env, tg, { x: INC.big.x + 14, y: INC.big.y + Lb.h - 10 }, 'inc55', np);
+      if (Lb && np > 0) extraThread(ctx, env, tg, { x: INC.big.x + 10, y: INC.big.y + 14 }, 'inc55', np);
     }
     var lp = out3(beat(a1, 0, 0.3));
     if (lp > 0) env.fig.lectora(ctx, INC.lectora.x, INC.lectora.y, INC.lectora.k, { pose: 'asking', facing: -1, p: lp });
@@ -522,22 +524,53 @@
 
   var DEN = {
     board: { x: 56, y: 70, w: 330, h: 270 }, dial: { x: 222, y: 222, r: 76 },
-    tag: { x: 60, y: 372 },
-    desks: [{ x: 520, n: 0 }, { x: 760, n: 0 }, { x: 640, n: 1 }, { x: 1000, n: 1 }, { x: 880, n: 2 }, { x: 1150, n: 2 }],
-    mail: [{ x: 440, n: 0 }, { x: 1076, n: 1 }, { x: 822, n: 2 }, { x: 950, n: 3 }],
-    floor: 548, deskK: 0.4, mailK: 0.5,
+    tag: { x: 404, y: 40 },
+    // Desks with a lamp each (use) and mailboxes (reporting); n = the beat that brings them.
+    desks: [{ x: 486, n: 0 }, { x: 666, n: 0 }, { x: 846, n: 1 }, { x: 1026, n: 1 }, { x: 1176, n: 2 }],
+    mail: [{ x: 576, n: 0 }, { x: 756, n: 1 }, { x: 936, n: 2 }, { x: 1110, n: 3 }],
+    floor: 548, deskK: 0.32, mailK: 0.5,
+    houses: [[470, 102, 110, 'rojo'], [640, 96, 128, 'amarillo'], [820, 112, 100, 'verde'], [1000, 98, 118, 'rojo'], [1170, 104, 108, 'azul']],
     frac: { x: 1010, top: 74, bar: 150, box: { x0: 852, x1: 1168, y0: 172, y1: 262 }, label: 276 }
   };
 
+  // A straight-edged shape for static grounds: a flat field offset from its outline (lithograph
+  // style) and one brush stroke per edge, so corners stay sharp (smoothed outlines turn a house
+  // into an egg).
+  function polyInk(g, env, pts, fill, seed, o) {
+    o = o || {};
+    var ink = env.ink, n = pts.length / 2, i;
+    if (fill) {
+      g.save();
+      g.translate(o.ox == null ? 3 : o.ox, o.oy == null ? 2 : o.oy);
+      g.globalAlpha *= o.alpha == null ? 1 : o.alpha;
+      g.beginPath();
+      for (i = 0; i < n; i++) { if (i) g.lineTo(pts[2 * i], pts[2 * i + 1]); else g.moveTo(pts[0], pts[1]); }
+      g.closePath();
+      g.fillStyle = fill;
+      g.fill();
+      if (ink.gouachePattern) { g.fillStyle = ink.gouachePattern(g, 1); g.fill(); }
+      g.restore();
+    }
+    for (i = 0; i < n; i++) {
+      if (o.open && i === n - 1) break;
+      var x0 = pts[2 * i], y0 = pts[2 * i + 1], x1 = pts[(2 * i + 2) % (2 * n)], y1 = pts[(2 * i + 3) % (2 * n)];
+      ink.line(g, [x0, y0, (x0 + x1) / 2 + 0.8, (y0 + y1) / 2 - 0.6, x1, y1], { w: o.w || 3.2, profile: 'even', seed: seed + ':' + i });
+    }
+  }
+
+  // A small house: a body and a pitched roof, straight-edged.
+  function house(g, env, x, base, w, h, color, seed) {
+    var m = env.pal.mundo;
+    polyInk(g, env, [x - w / 2, base, x - w / 2, base - h, x + w / 2, base - h, x + w / 2, base], env.pal.mix(m[color] || color, m.lienzo, 0.55), seed);
+    polyInk(g, env, [x - w / 2 - 12, base - h, x, base - h - w * 0.42, x + w / 2 + 12, base - h], m[color] === m.rojo ? m.tierra : m.rojo, seed + 'r');
+  }
+
   function denominadorLayer(env) {
-    var c = env.canvas(W, H), g = c.getContext('2d'), ink = env.ink, m = env.pal.mundo;
+    var c = env.canvas(W, H), g = c.getContext('2d'), ink = env.ink;
     ink.background(g, 'personas', { seed: 'v08:pagina' });
-    // The town's ground and a few warm rooftops behind it.
-    ink.line(g, [404, 548, 700, 552, 1000, 546, 1236, 550], { w: 4, profile: 'swell', seed: 'v08:suelo', dot: 'detached' });
-    [[470, 420, 64, m.rojo], [600, 404, 52, m.amarillo], [1210, 414, 56, m.verde]].forEach(function (h, i) {
-      ink.shape(g, [h[0] - h[2] / 2, 548, h[0] - h[2] / 2, h[1], h[0], h[1] - h[2] * 0.6, h[0] + h[2] / 2, h[1], h[0] + h[2] / 2, 548],
-        { fill: env.pal.mix(h[3], m.lienzo, 0.55), w: 3, seed: 'v08:casa' + i });
-    });
+    // The town's ground and its rooftops behind the desks.
+    DEN.houses.forEach(function (h, i) { house(g, env, h[0], DEN.floor, h[2], h[1], h[3], 'v08:casa' + i); });
+    ink.line(g, [404, 548, 700, 552, 1000, 546, 1236, 550], { w: 4, profile: 'swell', seed: 'v08:suelo' });
     return { bg: c };
   }
 
@@ -551,7 +584,8 @@
     var dl = drawDial(ctx, env, DEN.dial.x, DEN.dial.y, DEN.dial.r, { value: v362, ghost: v233, k: 0.62, p: intro,
       labels: { antes: { text: s.state.inc.antes, alpha: intro }, despues: { text: s.state.inc.despues, alpha: intro } } });
     if (dl.antes && dl.despues) {
-      var tg = sourceTag(ctx, env, 'ries-1', DEN.tag.x, DEN.tag.y, dl.antes.left, intro, { scale: 0.96 });
+      // Right of and above both rótulos: the threads leave the hole leftward.
+      var tg = sourceTag(ctx, env, 'ries-1', DEN.tag.x, DEN.tag.y, dl.antes.right, intro, { scale: 0.96 });
       extraThread(ctx, env, tg, dl.despues.right, 'den362', intro);
     }
     // «los conteos se revisan»: a pencil circles the count, softly.
@@ -562,13 +596,13 @@
         { w: 2.4, profile: 'even', seed: 'v08:revisa', p: rv, color: m.rojo });
     }
     // The town grows: desks with lamps (use), then mailboxes (reporting).
-    var dueUse = [0, C.uso - 0.05, C.uso + 0.02], dueRep = [0, C.reporte - 0.06, C.reporte - 0.01, C.reporte + 0.05];
+    var dueUse = [0, C.uso - 0.03, C.uso + 0.03], dueRep = [0, C.reporte - 0.06, C.reporte - 0.01, C.reporte + 0.05];
     var dim = s.line >= 1 ? 0.7 * beat(a1, C.transparencia - 0.02, C.transparencia + 0.12) : 0;
     DEN.desks.forEach(function (d, i) {
       var p = d.n === 0 ? intro : s.line >= 1 ? 1 : beat(a0, dueUse[d.n] - 0.03, dueUse[d.n] + 0.05);
       if (p <= 0) return;
       var top = fig.desk(ctx, d.x, DEN.floor, DEN.deskK, { p: p }).top;
-      if (p >= 0.6) fig.lamp(ctx, d.x + 18, top.y - 24 + Math.sin(s.t * 0.8 + i) * 1.2, 0.3, { t: s.t + i, dim: dim, p: seg(p, 0.6, 1) });
+      if (p >= 0.6) fig.lamp(ctx, d.x + 10, top.y - 22 + Math.sin(s.t * 0.8 + i) * 1.2, 0.34, { t: s.t + i, dim: dim, p: seg(p, 0.6, 1) });
     });
     DEN.mail.forEach(function (d, i) {
       var p = d.n === 0 ? intro : s.line >= 1 ? 1 : beat(a0, dueRep[d.n] - 0.03, dueRep[d.n] + 0.04);
@@ -597,7 +631,8 @@
     sign: { x: 150, y: 104, w: 276, h: 52 },
     fence: { x: 610, y0: 100, y1: 494, gap0: 300, gap1: 352 },
     tray: { x: 690, y: 300, w: 110, h: 56 },
-    termino: { x: 1064, y: 84, size: 50, w: 360 },
+    termino: { x: 1062, y: 88, size: 42, w: 390 },
+    desks: { x0: 120, y0: 392, dx: 136, dy: 62, w: 92, h: 30, cols: 3, rows: 2 },
     evaluadora: { x: 1074, y: 562, k: 2.2 },
     lock: { x: 610, y: 430 }
   };
@@ -626,6 +661,13 @@
     for (var k = 0; k < st.fenceTicks.length; k++) {
       var fy = st.fenceTicks[k];
       ink.rLine(ctx, Fn.x - 9, fy, Fn.x + 9, fy, { color: q.linea, w: 1.3, p: sp });
+    }
+    // The exam desks: identical, regular (the controlled conditions of a test).
+    var Dk = TRA.desks;
+    for (var dr = 0; dr < Dk.rows; dr++) for (var dc = 0; dc < Dk.cols; dc++) {
+      var dxp = Dk.x0 + dc * Dk.dx, dyp = Dk.y0 + dr * Dk.dy;
+      ink.rRect(ctx, dxp, dyp, Dk.w, Dk.h, { color: q.linea, w: 1.2, p: seg(sp, 0.2 + (dr * Dk.cols + dc) * 0.05, 0.6 + (dr * Dk.cols + dc) * 0.05) });
+      ink.rLine(ctx, dxp + 12, dyp + Dk.h / 2, dxp + Dk.w - 12, dyp + Dk.h / 2, { color: q.linea, w: 1, alpha: 0.6, p: sp });
     }
     // The score tray beyond the fence.
     var T = TRA.tray;
@@ -763,9 +805,9 @@
 
   var LEY = {
     labels: { vigor: { w: 250, align: 'center', bottom: 252 }, prohibiciones: { w: 280, align: 'center', bottom: 252 }, gpai: { w: 244, align: 'left', bottom: 216, dx: -150 } },
-    ctxTag: { x: 84, y: 352 },
+    ctxTag: { x: 508, y: 328 },
     gpaiTag: { x: 912, y: 64 },
-    cards: { x: 596, y: 348, w: 290, h: 54, gap: 10, keys: ['documentacion', 'derechosAutor', 'resumen'] }
+    cards: { x: 588, y: 394, w: 292, gap: 8, size: 19, keys: ['documentacion', 'derechosAutor', 'resumen'] }
   };
 
   function ley(ctx, s, env) {
@@ -802,16 +844,21 @@
       // Its three cards hang under the pin, one per obligation as it is said.
       var K = LEY.cards, cc = [C.c0, C.c1, C.c2];
       ink.line(ctx, s.state.ley.cardString, { w: 2, profile: 'hair', seed: 'v08:hilo-tarjetas', p: beat(a1, cc[0] - 0.05, cc[0]) });
+      var cyy = K.y;
       for (var c = 0; c < 3; c++) {
+        var to = { size: K.size, weight: 700, align: 'center', maxWidth: K.w - 30, lineHeight: 1.15 };
+        var lay = ink.measureText(ctx, rot(s, K.keys[c]), to), ch = lay.h + 22;
         var cp = beat(a1, cc[c] - 0.03, cc[c] + 0.05);
-        if (cp <= 0) continue;
-        var cyy = K.y + c * (K.h + K.gap);
-        ctx.save();
-        ctx.translate(K.x + K.w / 2, cyy + K.h / 2);
-        ctx.rotate((c - 1) * 0.012);
-        ink.card(ctx, -K.w / 2, -K.h / 2, K.w, K.h, { seed: 'v08:obligacion' + c, weight: 3, radius: 8, p: cp, peek: [m.amarillo, m.celeste, m.rojo][c], peekCorner: c % 2 ? 'tl' : 'br' });
-        ink.text(ctx, rot(s, K.keys[c]), 0, -12, { size: 21, weight: 700, align: 'center', maxWidth: K.w - 24, fit: true, minSize: 16, p: seg(cp, 0.4, 1) });
-        ctx.restore();
+        if (cp > 0) {
+          ctx.save();
+          ctx.translate(K.x + K.w / 2, cyy + ch / 2);
+          ctx.rotate((c - 1) * 0.012);
+          ink.card(ctx, -K.w / 2, -ch / 2, K.w, ch, { seed: 'v08:obligacion' + c + '|' + Math.round(ch), weight: 3, radius: 8, p: cp });
+          to.p = seg(cp, 0.4, 1);
+          ink.text(ctx, rot(s, K.keys[c]), 0, -lay.h / 2, to);
+          ctx.restore();
+        }
+        cyy += ch + K.gap;
       }
     }
   }
@@ -823,8 +870,8 @@
 
   var PLA = {
     mayoria: { w: 400, align: 'center', bottom: 252 },
-    previos: { w: 290, align: 'center', top: 352 },
-    tag: { x: 380, y: 366 }
+    previos: { w: 300, align: 'center', top: 346 },
+    tag: { x: 900, y: 470 }
   };
 
   function plazos(ctx, s, env) {
@@ -851,8 +898,9 @@
       t2 = dateLabel(ctx, env, r2, { x: cx, align: 'center', w: PLA.previos.w, top: PLA.previos.top, p: seg(p2, 0.4, 1) });
     }
     if (t1) {
+      // Below-right: the thread to «2026» runs up-left, the one to «2027» straight up.
       var tg = sourceTag(ctx, env, 'ries-3', PLA.tag.x, PLA.tag.y, { x: x1, y: TL.y + TL.h + 4 }, p1);
-      if (t2) extraThread(ctx, env, tg, { x: t2.x - 6, y: t2.y + 14 }, 'pla-previos', p2);
+      if (t2) extraThread(ctx, env, tg, { x: tg.hole.x + 4, y: t2.y + t2.h + 4 }, 'pla-previos', p2);
     }
   }
 
@@ -868,10 +916,10 @@
     sinCambios: { dy: 18 },
     anexos: [{ key: 'anexoIII', align: 'left', dx: -96, w: 180 }, { key: 'anexoI', align: 'right', dx: 90, w: 206 }],
     anexoBottom: 168,
-    sheet: { x: 300, y: 300, w: 400, h: 264 },
-    cards: { dx: 24, y: [384, 470], w: 352, h: 74, keys: ['prohibiciones', 'sandbox'] },
-    gpaiTag: { x: 64, y: 60 },
-    sheetTag: { x: 724, y: 330 },
+    sheet: { x: 280, y: 300, w: 430, h: 262 },
+    cards: { dx: 22, y: [384, 466], w: 386, keys: ['prohibiciones', 'sandbox'] },
+    gpaiTag: { x: 64, y: 72 },
+    sheetTag: { x: 728, y: 334 },
     lectora: { x: 1146, y: 566, k: 2.05 }
   };
 
@@ -913,8 +961,9 @@
       if (scp > 0) ink.text(ctx, rot(s, 'sinCambios'), x + 8, H2.bottom - 16, { size: 18, italic: true, weight: 700, color: m.verde, p: seg(scp, i * 0.15, 0.5 + i * 0.15) });
     });
     if (heads.length) {
-      var tg3 = sourceTag(ctx, env, 'ries-3', OMN.gpaiTag.x, OMN.gpaiTag.y, { x: heads[0].lb.x + 8, y: heads[0].lb.y }, intro);
-      for (var h = 1; h < heads.length; h++) extraThread(ctx, env, tg3, { x: heads[h].lb.x + 8, y: heads[h].lb.y }, 'omn-g' + h, intro);
+      // One tag for the group of general-purpose-model dates, tied straight down to the first one
+      // (a thread to the others would cross the tag's own text); the row reads as one group.
+      sourceTag(ctx, env, 'ries-3', OMN.gpaiTag.x, OMN.gpaiTag.y, { x: OMN.gpaiTag.x + 18, y: heads[0].lb.y - 2 }, intro);
     }
     // The Ómnibus sheet, stapled under the strip.
     var S = OMN.sheet, hp = beat(a0, C.hoja - 0.04, C.hoja + 0.06), tg4 = null;
@@ -922,14 +971,15 @@
       ctx.save();
       ctx.translate(S.x + S.w / 2, S.y + S.h / 2 - (1 - out3(hp)) * 30);
       ctx.rotate(-0.015);
-      ink.card(ctx, -S.w / 2, -S.h / 2, S.w, S.h, { seed: 'v08:omnibus', weight: 3.8, radius: 6, p: hp, peek: m.azul, peekCorner: 'br' });
+      ink.card(ctx, -S.w / 2, -S.h / 2, S.w, S.h, { seed: 'v08:omnibus', weight: 3.8, radius: 6, p: hp, peek: m.azul, peekCorner: 'tl' });
       label(ctx, env, rot(s, 'hoja'), -S.w / 2 + 24, -S.h / 2 + 22, 27, { maxWidth: S.w - 48, maxLines: 2, seed: 'v08:hoja-titulo', p: seg(hp, 0.4, 1) });
       ctx.restore();
-      // Two staples into the strip's lower edge.
-      [S.x + 70, S.x + S.w - 70].forEach(function (gx, i) {
-        if (hp >= 0.7) ink.rLine(ctx, gx - 14, TL.y + TL.h - 4, gx + 14, TL.y + TL.h + 10, { color: m.tinta, w: 3.4 });
+      // Two staples through the sheet's top edge into the strip.
+      if (hp >= 0.7) [S.x + 60, S.x + S.w - 60].forEach(function (gx) {
+        var sy = TL.y + TL.h + 4;
+        ink.rPoly(ctx, [gx - 13, sy + 5, gx - 13, sy, gx + 13, sy, gx + 13, sy + 5], { color: m.tinta, w: 2.6 });
       });
-      tg4 = sourceTag(ctx, env, 'ries-4', OMN.sheetTag.x, OMN.sheetTag.y, { x: S.x + S.w - 8, y: S.y + 40 }, seg(hp, 0.3, 1));
+      tg4 = sourceTag(ctx, env, 'ries-4', OMN.sheetTag.x, OMN.sheetTag.y, { x: S.x + S.w - 6, y: S.y + 44 }, seg(hp, 0.3, 1));
     }
     // The two postponed high-risk pins, further right; each stamped «aplazado».
     var acues = [C.anexoIII, C.anexoI];
@@ -944,7 +994,11 @@
       var sy = lb.y - 24, sx = A.align === 'left' ? lb.x + 60 : lb.x + lb.w - 60;
       if (hl > 0) ink.glow(ctx, sx, sy, 60, m.amarillo, 0.55 * hl);
       wordStamp(ctx, env, rot(s, 'aplazado'), sx, sy, stp, 'v08:aplazado' + i);
-      if (tg4) extraThread(ctx, env, tg4, { x: x, y: TL.y + TL.h + 6 }, 'omn-a' + i, p);
+      // A dotted guide along the strip's foot from the stapled sheet to the pin it adds.
+      if (hp > 0) {
+        var gy = TL.y + TL.h + 9, gx0 = S.x + S.w - 30;
+        ink.dotted(ctx, stable(env, 'v08:guia' + i, [gx0, gy, (gx0 + x) / 2, gy + 1, x, gy]), { r: 2, gap: 11, seed: 'v08:guia' + i, p: p });
+      }
     });
     // Line 2: two cards of plain text on the sheet (never illustrated).
     if (hp > 0) {
@@ -953,8 +1007,10 @@
         var cp = beat(a1, kc[c] - 0.04, kc[c] + 0.04);
         if (s.line >= 2) cp = 1;
         if (cp <= 0) continue;
-        ink.card(ctx, S.x + K.dx, K.y[c], K.w, K.h, { seed: 'v08:regla' + c, weight: 2.8, radius: 8, p: cp });
-        ink.text(ctx, rot(s, K.keys[c]), S.x + K.dx + 18, K.y[c] + 12, { size: 20, weight: 700, maxWidth: K.w - 36, lineHeight: 1.18, p: seg(cp, 0.4, 1) });
+        var to = { size: 19, weight: 700, maxWidth: K.w - 32, lineHeight: 1.16 }, lay = ink.measureText(ctx, rot(s, K.keys[c]), to);
+        ink.card(ctx, S.x + K.dx, K.y[c], K.w, lay.h + 22, { seed: 'v08:regla' + c + '|' + Math.round(lay.h), weight: 2.8, radius: 8, p: cp });
+        to.p = seg(cp, 0.4, 1);
+        ink.text(ctx, rot(s, K.keys[c]), S.x + K.dx + 16, K.y[c] + 11, to);
       }
     }
     // Line 3: the lectora.
@@ -968,34 +1024,39 @@
   // (the international reference) rise over the sea; the note «Información, no asesoría jurídica».
 
   var PQI = {
-    uni: { x: 150, y: 440 }, firm: { x: 330, y: 440 }, partner: { x: 960, y: 440 }, provider: { x: 1130, y: 440 },
+    uni: { x: 120, y: 452 }, firm: { x: 300, y: 456 }, partner: { x: 990, y: 458 }, provider: { x: 1170, y: 454 },
     note: { x: 486, y: 70, w: 308, h: 70 }
   };
 
   function porQueLayer(env) {
     var c = env.canvas(W, H), g = c.getContext('2d'), ink = env.ink, m = env.pal.mundo, pal = env.pal;
-    ink.background(g, 'territorio', { seed: 'v08:orillas', horizon: 0.62, contours: false });
-    // The sea between the shores.
-    ink.shape(g, [452, 300, 560, 270, 720, 280, 840, 300, 820, 470, 800, 560, 480, 560, 470, 470], { fill: m.azul, fillAlpha: 0.85, w: 3.4, seed: 'v08:mar' });
-    for (var i = 0; i < 4; i++) ink.line(g, ink.wavePoints(500 + i * 6, 330 + i * 52, 790 - i * 8, 5, 46, i), { w: 2.6, profile: 'swell', seed: 'v08:ola' + i, color: m.celeste });
-    // Two shores (no borders, no flags).
-    ink.shape(g, [40, 470, 140, 450, 300, 452, 452, 470, 470, 560, 40, 560], { fill: m.tierra, w: 3.6, seed: 'v08:orilla1' });
-    ink.shape(g, [830, 468, 980, 452, 1120, 448, 1240, 460, 1240, 560, 812, 560], { fill: m.verde, w: 3.6, seed: 'v08:orilla2' });
-    // A university (pediment and columns) and a company (a block of windows) on the left shore.
-    function building(x, y, w, h, color, kind, seed) {
-      ink.shape(g, [x - w / 2, y, x - w / 2, y - h, x + w / 2, y - h, x + w / 2, y], { fill: pal.mix(color, m.lienzo, 0.35), w: 3.4, seed: seed });
+    ink.background(g, 'territorio', { seed: 'v08:orillas', horizon: 0.6, contours: false });
+    // The sea, from the horizon down, between the two shores; calligraphic waves on it.
+    ink.shape(g, [300, 436, 640, 430, 980, 436, 1010, 560, 270, 560], { fill: m.azul, fillAlpha: 0.9, w: 3.4, seed: 'v08:mar', poly: true });
+    for (var i = 0; i < 3; i++) ink.line(g, ink.wavePoints(470 + i * 20, 462 + i * 34, 820 - i * 24, 5, 48, i), { w: 2.8, profile: 'swell', seed: 'v08:ola' + i, color: m.celeste });
+    // Two shores (no borders, no flags): biomorphic land on each side.
+    ink.shape(g, [0, 452, 160, 440, 330, 446, 470, 470, 500, 560, 0, 560], { fill: m.tierra, w: 3.6, seed: 'v08:orilla1' });
+    ink.shape(g, [800, 474, 900, 448, 1060, 440, 1280, 450, 1280, 560, 780, 560], { fill: m.verde, w: 3.6, seed: 'v08:orilla2' });
+    // A university (pediment and columns) and a company (a block of windows) on each shore.
+    function building(x, base, w, h, color, kind, seed) {
+      polyInk(g, env, [x - w / 2, base, x - w / 2, base - h, x + w / 2, base - h, x + w / 2, base], pal.mix(color, m.lienzo, 0.3), seed);
       if (kind === 'uni') {
-        ink.shape(g, [x - w / 2 - 12, y - h, x, y - h - 46, x + w / 2 + 12, y - h], { fill: m.rojo, w: 3.4, seed: seed + 'r' });
-        for (var k = 0; k < 4; k++) ink.line(g, [x - w / 2 + 16 + k * (w - 32) / 3, y - 4, x - w / 2 + 17 + k * (w - 32) / 3, y - h + 8], { w: 3.4, profile: 'blunt', seed: seed + 'c' + k });
+        polyInk(g, env, [x - w / 2 - 14, base - h, x, base - h - 44, x + w / 2 + 14, base - h], m.rojo, seed + 'r');
+        for (var k = 0; k < 4; k++) {
+          var cx = x - w / 2 + 18 + k * (w - 36) / 3;
+          ink.line(g, [cx, base - 6, cx + 1, base - h / 2, cx, base - h + 10], { w: 3.6, profile: 'blunt', seed: seed + 'c' + k });
+        }
       } else {
-        for (var r = 0; r < 3; r++) for (var q = 0; q < 3; q++) ink.shape(g, [x - w / 2 + 14 + q * (w - 28) / 3, y - h + 16 + r * 34, x - w / 2 + 34 + q * (w - 28) / 3, y - h + 16 + r * 34,
-          x - w / 2 + 34 + q * (w - 28) / 3, y - h + 38 + r * 34, x - w / 2 + 14 + q * (w - 28) / 3, y - h + 38 + r * 34], { fill: m.amarillo, w: 2, seed: seed + 'v' + r + q });
+        for (var r = 0; r < 3; r++) for (var q = 0; q < 3; q++) {
+          var wx = x - w / 2 + 14 + q * (w - 28) / 3, wy = base - h + 16 + r * (h - 30) / 3;
+          polyInk(g, env, [wx, wy, wx + 20, wy, wx + 20, wy + 22, wx, wy + 22], m.amarillo, seed + 'v' + r + q, { w: 2 });
+        }
       }
     }
-    building(PQI.uni.x, PQI.uni.y + 14, 140, 110, m.lienzoOcre, 'uni', 'v08:uni');
-    building(PQI.firm.x, PQI.firm.y + 14, 110, 130, m.celeste, 'firm', 'v08:empresa');
-    building(PQI.partner.x, PQI.partner.y + 14, 130, 104, m.lienzoOcre, 'uni', 'v08:socio');
-    building(PQI.provider.x, PQI.provider.y + 14, 110, 124, m.siena, 'firm', 'v08:proveedor');
+    building(PQI.uni.x, PQI.uni.y, 150, 112, m.lienzoOcre, 'uni', 'v08:uni');
+    building(PQI.firm.x, PQI.firm.y, 112, 134, m.celeste, 'firm', 'v08:empresa');
+    building(PQI.partner.x, PQI.partner.y, 140, 106, m.lienzoOcre, 'uni', 'v08:socio');
+    building(PQI.provider.x, PQI.provider.y, 112, 128, m.siena, 'firm', 'v08:proveedor');
     return { bg: c };
   }
 
@@ -1005,9 +1066,9 @@
     var intro = out3(s.intro);
     floaters(ctx, s, env, [['sol', 1180, 100, 50, m.rojo], ['pajaro', 160, 120, 70]], intro);
     // People on both shores.
-    fig.person(ctx, 230, 556, 1.1, { role: 'docente', pose: 'pointing', seed: 'v08:docente', skin: 3, hair: 'curly', facing: 1, p: intro });
-    fig.person(ctx, 410, 556, 1.05, { role: 'directiva', pose: 'presenting', seed: 'v08:directiva', skin: 1, hair: 'bun', facing: 1, p: intro });
-    fig.person(ctx, 1046, 556, 1.05, { role: 'investigadora', pose: 'waving', seed: 'v08:socia', skin: 0, hair: 'long', facing: -1, p: intro });
+    fig.person(ctx, 214, 552, 1.3, { role: 'docente', pose: 'pointing', seed: 'v08:docente', skin: 3, hair: 'curly', facing: 1, p: intro });
+    fig.person(ctx, 400, 552, 1.25, { role: 'directiva', pose: 'presenting', seed: 'v08:directiva', skin: 1, hair: 'bun', facing: 1, p: intro });
+    fig.person(ctx, 1078, 552, 1.25, { role: 'investigadora', pose: 'waving', seed: 'v08:socia', skin: 0, hair: 'long', facing: -1, p: intro });
     // Threads across the sea, one per relationship as it is said (dotted, warm).
     var cues = [C.servicios, C.socios, C.proveedores];
     for (var i = 0; i < st.threads.length; i++) {
@@ -1034,20 +1095,23 @@
   function wheelDrawings(env) {
     var m = env.pal.mundo;
     var d = env.ink.drawing('v08:disco', { w: 4, jitter: 0.4 });
+    // The brake disc: a flat blue disc with ventilation slots in a ring (not dots on red: that
+    // would read as a ladybird), a cream hub; the red caliper grips its rim and does not turn.
     d.circle(0, 0, 62, { fill: '@a', w: 4 });
-    for (var i = 0; i < 6; i++) { var a = i / 6 * TAU; d.circle(Math.cos(a) * 36, Math.sin(a) * 36, 6, { fill: '@ink', w: 1.6 }); }
-    d.circle(0, 0, 14, { fill: '@b', w: 2.6 });
+    d.stroke(circlePts(0, 0, 50, 24), { w: 2, closed: true, profile: 'even', overshoot: false });
+    for (var i = 0; i < 8; i++) { var a = i / 8 * TAU; d.stroke([Math.cos(a) * 26, Math.sin(a) * 26, Math.cos(a + 0.18) * 40, Math.sin(a + 0.18) * 40], { w: 3.4, profile: 'blunt', color: '@b' }); }
+    d.circle(0, 0, 15, { fill: '@b', w: 2.6 });
     var cal = env.ink.drawing('v08:pinza', { w: 3.4, jitter: 0.4 });
-    cal.shape([38, -60, 62, -44, 74, -14, 58, -14, 48, -36, 30, -48], { fill: '@ink', w: 3 });
+    cal.shape([34, -64, 62, -46, 76, -14, 58, -12, 46, -36, 26, -50], { fill: '@a', w: 3 });
     var w = env.ink.drawing('v08:volante', { w: 4, jitter: 0.5 });
-    w.stroke(circlePts(0, 0, 150, 28), { w: 22, closed: true, profile: 'even', color: '@wood' });
-    w.stroke(circlePts(0, 0, 162, 28), { w: 4, closed: true, profile: 'outline' });
-    w.stroke(circlePts(0, 0, 138, 28), { w: 4, closed: true, profile: 'outline' });
+    w.stroke(circlePts(0, 0, 150, 36), { w: 22, closed: true, profile: 'even', color: '@wood', overshoot: false });
+    w.stroke(circlePts(0, 0, 162, 36), { w: 4, closed: true, profile: 'outline', overshoot: false });
+    w.stroke(circlePts(0, 0, 138, 36), { w: 4, closed: true, profile: 'outline', overshoot: false });
     for (i = 0; i < 3; i++) w.shape(rotPts([20, -9, 140, -12, 140, 12, 20, 9], Math.PI / 2 + i * TAU / 3), { fill: '@wood', w: 3.4 });
     w.circle(0, 0, 32, { fill: '@hub', w: 4 });
     return {
-      disc: d.done({ colors: { a: m.rojo, b: m.lienzoOcre } }),
-      caliper: cal.done(),
+      disc: d.done({ colors: { a: m.azul, b: m.lienzo } }),
+      caliper: cal.done({ colors: { a: m.rojo } }),
       wheel: w.done({ colors: { wood: m.madera, hub: m.amarillo } })
     };
   }
@@ -1110,9 +1174,9 @@
   // autoridad».
 
   var FRE = {
-    lever: { x: 300, y: 500, k: 2.6 }, note: { x: 70, y: 70, w: 330, h: 74 },
-    panel: { x: 720, y: 150, w: 210, h: 190 }, reviewer: { x: 1080, y: 548, k: 2.2 },
-    sinAutoridad: { x: 1080, y: 240 }
+    lever: { x: 250, y: 500, k: 2.6 }, note: { x: 380, y: 96, w: 330, h: 74 }, disc: { x: 520, y: 430, k: 0.8 },
+    panel: { x: 770, y: 250, w: 170, h: 160 }, reviewer: { x: 1090, y: 548, k: 2.2 },
+    sinAutoridad: { x: 1090, y: 270 }
   };
 
   function freno(ctx, s, env) {
@@ -1130,8 +1194,13 @@
     fig.lever(ctx, L.x, L.y, L.k, { seed: 'v08:palanca', p: intro });
     var hx = L.x + 32 * L.k, hy = L.y - 106 * L.k;
     var hp = beat(a, C.criterio - 0.08, C.criterio);
-    if (hp > 0) hand(ctx, s, env, lerp(hx - 160, hx + 4, out3(hp)), lerp(hy + 120, hy + 8, out3(hp)), 0.92, -0.35, out3(hp), m.verde);
+    if (hp > 0) hand(ctx, s, env, lerp(hx - 150, hx - 2, out3(hp)), lerp(hy + 150, hy + 10, out3(hp)), 0.95, 0.5, out3(hp), m.verde);
     ctx.restore();
+    // The lever's cable to the brake disc.
+    ink.line(ctx, st.cable, { w: 2.6, profile: 'even', seed: 'v08:cable', p: intro });
+    var D = FRE.disc;
+    s.state.wheel && env.ink.draw(ctx, s.state.wheel.disc, D.x, D.y, D.k, { p: intro, rot: grip * 0.4 });
+    s.state.wheel && env.ink.draw(ctx, s.state.wheel.caliper, D.x, D.y, D.k, { p: intro });
     var np = beat(a, C.criterio, C.criterio + 0.08);
     if (np > 0) pinnedNote(ctx, env, rot(s, 'pregunta'), { x: FRE.note.x, y: FRE.note.y, w: FRE.note.w, h: FRE.note.h, size: 26, weight: 700, padT: 20, rot: -0.03 }, np, 'v08:quien');
     // Beside the lamp (in its ruled panel), the reviewer with no lever.
@@ -1155,8 +1224,8 @@
   // a person with no time to review; small sparks jump between them.
 
   var SOC = {
-    lamp: { x: 640, y: 266, k: 0.92 }, plinth: { x: 560, y: 330, w: 160, h: 64 },
-    bucket: { x: 250, y: 420 }, chart: { x: 312, y: 104, w: 190, h: 140 }, keys: { x: 930, y: 230 }, person: { x: 1080, y: 556, k: 2.2 },
+    lamp: { x: 640, y: 248, k: 0.9 }, plinth: { x: 580, y: 312, w: 120, h: 86 },
+    bucket: { x: 250, y: 410 }, chart: { x: 300, y: 112, w: 190, h: 140 }, keys: { x: 920, y: 214 }, person: { x: 1066, y: 548, k: 2.1 },
     floor: 548
   };
 
@@ -1164,12 +1233,15 @@
     var C = cuesOf(s, 'sociotecnico'), st = s.state.soc, ink = env.ink, fig = env.fig, m = env.pal.mundo, q = env.pal.maquina, a = s.at(0);
     bg(ctx, s, env);
     var intro = out3(s.intro);
-    floaters(ctx, s, env, [['estrella', 1190, 90, 32, m.amarillo], ['espiral', 640, 470, 34]], intro);
+    floaters(ctx, s, env, [['estrella', 1190, 90, 32, m.amarillo], ['sol', 90, 96, 40, m.rojo]], intro);
     ink.line(ctx, st.floor, { w: 4, profile: 'swell', seed: 'v08:taller', p: intro });
-    // The lamp on its small ruled plinth: steady, safe-looking.
+    // The workbench, and on it the lamp on its small ruled plinth: steady, safe-looking.
+    fig.table(ctx, SOC.lamp.x, SOC.floor, 1, { w: 300, h: 150, p: intro, seed: 'v08:banco' });
     var P = SOC.plinth;
     ink.rRect(ctx, P.x, P.y, P.w, P.h, { color: q.linea, w: 1.4, fill: q.noche, p: intro });
-    fig.lamp(ctx, SOC.lamp.x, SOC.lamp.y, SOC.lamp.k, { t: s.t, p: intro });
+    fig.lamp(ctx, SOC.lamp.x, SOC.lamp.y, SOC.lamp.k, { t: s.t, glow: 1 + 0.25 * beat(a, C.modelo - 0.02, C.modelo + 0.08), p: intro });
+    // «sistemas sociotécnicos»: one loose dotted boundary draws around the whole workshop.
+    ink.dotted(ctx, st.system, { closed: true, r: 2.4, gap: 15, seed: 'v08:sistema', p: beat(a, 0.02, 0.2) });
     var cues = [C.datos, C.incentivos, C.permisos, C.usuarios], ps = cues.map(function (c) { return beat(a, c - 0.05, c + 0.04); });
     // Leaky data bucket.
     if (ps[0] > 0) {
@@ -1221,9 +1293,9 @@
     var turn = s.t * 0.08;
     drawWheel(ctx, s, env, CIE.cx, CIE.cy, CIE.k, turn, intro);
     // Two warm hands on the rim, steering.
-    var R = 150 * CIE.k, hl = Math.PI * 1.12, hr = -Math.PI * 0.12;
-    hand(ctx, s, env, CIE.cx + Math.cos(hl) * R, CIE.cy + Math.sin(hl) * R, 0.86, hl + Math.PI / 2 + Math.PI, intro, m.rojo);
-    hand(ctx, s, env, CIE.cx + Math.cos(hr) * R, CIE.cy + Math.sin(hr) * R, 0.86, hr + Math.PI / 2, intro, m.verde);
+    var R = 150 * CIE.k, hl = Math.PI * 1.1, hr = -Math.PI * 0.1;
+    hand(ctx, s, env, CIE.cx + Math.cos(hl) * R, CIE.cy + Math.sin(hl) * R, 0.86, -0.32, intro, m.rojo);
+    hand(ctx, s, env, CIE.cx + Math.cos(hr) * R, CIE.cy + Math.sin(hr) * R, 0.86, 0.32, intro, m.verde);
     env.ink.letter(ctx, rot(s, 'titulo'), W / 2, CIE.title.y, { size: CIE.title.size, align: 'center', maxWidth: CIE.title.w, maxLines: 2, seed: 'v08:titulo-final',
       counters: 0.25, stars: false, p: beat(a, C.titulo - 0.06, Math.min(1, C.titulo + 0.3)) });
     var f = seg(s.t, s.dur - CIE.fade, s.dur);
@@ -1247,8 +1319,8 @@
     st.familias = {
       pillars: FAM.cols.map(function (c, k) { return pillarDrawing(env, k); }),
       legend: env.pal.legend.riesgos || [],
-      reportLines: [0, 1, 2, 3, 4].map(function (k) { return ink.wavePoints(-60, -60 + k * 26, k === 4 ? 10 : 60, 1.6, 30 + k * 3, k); }),
-      bracket: [300, 548, 330, 560, 580, 556, 830, 560, 860, 546]
+      reportLines: [0, 1, 2, 3, 4, 5].map(function (k) { return ink.wavePoints(-66, -74 + k * 28, k === 5 ? 6 : 66, 1.6, 30 + k * 3, k); }),
+      bracket: [292, 546, 330, 558, 580, 554, 830, 558, 868, 544]
     };
 
     // respuesta: strings from the nails, the map's land and threat arrows, the flexible bridge.
@@ -1274,7 +1346,7 @@
     st.den = {
       bar: [Bx.x0 - 10, F.bar, F.x, F.bar + 2, Bx.x1 + 10, F.bar],
       box: [Bx.x0, Bx.y0, (Bx.x0 + Bx.x1) / 2, Bx.y0 - 1, Bx.x1, Bx.y0, Bx.x1 + 1, (Bx.y0 + Bx.y1) / 2, Bx.x1, Bx.y1, (Bx.x0 + Bx.x1) / 2, Bx.y1 + 1, Bx.x0, Bx.y1, Bx.x0 - 1, (Bx.y0 + Bx.y1) / 2],
-      link: [330, 150, 560, 96, 836, 104]
+      link: [392, 250, 600, 180, 836, 110]
     };
 
     // trampa: the lamp's walk, the fence ticks, the warm patch, the evaluator's line of sight.
@@ -1309,7 +1381,7 @@
         [PQI.uni.x + 20, PQI.uni.y - 170, 480, 120, 820, 130, PQI.partner.x - 10, PQI.partner.y - 150],
         [PQI.provider.x - 20, PQI.provider.y - 128, 860, 250, 560, 250, PQI.firm.x + 50, PQI.firm.y - 128]
       ],
-      stars: [[560, 360, 30], [650, 330, 38], [740, 372, 28], [620, 430, 24]]
+      stars: [[540, 330, 40], [646, 300, 50], [752, 338, 38], [600, 384, 30]]
     };
 
     // volante: the arcs between stations along the ring.
@@ -1324,7 +1396,8 @@
     // freno: the floor and the cross over the reviewer.
     var R2 = FRE.reviewer, top = R2.y - 100 * R2.k;
     st.freno = {
-      floor: [80, 504, 400, 508, 700, 502, 1220, 552],
+      floor: [80, 504, 400, 507, 700, 502, 960, 506, 1230, 550],
+      cable: [FRE.lever.x + 30, FRE.lever.y - 8, 380, 520, 470, 470, FRE.disc.x - 40, FRE.disc.y + 16],
       cross: [[R2.x - 92, top + 14, R2.x, top + 120, R2.x + 92, R2.y - 20], [R2.x + 92, top + 14, R2.x + 6, top + 120, R2.x - 92, R2.y - 20]]
     };
 
@@ -1332,6 +1405,7 @@
     var L = SOC.lamp;
     st.soc = {
       floor: [70, SOC.floor, 400, SOC.floor + 4, 800, SOC.floor - 2, 1220, SOC.floor + 2],
+      system: ink.ellipsePoints(650, 318, 560, 248, 30, 0.04),
       axes: [-70, -50, -72, 50, 76, 48],
       crooked: [-60, 36, -30, 6, -6, 22, 20, -30, 40, -20, 58, 34],
       sparks: [
