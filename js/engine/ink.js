@@ -1808,7 +1808,9 @@
       var line = L.lines[li], lx = lineX(L, line, x), by = y + line.y + size * 0.96;
       for (var gi = 0; gi < line.glyphs.length; gi++) {
         var gl = line.glyphs[gi];
-        var e = p >= 1 ? 1 : segment(p, span * gl.i / n, span * (gl.i + 1.6) / n);
+        // Each glyph's window is clamped to the lettering's span, so the last glyphs finish with
+        // it instead of jumping to whole at p = 1.
+        var e = p >= 1 ? 1 : segment(p, span * gl.i / n, Math.min(span, span * (gl.i + 1.6) / n));
         if (e <= 0) continue;
         ctx.save();
         ctx.translate(lx + gl.x + gl.w / 2, by + gl.dy);
@@ -1839,7 +1841,7 @@
     }
     for (var si = 0; si < L.stars.length; si++) {
       var st = L.stars[si];
-      var se = p >= 1 ? 1 : segment(p, span * (st.after + 0.5) / n, span * (st.after + 2) / n);
+      var se = p >= 1 ? 1 : segment(p, Math.min(span * (st.after + 0.5) / n, span * 0.98), Math.min(span, span * (st.after + 2) / n));
       if (se <= 0) continue;
       var sl = L.lines[st.line], sx = lineX(L, sl, x) + st.x, sy = y + sl.y + size * 0.96 + st.y;
       ctx.globalAlpha = se;
