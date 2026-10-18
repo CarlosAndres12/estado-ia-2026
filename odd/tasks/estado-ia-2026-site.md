@@ -48,9 +48,9 @@ exceeds it. Slicing into PRs is left to the user (each task commit is a candidat
 | T07 | Page shell: router, markup, views, nav, hero, chips, citations/popovers, banco, glossary, FAQ, references, asistente, footer, CSS | delegated writer | done (cherry-picked b22f7c2..4c08e68) |
 | T08 | Interactions: quizzes, games, calculator, embudo, cuaderno, rubric, Ley de IA timeline, indicadores, timer, láminas viewer, Modo clase, print | delegated writer | done (cherry-picked 540ff7d..cb96f5a) |
 | T09 | Láminas D01–D17 | delegated writers (parallel, worktrees) | done (D01–D17 merged) |
-| T10 | Videos V01, V03–V09 | delegated writers (parallel, worktrees) | running (one video per worker, brief in odd/spec/video-worker-brief.md) |
-| T11 | Voice-over tooling with **Edge TTS** (user decision; Azure kept optional): normalizer, SSML, Edge bridge + adapter, alignment, generator, listening sheet | delegated writer (many non-trivial files) | done (merged; fix b91d3af) |
-| T12 | Optional MP4 export (`render-videos.mjs`) | delegated writer | pending |
+| T10 | Videos V01, V03–V09 | delegated writers (parallel, worktrees) | done |
+| T11 | Voice-over tooling with **Edge TTS** (user decision; Azure kept optional): normalizer, SSML, Edge bridge + adapter, alignment, generator, listening sheet | delegated writer (many non-trivial files) | done |
+| T12 | Optional MP4 export (`render-videos.mjs`) | delegated writer | done |
 | T13 | README (Spanish), acceptance checks (prompt §16), final fixes | delegated verifier + writer | pending |
 
 ## Acceptance criteria
@@ -198,6 +198,15 @@ zero errors; 9 videos play in sync; 17 láminas render/print with corrected figu
 - V05 done (cherry-picked b370117..452c31a): 9 scenes, est. 3:42 (target 3:00–4:30), determinism ok,
   checker 0 errors (462 numbers). Wishes: round unitGrid + approx cap; negative bars; lamp size in px;
   props expose natural size/centre; thread avoids text; `fig.youngLadder` vs D9 ladder.
+
+- V06–V09 done (cherry-picked); all 9 videos merged; 200/200 tests, checker 0 errors.
+- T12 render-videos.mjs merged (tested on a 10 s segment only; ~3.6 fps full scale).
+- README (Spanish, 338 lines) merged.
+- Narration generated with Edge TTS (d0995b0): 9 MP3 (39 MB), VTT captions, manifest; generation only
+  (no audio checks per user rule). Lengths vs target: v01 149 s (target 150–210 → 1 s under, warning
+  only), v02 203, v03 357, v04 417, v05 208, v06 218, v07 299, v08 322, v09 353 — all others inside.
+  v02 determinism with the manifest: identical, 0 console errors.
+- Engine polish pass running (bugs + additive options).
 
 ## Next step
 
