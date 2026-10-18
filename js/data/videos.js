@@ -1733,7 +1733,9 @@ EIA.data.videos = [
         rotulos: {
           chembench: { text: 'ChemBench: superan en promedio a químicos humanos' },
           astrofisica: { text: 'Replicar investigaciones de astrofísica: menos de 20%', cifras: ['cap-5'] },
-          paperArena: { text: 'PaperArena: 38,8% frente a 83,5%', cifras: ['cap-6'] }
+          paperArena: { text: 'PaperArena: 38,8% frente a 83,5%', cifras: ['cap-6'] },
+          agente: { text: 'mejor agente' },
+          expertos: { text: 'expertos con doctorado' }
         },
         lines: [
           {
@@ -1768,7 +1770,8 @@ EIA.data.videos = [
         seVe: 'Un manuscrito dibujado por completo con líneas regladas recibe, en un taller, un pequeño sello «Aceptado»; a su lado, un cajón rotulado «descubrimientos experimentales confirmados» guarda solo unas pocas tarjetas.',
         rotulos: {
           sello: { text: 'Aceptado' },
-          cajon: { text: 'descubrimientos experimentales confirmados' }
+          cajon: { text: 'descubrimientos experimentales confirmados' },
+          idea: { text: 'Producir manuscritos no es producir conocimiento válido.' }
         },
         lines: [
           {
@@ -1816,7 +1819,8 @@ EIA.data.videos = [
         seVe: 'Se enciende la luz de abajo; una médica escribe notas clínicas con una pequeña lámpara junto a la libreta; una barra de tiempo de escritura se encoge hasta su marca «hasta −83%», con la palabra «hasta» al lado.',
         rotulos: {
           marca: { text: 'hasta −83%', cifras: ['med-1'] },
-          hasta: { text: 'hasta' }
+          hasta: { text: 'hasta' },
+          barra: { text: 'tiempo de redacción de notas clínicas' }
         },
         lines: [
           {
@@ -1854,7 +1858,12 @@ EIA.data.videos = [
           fda: { text: 'FDA: 258 dispositivos con IA en 2025 · ~1.400 en total', cifras: ['med-5'] },
           fecha: { text: 'hasta diciembre de 2024', cifras: ['med-6'] },
           autorizaciones: { text: '1.016 autorizaciones', cifras: ['med-6'] },
-          ensayos: { text: 'con ensayos aleatorizados' }
+          ensayos: { text: 'con ensayos aleatorizados' },
+          estudios: { text: 'más de 500 estudios revisados', cifras: ['med-3'] },
+          examen: { text: 'casi la mitad usó preguntas tipo examen', cifras: ['med-3'] },
+          clinicos: { text: 'solo 5% usó datos clínicos reales', cifras: ['med-3'] },
+          dispositivos: { text: 'dispositivos con estudios clínicos' },
+          porcentaje: { text: '2,4%', cifras: ['med-6'] }
         },
         lines: [
           {
