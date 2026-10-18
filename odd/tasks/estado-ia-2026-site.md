@@ -51,7 +51,7 @@ exceeds it. Slicing into PRs is left to the user (each task commit is a candidat
 | T10 | Videos V01, V03–V09 | delegated writers (parallel, worktrees) | done |
 | T11 | Voice-over tooling with **Edge TTS** (user decision; Azure kept optional): normalizer, SSML, Edge bridge + adapter, alignment, generator, listening sheet | delegated writer (many non-trivial files) | done |
 | T12 | Optional MP4 export (`render-videos.mjs`) | delegated writer | done |
-| T13 | README (Spanish), acceptance checks (prompt §16), final fixes | delegated verifier + writer | pending |
+| T13 | README (Spanish), acceptance checks (prompt §16), final fixes | delegated verifier + writer | done |
 
 ## Acceptance criteria
 
@@ -208,7 +208,18 @@ zero errors; 9 videos play in sync; 17 láminas render/print with corrected figu
   v02 determinism with the manifest: identical, 0 console errors.
 - Engine polish pass running (bugs + additive options).
 
+- Engine polish merged (6 bugs, 7 opt-in options); V08 two-source tag repositioned (9ed36ba).
+- Final acceptance (2026-10-18): 200/200 tests; check-content 0 errors 0 warnings; gallery 57/57;
+  check-routes --interact 8/8 and 30 routes at 360 px, 0 console errors; 17 lámina stills 0 errors;
+  v01–v09 determinism identical, 0 console errors; perf 60 s sample 24 fps, p95 1.8 ms, heap +0.3 MB.
+- Not verified by design or environment: narration by ear (user rule: no audio checks), speechSynthesis,
+  MediaRecorder, facilitator two-window sync, real-mouse drag, full MP4 exports, Azure adapter.
+- Open polish wishes (non-blocking): big-figure thread crosses its label; lamp loop phase; round unit
+  grid; negative bars; gauge sub-range colours; V01 narration 149 s vs 150 s target minimum (warning).
+
 ## Next step
+
+Done. Push / PR are the user's decision (branch feat/estado-ia-2026-site).
 
 Merge wave 1 branches as they finish (verify each: checker, tests, headless console), then wave 2:
 T06 (V02 + art review), T07 (page shell), T11 (voice tools); then T08, T09, T10.
