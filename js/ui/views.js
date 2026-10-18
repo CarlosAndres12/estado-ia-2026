@@ -1199,6 +1199,18 @@
       h('span', { class: 'site-footer__sign', 'aria-hidden': 'true' }),
       h('p', { class: 'site-footer__text', html: html })
     ]));
+    if (f.autores && f.autores.length) {
+      footer.appendChild(h('div', { class: 'site-footer__authors' }, [
+        h('h2', { class: 'site-footer__authors-title', text: f.autoresTitulo || '' }),
+        h('ul', {}, f.autores.map(function (a) {
+          return h('li', {}, [
+            h('strong', { text: a.nombre }),
+            h('span', { text: ' ' + a.afiliacion + ' ' }),
+            h('a', { href: 'mailto:' + a.correo, text: a.correo })
+          ]);
+        }))
+      ]));
+    }
   }
 
   // =============================================================================================

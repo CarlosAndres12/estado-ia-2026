@@ -434,7 +434,20 @@ EIA.data.course = {
   },
   footer: {
     texto: 'Ilustraciones y animaciones dibujadas con código, con un lenguaje visual inspirado en el arte de Joan Miró. Narración con voces sintéticas. Contenido: Base de conocimiento del curso «Estado de la IA 2026», versión 1.1 (17 de octubre de 2026), a partir del informe base *Estado del arte de la inteligencia artificial en 2026* (corte: 14 de octubre de 2026). Cifras verificadas contra las fuentes originales el 17 de octubre de 2026, salvo las marcadas como «Informe base». Revisado por [nombre del facilitador].',
-    placeholder: '[nombre del facilitador]'
+    placeholder: '[nombre del facilitador]',
+    autoresTitulo: 'Autores',
+    autores: [
+      {
+        nombre: 'Guberney Muñetón-Santa',
+        afiliacion: 'Profesor del Instituto de Estudios Regionales INER, Universidad de Antioquia UdeA, Calle 70 No. 52-21, Medellín, 050010, Antioquia, Colombia.',
+        correo: 'guberney.muneton@udea.edu.co'
+      },
+      {
+        nombre: 'Carlos Andrés Pérez-Aguirre',
+        afiliacion: 'Estudiante de doctorado AI-Lab, Signal Processing and Recognition Group, Universidad Nacional de Colombia-Sede Manizales, Carrera 27 # 64-60, Manizales, 170001, Caldas, Colombia.',
+        correo: 'caaperezag@unal.edu.co'
+      }
+    ]
   },
   ui: {
     sitio: { titulo: 'Estado de la IA 2026' },
