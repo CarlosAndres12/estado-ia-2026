@@ -10,8 +10,8 @@
  *                                         window.renderReady (fonts loaded + setup done)
  *   lamina.layout(entry, module)          -> zones { titular, subtitulo, cifras, figs[], diagrama,
  *                                            ilustracion, idea, pie, sesion, full }
- *   lamina.diagram(ctx, diagrama, rect, { p, mono }) generic drawers (flujo, embudo, causal, columnas,
- *                                         pasos, ciclo, semaforo, linea, tarjetas)
+ *   lamina.diagram(ctx, diagrama, rect, { p, mono, titulo }) generic drawers (flujo, embudo, causal,
+ *                                         columnas, pasos, ciclo, semaforo, linea, tarjetas, barras)
  *   lamina.bigFigure(ctx, item, rect, { p, seed })  one big figure with its label and tag
  *   lamina.entry(id)                      the deck entry or null
  *
@@ -205,8 +205,17 @@
 
   var DRAW = {};
 
+  // diagrama.titulo above a drawer's band when the caller asks for it (o.titulo): returns the rect
+  // left for the drawing itself.
+  function titled(ctx, d, r, o) {
+    if (!o.titulo || !d.titulo) return r;
+    var th = I().text(ctx, d.titulo, r.x, r.y, { size: 21, weight: 700, maxWidth: r.w, maxLines: 1, fit: true, minSize: 15, p: seg(o.p, 0, 0.3) }).h + 8;
+    return { x: r.x, y: r.y + th, w: r.w, h: Math.max(0, r.h - th) };
+  }
+
   // flujo: "A → B → C" as paper cards joined by calligraphic arrows.
   DRAW.flujo = function (ctx, d, r, o) {
+    r = titled(ctx, d, r, o);
     var items = d.items || [], n = items.length || 1, gap = 46, ink = I();
     var cw = (r.w - gap * (n - 1)) / n, ch = Math.min(r.h - (hasTags(items) ? 40 : 0), 96), y = r.y + 4;
     for (var i = 0; i < items.length; i++) {
@@ -220,15 +229,33 @@
 
   function hasTags(items) { for (var i = 0; i < items.length; i++) if (items[i].cifras && items[i].cifras.length) return true; return false; }
 
-  // pasos: numbered stepping stones along a calligraphic path, labels under them.
+  // pasos: numbered stepping stones along a calligraphic path, labels under them. An item's luz
+  // (1 lit, 0.5 half-lit, 0 dark) lights its stone the way the lamp reaches that step; without
+  // luz the stones alternate cream and yellow.
   DRAW.pasos = function (ctx, d, r, o) {
+    r = titled(ctx, d, r, o);
     var items = d.items || [], n = items.length || 1, ink = I(), m = M();
-    var stepW = r.w / n, cy = r.y + 30;
+    var stepW = r.w / n, cy = r.y + 30, dark = E.palette.mix(m.tinta, m.azul, 0.25);
     ink.line(ctx, pathFor('pasos', r.x + 20, cy, r.x + r.w - 20), { w: 3, seed: 'pasos-path' + n, profile: 'swell', p: seg(o.p, 0, 0.5) });
     for (var i = 0; i < items.length; i++) {
       var cx = r.x + stepW * (i + 0.5), ip = seg(o.p, 0.2 + 0.6 * i / n, 0.2 + 0.6 * i / n + 0.3);
-      ink.circle(ctx, cx, cy, 20, { fill: i % 2 ? m.amarillo : m.lienzo, w: 3.4, seed: 'paso' + i, p: ip });
-      ink.text(ctx, String(i + 1), cx, cy - 12, { size: 20, weight: 700, align: 'center', p: ip });
+      var luz = items[i].luz == null ? null : clamp(+items[i].luz, 0, 1), numColor;
+      if (luz == null) ink.circle(ctx, cx, cy, 20, { fill: i % 2 ? m.amarillo : m.lienzo, w: 3.4, seed: 'paso' + i, p: ip });
+      else {
+        if (luz > 0 && ip > 0) ink.glow(ctx, cx, cy, 30 + 22 * luz, m.amarillo, 0.75 * luz * ip);
+        ink.circle(ctx, cx, cy, 20, { fill: luz >= 1 ? m.amarillo : luz <= 0 ? dark : m.lienzo, w: 3.4, seed: 'paso' + i, p: ip });
+        if (luz > 0 && luz < 1 && ip > 0) {
+          // Half-lit: yellow up to its share of the stone, from the side the light comes from.
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(cx - 24, cy - 24, 48 * luz, 48);
+          ctx.clip();
+          ink.circle(ctx, cx, cy, 17, { fill: m.amarillo, line: false, seed: 'paso-luz' + i, p: ip });
+          ctx.restore();
+        }
+        if (luz <= 0) numColor = m.lienzo;
+      }
+      ink.text(ctx, String(i + 1), cx, cy - 12, { size: 20, weight: 700, align: 'center', p: ip, color: numColor });
       textBox(ctx, items[i].text, { x: cx - stepW / 2 + 8, y: cy + 28, w: stepW - 16, h: r.h - 62 }, { size: 18, p: ip });
       itemTag(ctx, items[i], cx - stepW / 2 + 8, r.y + r.h - 30, ip, o);
     }
@@ -279,6 +306,47 @@
       ink.dotted(ctx, [cx - ex + bw / 2 + 10, ey, cx, ey + 4, cx + ex - bw / 2 - 10, ey], { r: 2.6, gap: 10, seed: 'assoc', p: dp });
       var link = d.enlace != null && d.enlace !== '' ? d.enlace : it[3] && it[3].text;
       if (link) ink.text(ctx, link, cx, ey + 12, { size: 18, italic: true, align: 'center', p: dp });
+    }
+  };
+
+  // barras: one horizontal bar per item on a shared zero-based scale (chart.bar), the item's label
+  // at its left, its verbatim value at its end once it lands, one source tag for all the items'
+  // cifras at the right. Values come from parseValue(item.text), else item.valor; labels from
+  // item.etiqueta, else the text without its leading number. Its titulo is part of the chart
+  // (it names what is counted), so this drawer always letters it.
+  DRAW.barras = function (ctx, d, r, o) {
+    r = titled(ctx, d, r, { titulo: true, p: o.p });
+    var ink = I(), chart = E.chart, m = M(), size = 21;
+    var rows = (d.items || []).map(function (it) {
+      var pv = chart.parseValue(it.text), value = pv ? pv.value : +it.valor;
+      var label = it.etiqueta || (pv && pv.index === 0 ? String(it.text).slice(pv.raw.length).trim() : String(it.text).replace(pv ? pv.raw : '', '').trim());
+      return { it: it, value: isFinite(value) ? value : 0, raw: pv ? pv.raw : String(it.valor), label: label };
+    });
+    if (!rows.length) return;
+    var labelW = 0, ids = [];
+    rows.forEach(function (b) {
+      labelW = Math.max(labelW, ink.measureText(ctx, b.label, { size: size, weight: 700 }).w);
+      (b.it.cifras || []).forEach(function (id) { if (ids.indexOf(id) < 0) ids.push(id); });
+    });
+    labelW = Math.min(labelW, r.w * 0.3);
+    var tagO = { scale: 0.8, scope: true, mono: o.mono }, tm = ids.length && E.tags ? E.tags.measureTag(ctx, ids, tagO) : { w: 0, h: 0 };
+    var n = rows.length, gap = 12, h = clamp((r.h - gap * (n - 1)) / n, 14, 32);
+    var x0 = r.x + labelW + 16, valueW = 64, len = Math.max(40, r.x + r.w - x0 - valueW - (tm.w ? tm.w + 24 : 0));
+    var max = Math.max.apply(null, rows.map(function (b) { return Math.abs(b.value); })) || 1;
+    var sc = chart.scale(max, x0, len), y0 = r.y + 4;
+    chart.baseline(ctx, sc(0), y0 - 6, y0 + n * (h + gap) - gap + 6, { p: seg(o.p, 0, 0.2) });
+    var ends = [];
+    rows.forEach(function (b, i) {
+      var y = y0 + i * (h + gap), ip = seg(o.p, 0.1 + 0.5 * i / n, 0.1 + 0.5 * i / n + 0.4), lp = seg(ip, 0.9, 1);
+      chart.bar(ctx, { value: b.value, cap: 'exact', scale: sc, y: y, h: h, color: m.azul, labels: false, seed: 'barras' + i, p: ip });
+      ink.text(ctx, b.label, x0 - 12, y + h / 2 - size * 0.62, { size: size, weight: 700, align: 'right', maxWidth: labelW, fit: true, minSize: 13, p: seg(ip, 0, 0.3) });
+      var vl = lp > 0 ? ink.text(ctx, b.raw, sc(b.value) + 10, y + h / 2 - size * 0.62, { size: size, weight: 700, p: lp }) : { w: 0 };
+      ends.push({ x: sc(b.value) + 10 + vl.w, y: y + h / 2 });
+    });
+    if (ids.length && E.tags) {
+      var ty = y0 + (n * (h + gap) - gap) / 2 - tm.h / 2;
+      E.tags.sourceTag(ctx, ids, { x: r.x + r.w - tm.w, y: ty, scale: tagO.scale, scope: tagO.scope, mono: o.mono, anchor: { x: ends[0].x + 4, y: ends[0].y },
+        p: seg(o.p, 0.85, 1) });
     }
   };
 
@@ -352,7 +420,7 @@
     if (!d) return;
     var p = o.p == null ? 1 : o.p, fn = DRAW[d.tipo];
     if (!fn) { warnOnce('diagrama.tipo desconocido: ' + d.tipo); fn = DRAW.tarjetas; }
-    fn(ctx, d, r, { p: p, mono: o.mono });
+    fn(ctx, d, r, { p: p, mono: o.mono, titulo: o.titulo !== false });
   };
   lamina.diagramTypes = function () { return Object.keys(DRAW); };
 
@@ -413,7 +481,7 @@
       ctx.restore();
     }
     var lay = (inst.mod && inst.mod.layout) || {};
-    if (entry.diagrama && z.diagrama && lay.drawDiagram !== false) lamina.diagram(ctx, entry.diagrama, z.diagrama, { mono: lay.mono });
+    if (entry.diagrama && z.diagrama && lay.drawDiagram !== false) lamina.diagram(ctx, entry.diagrama, z.diagrama, { mono: lay.mono, titulo: lay.diagramTitle === true });
     if (z.figs) entry.cifras.forEach(function (f, i) { lamina.bigFigure(ctx, f, z.figs[i], { seed: id + ':fig' + i }); });
     drawTitular(ctx, entry, z, 1);
     drawSesion(ctx, entry, z);

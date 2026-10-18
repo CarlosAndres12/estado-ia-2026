@@ -151,10 +151,29 @@
     { tipo: 'tarjetas', items: [{ text: 'Gobiernos' }, { text: 'Universidades' }, { text: 'Organizaciones' }] }
   ];
 
-  section('lamina', 3, function (ctx, o) {
+  // Drawer options: titles, the lamp's reach on pasos (luz), the causal enlace, barras.
+  var DIAGRAMS_OPTS = [
+    { tipo: 'flujo', titulo: 'No son lo mismo', items: [{ text: 'Exposición' }, { text: 'Automatización' }, { text: 'Desplazamiento' }] },
+    { tipo: 'pasos', titulo: 'Dónde llega la luz', items: [{ text: 'Hipótesis', luz: 1 }, { text: 'Diseño', luz: 1 }, { text: 'Ejecución', luz: 0.5 },
+      { text: 'Validación', luz: 0 }, { text: 'Interpretación', luz: 0 }] },
+    { tipo: 'causal', enlace: 'asociación', items: [{ text: 'Capital, datos, gestión' }, { text: 'Exposición a IA' }, { text: 'Ingreso por empleado' }] },
+    { tipo: 'barras', titulo: 'Modelos notables 2025', items: [{ text: 'EE. UU. 59', cifras: ['cap-10'], etiqueta: 'EE. UU.', valor: 59 },
+      { text: 'China 35', cifras: ['cap-10'], etiqueta: 'China', valor: 35 }] }
+  ];
+
+  section('lamina', 4, function (ctx, o) {
     var lam = E.lamina;
     if (o.page === 1) { lam.render(ctx, 'd07', { t: o.t, still: q.still === '1' }); return; }
     if (o.page === 2) { lam.render(ctx, 'd06', { t: o.t, still: q.still === '1' }); return; }
+    if (o.page === 4) {
+      E.ink.background(ctx, 'personas', { seed: 'gallery-diagrams-opts' });
+      var cellsO = [{ x: 40, y: 30, w: 580, h: 170 }, { x: 660, y: 30, w: 580, h: 190 }, { x: 40, y: 260, w: 580, h: 230 }, { x: 660, y: 280, w: 580, h: 150 }];
+      DIAGRAMS_OPTS.forEach(function (d, i) {
+        lam.diagram(ctx, d, cellsO[i], { p: o.p });
+        devLabel(ctx, d.tipo, cellsO[i].x + 4, cellsO[i].y - 12, { align: 'left', size: 11 });
+      });
+      return;
+    }
     E.ink.background(ctx, 'personas', { seed: 'gallery-diagrams' });
     var cells = [
       { x: 30, y: 20, w: 600, h: 130 }, { x: 650, y: 20, w: 600, h: 150 },
@@ -501,6 +520,8 @@
       'multi-id sourceTag shows every source once: «' + (tgM && tgM.label) + '»');
     var tgW = E.tags.sourceTag(ctx, ['ries-4', 'ctx-ley-vigor'], { x: 0, y: 0, p: 0, maxWidth: 200, scope: false });
     log(!!tgW && tgW.w <= 200 + 1e-6 && tgW.lines.length > 1, 'long source label wraps inside maxWidth 200 (w ' + (tgW && tgW.w.toFixed(1)) + ', ' + (tgW && tgW.lines.length) + ' lines)');
+
+    log(E.lamina.diagramTypes().indexOf('barras') >= 0, 'lamina.diagram knows barras');
 
     // 5. Legend rules: the five evidence colors belong only to the evidence types.
     var ev = E.palette.evidencia, decorUsesEv = E.palette.decor.some(function (col) { return Object.keys(ev).some(function (k) { return ev[k] === col; }); });
