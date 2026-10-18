@@ -385,7 +385,7 @@
     far: [796, 272, 850, 244, 940, 222, 1060, 210, 1180, 214, 1290, 226, 1290, 296, 1100, 302, 900, 298],
     towers: [[1000, 46], [1056, 64], [1112, 54], [1168, 40]],          // x, height (bottom at TOWER_BASE)
     stalls: [{ x: 116, shop: false }, { x: 300, shop: true }, { x: 486, shop: false }],
-    table: 470, feet: 566,
+    table: 432, feet: 566,
     people: [
       { x: 52, skin: 1, hair: 'long', facing: 1 }, { x: 196, skin: 4, hair: 'short', facing: -1 }, { x: 226, skin: 2, hair: 'bun', facing: 1 },
       { x: 384, skin: 0, hair: 'curly', facing: -1 }, { x: 420, skin: 3, hair: 'braids', facing: 1 }, { x: 572, skin: 1, hair: 'ponytail', facing: -1 }
@@ -439,16 +439,29 @@
       var lit = sl.shop ? cueBeat(a0, C.mipymes, 0.04, 0.08) : beat(a0, 0.04 + k * 0.05, 0.16 + k * 0.05);
       stall(ctx, s, env, sl, k, out3(seg(s.t, 0, 0.6) * 0.3 + beat(a0, 0, 0.12) * 0.7), lit);
     });
+    // «productividad a corto plazo»: a bright star rises over each stall.
+    CONS.stalls.forEach(function (sl, k) {
+      var sp = cueBeat(a0, C.productividad, 0.02 - k * 0.02, 0.1 + k * 0.02);
+      if (sp <= 0) return;
+      var sy = CONS.table - 196 - out3(sp) * 26 + Math.sin(s.t * 0.9 + k) * 2 * calm(s);
+      ink.glow(ctx, sl.x, sy, 46, m.amarillo, 0.8 * sp);
+      fig.sign(ctx, 'estrella', sl.x, sy, 46 * out3(sp), { seed: 'v09:chispa' + k, colors: { a: m.amarillo } });
+    });
     // Many small figures buying, each with a lamp box in hand once they have bought it.
     CONS.people.forEach(function (pp, i) {
       var pp0 = out3(beat(a0, 0.02 + i * 0.03, 0.14 + i * 0.03));
       if (pp0 <= 0) return;
       var walk = Math.sin(s.t * 0.6 + i * 1.3) * 3 * calm(s);
-      var P = fig.person(ctx, pp.x + walk, CONS.feet, 0.92, { role: 'persona', pose: i % 2 ? 'carrying' : 'standing', facing: pp.facing, seed: 'v09:comprador' + i,
+      var carry = i % 2 === 1;
+      fig.person(ctx, pp.x + walk, CONS.feet, 0.92, { role: 'persona', pose: carry ? 'carrying' : 'standing', facing: pp.facing, seed: 'v09:comprador' + i,
         skin: pp.skin, hair: pp.hair, p: pp0 });
-      // «productividad a corto plazo»: a small star over some heads.
-      var sp = beat(a0, C.productividad - 0.02 + i * 0.01, C.productividad + 0.06 + i * 0.01);
-      if (sp > 0 && i % 2 === 0) fig.sign(ctx, 'estrella', P.head.x, P.top - 26 + Math.sin(s.t + i) * 2, 36 * out3(sp), { seed: 'v09:chispa' + i, colors: { a: m.amarillo } });
+      var topY = CONS.feet - 92;
+      // Bought: a lamp in its box, carried over the head.
+      if (carry) {
+        fig.lamp(ctx, pp.x + walk, topY - 40, 0.18, { t: s.t + i, p: seg(pp0, 0.6, 1) });
+        ink.draw(ctx, st.box, pp.x + walk, topY - 2, 0.7, { p: seg(pp0, 0.5, 1) });
+      }
+
     });
     // Line 2. «dependencia tecnológica»: ruled threads from the market's lamps to the far shore.
     var dp = cueBeat(a1, C.dependencia, 0.04, 0.12);
@@ -579,7 +592,7 @@
       if (i === 0) firstTag = { x: gr.x + g.radius * 0.7, y: gr.y - g.radius * 0.7, p: lp };
     });
     var a0w = landWindow(C.ocho);
-    var yp = beat(a, a0w[0], a0w[1]);
+    var yp = beat(a, a0w[1] - 0.01, a0w[1] + 0.04);
     if (yp > 0) label(ctx, env, rot(s, 'anio'), COMP.year.x, COMP.year.y, 46, { align: 'center', seed: 'v09:anio', p: yp });
     if (firstTag && firstTag.p > 0) tag(ctx, env, 'eco-7', COMP.tag.x, COMP.tag.y, firstTag, firstTag.p);
   }
@@ -695,7 +708,9 @@
     var a0 = s.at(0), a1 = s.at(1), intro = out3(s.intro);
     var pw = 130 * CON.k, ph = 180 * CON.k, cues = [C.e0, C.e1, C.e2, C.e3, C.e4, C.e5];
     // The title, written as the scene opens; its numbers are tagged from then on.
-    var TL = label(ctx, env, rot(s, 'documento'), CON.title.x, CON.title.y, 56, { seed: 'v09:conpes', p: beat(a0, 0, 0.12) });
+    // (Faded in whole: written glyph by glyph, «4144» would pass through other numbers.)
+    var TL = letterFade(ctx, env, rot(s, 'documento'), CON.title.x, CON.title.y, { size: 56, align: 'left', counters: 0, stars: false, underline: false,
+      seed: 'v09:conpes', maxLines: 1, p: 1 }, beat(a0, 0, 0.1), 'conpes');
     // How open the map is: panel i unfolds on its axis' word.
     var open = 1;
     for (var i = 1; i < 6; i++) open += seg(a1, cues[i] - 0.05, cues[i]);
@@ -729,7 +744,7 @@
     var win = landWindow(C.contador), cp = beat(a0, win[0], win[1]);
     var CL = null;
     if (cp > 0) CL = ink.text(ctx, rot(s, 'contador'), CON.counter.x, CON.counter.y, { size: 28, weight: 700, p: cp });
-    var tp = beat(a0, 0.02, 0.12);
+    var tp = beat(a0, 0, 0.1);
     if (tp > 0) {
       var tb = tag(ctx, env, 'alc-4', CON.tag.x, CON.tag.y, { x: CON.title.x + TL.w + 8, y: CON.title.y + TL.h * 0.62 }, tp);
       if (CL && tb) {
