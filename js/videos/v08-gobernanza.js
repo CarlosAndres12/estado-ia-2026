@@ -311,7 +311,7 @@
     // one after the other, and stand complete when «tres familias» is said.
     var cueF = [C.f0, C.f1, C.f2];
     for (var i = 0; i < FAM.cols.length; i++) {
-      var c0 = Math.min(C.informe + 0.04 + i * 0.12, C.familias - 0.2), cp = beat(a0, c0, C.familias - 0.01);
+      var col = FAM.cols[i], c0 = Math.min(C.informe + 0.04 + i * 0.12, C.familias - 0.2), cp = beat(a0, c0, C.familias - 0.01);
       if (s.line >= 1) cp = 1;
       if (cp <= 0) continue;
       ink.draw(ctx, st.pillars[i], col.x, FAM.foot, FAM.k, { p: cp, colors: { a: m[col.color], stone: m.lienzoOcre, paper: m.lienzo } });
