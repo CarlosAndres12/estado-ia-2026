@@ -344,6 +344,42 @@
     tags.marginNote(ctx, 'Benchmark', 'Prueba estandarizada para comparar sistemas en una tarea definida (texto de prueba).', 760, 570, 480, o.p);
   });
 
+  // Engine-polish options (additive; defaults keep every older frame as it was).
+  section('options', 1, function (ctx, o) {
+    var ink = E.ink, tags = E.tags, chart = E.chart, fig = E.figures, m = E.palette.mundo, q = E.palette.maquina;
+    ink.background(ctx, 'personas', { seed: 'gallery-options' });
+    // Tags hanging left of their number (hole on the right) with a light thread on navy.
+    fig.panel(ctx, 20, 20, 600, 200);
+    ctx.font = '900 44px "EIA Display"'; ctx.fillStyle = m.lienzo; ctx.fillText('cap-10', 430, 110);
+    tags.sourceTag(ctx, 'cap-10', { near: { x: 420, y: 96, side: 'left', gap: 30 }, hole: 'right', threadColor: m.lienzo, p: o.p });
+    tags.labelTag(ctx, 'Fuente · Alcance · Tipo de evidencia', { x: 40, y: 150, hole: 'right', anchor: { x: 430, y: 180 }, threadColor: q.linea, scale: 0.8, p: o.p });
+    devLabel(ctx, 'hole right + threadColor', 26, 210, { align: 'left', size: 11 });
+    // ≈ cap in a light color on navy; band ticks recolored.
+    fig.panel(ctx, 640, 20, 620, 200);
+    var sc = chart.scale(100, 670, 380);
+    chart.bar(ctx, { text: '~1/3', scale: sc, y: 50, h: 34, color: m.amarillo, tickColor: m.lienzo, textColor: m.lienzo, labels: true, p: o.p });
+    chart.band(ctx, { text: '14–15%', scale: sc, y: 130, color: m.celeste, tickColor: m.lienzo, zeroLine: false, p: o.p });
+    devLabel(ctx, 'tickColor', 646, 210, { align: 'left', size: 11 });
+    // Unit grid with the ≈ cap.
+    chart.unitGrid(ctx, { x: 40, y: 260, w: 220, total: 100, percent: 100 / 3, approx: true, approxSign: true, seed: 'opt-ug', p: o.p });
+    devLabel(ctx, 'unitGrid approx', 40, 250, { align: 'left', size: 11 });
+    // Iceberg waterlines: default, deeper, none.
+    ink.wash(ctx, 330, 250, 920, 230, { color: m.azul, alpha: 0.9 });
+    fig.iceberg(ctx, 470, 380, 0.42, { p: o.p });
+    fig.iceberg(ctx, 790, 380, 0.42, { waterline: 40, p: o.p });
+    fig.iceberg(ctx, 1110, 380, 0.42, { waterline: false, p: o.p });
+    devLabel(ctx, 'waterline default · 40 · false', 336, 262, { align: 'left', size: 11, color: m.lienzo });
+    // Sharp corners vs the default rounded outline (same points).
+    ink.shape(ctx, OPT_POLY, { fill: m.rojo, w: 4, seed: 'opt-round', p: o.p });
+    ink.shape(ctx, OPT_POLY_SHARP, { fill: m.rojo, w: 4, seed: 'opt-sharp', sharp: true, p: o.p });
+    devLabel(ctx, 'shape default · sharp', 40, 520, { align: 'left', size: 11 });
+    // Agent loop without its lamp, bigger labels.
+    fig.agentLoop(ctx, 640, 500, 0.62, { labels: ['Objetivo', 'Planificar', 'Usar herramientas', 'Ejecutar', 'Verificar'], returnTo: 1, lamp: false, labelSize: 19, p: o.p });
+    devLabel(ctx, 'agentLoop lamp:false labelSize:19', 646, 492, { align: 'left', size: 11 });
+  });
+  var OPT_POLY = [40, 560, 260, 540, 280, 700, 60, 690];
+  var OPT_POLY_SHARP = [330, 560, 550, 540, 570, 700, 350, 690];
+
   section('lettering', 1, function (ctx, o) {
     var ink = E.ink;
     ink.background(ctx, 'personas', { seed: 'gallery-letter' });
@@ -522,6 +558,10 @@
     log(!!tgW && tgW.w <= 200 + 1e-6 && tgW.lines.length > 1, 'long source label wraps inside maxWidth 200 (w ' + (tgW && tgW.w.toFixed(1)) + ', ' + (tgW && tgW.lines.length) + ' lines)');
 
     log(E.lamina.diagramTypes().indexOf('barras') >= 0, 'lamina.diagram knows barras');
+
+    var ugA = chart.unitGrid(ctx, { x: 0, y: 0, w: 100, total: 100, percent: 100 / 3, approx: true });
+    log(!!ugA.edge && ugA.edge.length === 8 && ugA.edge[2] === 3 * ugA.pitch && ugA.edge[5] === 3 * ugA.pitch,
+      'unitGrid approx: dotted edge steps after the 33rd dot (' + (ugA.edge ? ugA.edge.join(',') : 'none') + ')');
 
     // 5. Legend rules: the five evidence colors belong only to the evidence types.
     var ev = E.palette.evidencia, decorUsesEv = E.palette.decor.some(function (col) { return Object.keys(ev).some(function (k) { return ev[k] === col; }); });
