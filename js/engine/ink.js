@@ -380,6 +380,20 @@
   /* shapeGeom(points, opts) -> closed gouache shape: { outline, path (Path2D of the color field),
    * cx, cy, rad, ox, oy (unit offset direction × magnitude), bbox }.
    * The color field is jittered independently of the line and slightly scaled (spill or sliver). */
+  // sharp: two guide points hugging each corner, so the Catmull-Rom outline turns within a pixel or
+  // two of the vertex instead of rounding it.
+  function sharpen(c, w) {
+    var n = c.length >> 1, out = [];
+    for (var i = 0; i < n; i++) {
+      var x = c[2 * i], y = c[2 * i + 1];
+      var px = c[2 * ((i - 1 + n) % n)], py = c[2 * ((i - 1 + n) % n) + 1], nx = c[2 * ((i + 1) % n)], ny = c[2 * ((i + 1) % n) + 1];
+      var lp = Math.sqrt(d2(x, y, px, py)) || 1, ln = Math.sqrt(d2(x, y, nx, ny)) || 1;
+      var e = Math.max(0.6, Math.min(1.5 + (w || 3) * 0.15, lp / 4, ln / 4));
+      out.push(x + (px - x) / lp * e, y + (py - y) / lp * e, x, y, x + (nx - x) / ln * e, y + (ny - y) / ln * e);
+    }
+    return out;
+  }
+
   function shapeGeom(points, o) {
     o = o || {};
     var c = flat(points);
@@ -403,7 +417,7 @@
       fc[2 * i + 1] = cy + (c[2 * i + 1] - cy) * fs + r.jitter(fj);
     }
     var path;
-    if (o.poly) {
+    if (o.poly || o.sharp) {
       // Straight-edged field (floors, walls, bands): the polygon itself, offset but not smoothed.
       path = new Path2D();
       for (i = 0; i < n; i++) { if (i === 0) path.moveTo(c[0], c[1]); else path.lineTo(c[2 * i], c[2 * i + 1]); }
@@ -412,7 +426,7 @@
       var fp = o.exact ? smoothPath(c, true, o.step || 1.5) : smoothPath(fc, true, o.step || 1.5);
       path = toPath2D(fp.x, fp.y, fp.n, true);
     }
-    var outline = o.line === false ? null : strokeGeom(c, {
+    var outline = o.line === false ? null : strokeGeom(o.sharp ? sharpen(c, o.w) : c, {
       closed: true, w: o.w, profile: o.profile || 'outline', seed: seed + ':o', second: o.second,
       overshoot: o.overshoot, dot: o.dot, press: o.press, rough: o.rough
     });
@@ -580,7 +594,8 @@
     var c = this._jit(pts, o.jitter != null ? o.jitter : this.jitter);
     var g = shapeGeom(c, {
       seed: this._seed(), w: o.w || this.w, line: o.line, profile: o.profile, fillJitter: o.fillJitter,
-      fillScale: o.fillScale, second: o.second, overshoot: o.overshoot, exact: o.exact, press: o.press, poly: o.poly
+      fillScale: o.fillScale, second: o.second, overshoot: o.overshoot, exact: o.exact, press: o.press, poly: o.poly,
+      sharp: o.sharp
     });
     var fill = null, line = null;
     if (o.fill) {
@@ -920,7 +935,7 @@
   }
   ink.shape = function (ctx, pts, o) {
     o = o || {};
-    var g = cached(pts, o, 's', function () { return shapeGeom(pts, o); });
+    var g = cached(pts, o, o.sharp ? 's#' : 's', function () { return shapeGeom(pts, o); });
     return drawShapeNow(ctx, g, o);
   };
   ink.blob = function (ctx, cx, cy, rx, ry, o) {
