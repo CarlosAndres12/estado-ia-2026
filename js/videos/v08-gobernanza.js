@@ -811,7 +811,7 @@
 
   var LEY = {
     labels: { vigor: { w: 250, align: 'center', bottom: 252 }, prohibiciones: { w: 280, align: 'center', bottom: 252 }, gpai: { w: 244, align: 'left', bottom: 216, dx: -150 } },
-    ctxTag: { x: 508, y: 328 },
+    ctxTag: { x: 470, y: 322 },
     gpaiTag: { x: 912, y: 64 },
     cards: { x: 520, y: 388, w: 362, gap: 8, size: 19, keys: ['documentacion', 'derechosAutor', 'resumen'] }
   };
@@ -837,7 +837,7 @@
     }
     if (heads.length) {
       var cy = TL.y + TL.h + 4;
-      var tg = sourceTag(ctx, env, ['ctx-ley-vigor', 'ctx-ley-prohibiciones'], LEY.ctxTag.x, LEY.ctxTag.y, { x: heads[0].x, y: cy }, heads[0].p);
+      var tg = sourceTag(ctx, env, ['ctx-ley-vigor', 'ctx-ley-prohibiciones'], LEY.ctxTag.x, LEY.ctxTag.y, { x: heads[0].x, y: cy }, heads[0].p, { scale: 0.86, scope: false, maxWidth: 330 });
       if (heads[1]) extraThread(ctx, env, tg, { x: heads[1].x, y: cy }, 'ley-prohib', heads[1].p);
     }
     // Line 2: the general-purpose models.
