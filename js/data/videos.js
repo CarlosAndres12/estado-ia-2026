@@ -1495,6 +1495,7 @@ EIA.data.videos = [
         min: 16,
         seVe: 'Un patio universitario cálido, con estudiantes que llevan cuadernos y teléfonos; junto a muchos de ellos brillan pequeñas lámparas frías; luego, una tarjeta con tres barras proporcionales: «86% usa IA», «54% al menos cada semana» y «24% a diario (cobertura de prensa)».',
         rotulos: {
+          eeuu: { text: 'En Estados Unidos, cuatro de cada cinco estudiantes de secundaria y universidad usan IA generativa', cifras: ['edu-4'] },
           uso: { text: '86% usa IA', cifras: ['edu-1'] },
           semanal: { text: '54% al menos cada semana', cifras: ['edu-1'] },
           diario: { text: '24% a diario (cobertura de prensa)', cifras: ['edu-2'] }
@@ -1569,7 +1570,9 @@ EIA.data.videos = [
         min: 16,
         seVe: 'Un colador reglado intenta atrapar las letras generadas de una página y deja pasar la mayoría; se hace a un lado; cuatro piezas se dibujan a lo largo de un camino: «Producto auténtico → Bitácora de proceso → Defensa oral → Uso declarado de IA».',
         rotulos: {
-          camino: { text: 'Producto auténtico → Bitácora de proceso → Defensa oral → Uso declarado de IA' }
+          camino: { text: 'Producto auténtico → Bitácora de proceso → Defensa oral → Uso declarado de IA' },
+          preguntaAntes: { text: '¿usó IA?' },
+          preguntaAhora: { text: '¿qué aprendió, qué decidió y puede justificarlo?' }
         },
         lines: [
           {
@@ -1586,7 +1589,11 @@ EIA.data.videos = [
         id: 'piezas',
         min: 16,
         seVe: 'Las cuatro piezas se vuelven cuatro tarjetas sobre un escritorio, cada una con lo que recoge: un producto real, una bitácora con fechas, una conversación y una declaración breve.',
-        rotulos: {},
+        rotulos: {
+          permitidos: { text: 'qué usos de IA están permitidos' },
+          declaran: { text: 'cómo se declaran' },
+          sinIA: { text: 'qué parte se hace sin IA' }
+        },
         lines: [
           {
             voice: 'narrador',
@@ -1598,7 +1605,15 @@ EIA.data.videos = [
         id: 'riesgos',
         min: 16,
         seVe: 'La lancha pasa entre dos corrientes: una cálida, con signos que ayudan (tutoría, retroalimentación, accesibilidad), y un remolino oscuro de formas idénticas repetidas (dependencia, respuestas homogéneas, aprendizaje superficial).',
-        rotulos: {},
+        rotulos: {
+          tutoria: { text: 'tutoría' },
+          retroalimentacion: { text: 'retroalimentación' },
+          accesibilidad: { text: 'accesibilidad' },
+          dependencia: { text: 'dependencia cognitiva' },
+          homogeneas: { text: 'respuestas homogéneas' },
+          superficial: { text: 'aprendizaje superficial' },
+          sinIA: { text: 'actividades sin IA' }
+        },
         lines: [
           {
             voice: 'narrador',
