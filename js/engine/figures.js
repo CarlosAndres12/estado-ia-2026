@@ -766,7 +766,9 @@
   /* fig.agentLoop(ctx, x, y, scale, opts) -> { stations: [{ x, y }], panel }: the ruled agent loop
    * on its navy panel, with the lamp moving along it. (x, y) = top-left; panel 560×300 at scale 1.
    * opts: labels (verbatim station labels, from data), n (stations, default labels.length or 5),
-   * returnTo (index the return arrow goes back to, 1), at (0..1 lamp position along the loop), t, p. */
+   * returnTo (index the return arrow goes back to, 1), at (0..1 lamp position along the loop), t, p,
+   * lamp (true; false leaves the lamp out so the caller can draw its own), labelSize (station
+   * label px at scale 1, 15). */
   fig.agentLoop = function (ctx, x, y, scale, o) {
     o = o || {};
     var s = scale || 1, w = 560 * s, h = 300 * s, p = o.p == null ? 1 : o.p, q = Q(), ink = I();
@@ -816,9 +818,9 @@
       var a0 = at(i / n + 0.06), a1 = at(i / n + 0.075);
       ink.rArrow(ctx, a0.x, a0.y, a1.x, a1.y, { color: q.linea, w: 1.4, headSize: 8 * s, p: ip });
       if (labels[i]) {
-        var below = sp.y > cy + 1, lx = sp.x, ly = below ? sp.y + 16 * s : sp.y - 16 * s - 18 * s;
+        var below = sp.y > cy + 1, lx = sp.x, ly = below ? sp.y + 16 * s : sp.y - 16 * s - 18 * s * (o.labelSize || 15) / 15;
         if (Math.abs(sp.y - cy) < ry * 0.5) { lx = sp.x + (sp.x < cx ? -14 * s : 14 * s); ly = sp.y - 9 * s; }
-        ink.text(ctx, labels[i], lx, ly, { size: 15 * Math.max(0.9, s), weight: 700, color: M().lienzo, p: ip,
+        ink.text(ctx, labels[i], lx, ly, { size: (o.labelSize || 15) * Math.max(0.9, s), weight: 700, color: M().lienzo, p: ip,
           align: Math.abs(sp.y - cy) < ry * 0.5 ? (sp.x < cx ? 'right' : 'left') : 'center', maxWidth: (Math.abs(sp.y - cy) < ry * 0.5 ? 108 : 150) * s });
       }
     }
@@ -835,7 +837,8 @@
       ctx.stroke();
       ctx.restore();
     }
-    if (o.at != null && p >= 0.6) {
+    if (o.lamp === false) { /* the caller draws its own lamp */ }
+    else if (o.at != null && p >= 0.6) {
       var lp = at(o.at);
       fig.lamp(ctx, lp.x, lp.y, 0.34 * s, { t: o.t, p: seg(p, 0.6, 1) });
     } else if (o.at == null && p >= 0.6) {
@@ -1672,7 +1675,10 @@
 
   /* fig.iceberg(ctx, x, y, scale, opts): the luminous tip above a calligraphic waterline and the
    * large submerged mass below. (x, y) = waterline center; scale 1 = 420 px wide.
-   * opts: reveal (0..1 how much of the mass shows), glow (tip glow 0..1), p. */
+   * opts: reveal (0..1 how much of the mass shows), glow (tip glow 0..1), p, waterline (true; false
+   * draws no line — e.g. over a sea that has its own surface; a number moves the line that many px
+   * at scale 1 below (+) or above (−) the iceberg's own waterline, so it can sink the iceberg
+   * deeper), waterColor (lienzo). */
   fig.iceberg = function (ctx, x, y, scale, o) {
     o = o || {};
     var s = scale || 1, m = M(), p = o.p == null ? 1 : o.p;
@@ -1691,7 +1697,9 @@
     ctx.clip();
     I().draw(ctx, d, x, y, s, { p: p, colors: { tip: m.lienzo, mass: P().mix(m.celeste, m.azul, 0.35) } });
     ctx.restore();
-    I().wave(ctx, x - 300 * s, y, x + 300 * s, { amp: 5 * s, len: 120 * s, w: 4.5 * s, seed: 'waterline', profile: 'swell', p: p, color: m.lienzo });
+    if (o.waterline === false) return;
+    var wy = y + (typeof o.waterline === 'number' ? o.waterline * s : 0);
+    I().wave(ctx, x - 300 * s, wy, x + 300 * s, { amp: 5 * s, len: 120 * s, w: 4.5 * s, seed: 'waterline', profile: 'swell', p: p, color: o.waterColor || m.lienzo });
   };
 
   /* fig.marNocturno(ctx, x, y, scale, opts) -> { horizon } — a night sea: ultramarine and noche
