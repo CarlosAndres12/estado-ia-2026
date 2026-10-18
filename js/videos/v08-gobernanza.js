@@ -38,8 +38,13 @@
   function clamp01(x) { return x <= 0 ? 0 : x >= 1 ? 1 : x; }
   function lerp(a, b, t) { return a + (b - a) * t; }
   function seg(p, a, b) { return b <= a ? (p >= b ? 1 : 0) : clamp01((p - a) / (b - a)); }
-  // A beat inside a line: like seg on s.at(i), but never before the line starts (a cue at 0).
-  function beat(at, a, b) { return at <= 0 ? 0 : seg(at, Math.max(0, a), b); }
+  // A beat inside a line: like seg on s.at(i), but never before the line starts (a cue at 0), and
+  // always finished by the end of the line (a window that would end past it is pulled back in).
+  function beat(at, a, b) {
+    if (at <= 0) return 0;
+    b = Math.min(b, 1);
+    return seg(at, Math.max(0, Math.min(a, b - 0.02)), b);
+  }
   function out3(t) { t = 1 - clamp01(t); return 1 - t * t * t; }
   function inOut3(t) { t = clamp01(t); return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
   function noise(x, seed) { return EIA.engine.rng.noise1(x, seed); }
@@ -251,7 +256,7 @@
   // A warm hand (palm, four fingers, thumb, sleeve), fingers up at rotation 0; scale 1 ≈ 80 px.
   function handDrawing(env) {
     var b = env.ink.drawing('v08:mano', { w: 3, jitter: 0.3 });
-    b.shape([-28, 30, 28, 30, 30, 104, -30, 104], { fill: '@sleeve', w: 3 });
+    b.shape([-17, 28, 17, 28, 21, 190, -21, 190], { fill: '@sleeve', w: 3 });
     for (var i = 0; i < 4; i++) b.ellipse(-21 + i * 14, -24 + Math.abs(i - 1.5) * 4, 7.5, 16, { fill: '@skin', w: 2.4 });
     b.ellipse(31, 8, 9, 17, { fill: '@skin', w: 2.4, rot: -0.7 });
     b.ellipse(0, 6, 31, 28, { fill: '@skin', w: 3 });
@@ -592,7 +597,7 @@
     var rv = beat(a0, C.revisan - 0.02, C.revisan + 0.12);
     if (rv > 0 && dl.despues) {
       var lb = dl.despues;
-      ink.line(ctx, stable(env, 'v08:revisa', circlePts(lb.x + lb.w / 2, lb.y + lb.h / 2, Math.max(lb.w, 40) * 0.62, 14, -1.2).concat([lb.x + lb.w * 0.9, lb.y - 2])),
+      ink.line(ctx, stable(env, 'v08:revisa', circlePts(lb.x + lb.w / 2, lb.y + lb.h / 2, Math.max(lb.w, 40) * 0.7, 14, -1.2).concat([lb.x + lb.w * 0.9, lb.y - 2])),
         { w: 2.4, profile: 'even', seed: 'v08:revisa', p: rv, color: m.rojo });
     }
     // The town grows: desks with lamps (use), then mailboxes (reporting).
@@ -631,7 +636,7 @@
     sign: { x: 150, y: 104, w: 276, h: 52 },
     fence: { x: 610, y0: 100, y1: 494, gap0: 300, gap1: 352 },
     tray: { x: 690, y: 300, w: 110, h: 56 },
-    termino: { x: 1062, y: 88, size: 42, w: 390 },
+    termino: { x: 1062, y: 92, size: 44 },
     desks: { x0: 120, y0: 392, dx: 136, dy: 62, w: 92, h: 30, cols: 3, rows: 2 },
     evaluadora: { x: 1074, y: 562, k: 2.2 },
     lock: { x: 610, y: 430 }
@@ -690,7 +695,7 @@
     }
     // The term, lettered on the page.
     var tp = beat(a0, C.termino - 0.03, C.termino + 0.12);
-    if (tp > 0) label(ctx, env, rot(s, 'termino'), TRA.termino.x, TRA.termino.y, TRA.termino.size, { align: 'center', maxWidth: TRA.termino.w, seed: 'v08:termino', underline: true, p: tp });
+    if (tp > 0) label(ctx, env, rot(s, 'termino'), TRA.termino.x, TRA.termino.y, TRA.termino.size, { align: 'center', seed: 'v08:termino', underline: true, p: tp });
     // Line 2: the human controls.
     var ep = out3(beat(a1, 0, 0.25));
     if (ep > 0) fig.person(ctx, TRA.evaluadora.x, TRA.evaluadora.y, TRA.evaluadora.k, { role: 'investigadora', pose: 'writing', prop: 'clipboard', facing: -1,
@@ -807,7 +812,7 @@
     labels: { vigor: { w: 250, align: 'center', bottom: 252 }, prohibiciones: { w: 280, align: 'center', bottom: 252 }, gpai: { w: 244, align: 'left', bottom: 216, dx: -150 } },
     ctxTag: { x: 508, y: 328 },
     gpaiTag: { x: 912, y: 64 },
-    cards: { x: 588, y: 394, w: 292, gap: 8, size: 19, keys: ['documentacion', 'derechosAutor', 'resumen'] }
+    cards: { x: 520, y: 388, w: 362, gap: 8, size: 19, keys: ['documentacion', 'derechosAutor', 'resumen'] }
   };
 
   function ley(ctx, s, env) {
@@ -919,7 +924,7 @@
     sheet: { x: 280, y: 300, w: 430, h: 262 },
     cards: { dx: 22, y: [384, 466], w: 386, keys: ['prohibiciones', 'sandbox'] },
     gpaiTag: { x: 64, y: 72 },
-    sheetTag: { x: 728, y: 334 },
+    sheetTag: { x: 728, y: 348 },
     lectora: { x: 1146, y: 566, k: 2.05 }
   };
 
@@ -958,7 +963,7 @@
       pin(ctx, env, 'g' + i, x, H2.bottom + 4, 1);
       var lb = dateLabel(ctx, env, g.head, { x: x, align: 'center', w: H2.w, bottom: H2.bottom - 20, size: H2.size, p: intro });
       heads.push({ x: x, lb: lb });
-      if (scp > 0) ink.text(ctx, rot(s, 'sinCambios'), x + 8, H2.bottom - 16, { size: 18, italic: true, weight: 700, color: m.verde, p: seg(scp, i * 0.15, 0.5 + i * 0.15) });
+      if (scp > 0) ink.text(ctx, rot(s, 'sinCambios'), x, H2.bottom - 16, { size: 18, italic: true, weight: 700, align: 'center', color: m.verde, p: seg(scp, i * 0.15, 0.5 + i * 0.15) });
     });
     if (heads.length) {
       // One tag for the group of general-purpose-model dates, tied straight down to the first one
@@ -971,7 +976,7 @@
       ctx.save();
       ctx.translate(S.x + S.w / 2, S.y + S.h / 2 - (1 - out3(hp)) * 30);
       ctx.rotate(-0.015);
-      ink.card(ctx, -S.w / 2, -S.h / 2, S.w, S.h, { seed: 'v08:omnibus', weight: 3.8, radius: 6, p: hp, peek: m.azul, peekCorner: 'tl' });
+      ink.card(ctx, -S.w / 2, -S.h / 2, S.w, S.h, { seed: 'v08:omnibus', weight: 3.8, radius: 6, p: hp });
       label(ctx, env, rot(s, 'hoja'), -S.w / 2 + 24, -S.h / 2 + 22, 27, { maxWidth: S.w - 48, maxLines: 2, seed: 'v08:hoja-titulo', p: seg(hp, 0.4, 1) });
       ctx.restore();
       // Two staples through the sheet's top edge into the strip.
@@ -1025,18 +1030,18 @@
 
   var PQI = {
     uni: { x: 120, y: 452 }, firm: { x: 300, y: 456 }, partner: { x: 990, y: 458 }, provider: { x: 1170, y: 454 },
-    note: { x: 486, y: 70, w: 308, h: 70 }
+    note: { x: 446, y: 64, w: 388, h: 66 }
   };
 
   function porQueLayer(env) {
     var c = env.canvas(W, H), g = c.getContext('2d'), ink = env.ink, m = env.pal.mundo, pal = env.pal;
     ink.background(g, 'territorio', { seed: 'v08:orillas', horizon: 0.6, contours: false });
     // The sea, from the horizon down, between the two shores; calligraphic waves on it.
-    ink.shape(g, [300, 436, 640, 430, 980, 436, 1010, 560, 270, 560], { fill: m.azul, fillAlpha: 0.9, w: 3.4, seed: 'v08:mar', poly: true });
+    ink.shape(g, [300, 436, 640, 430, 980, 436, 1010, 660, 270, 660], { fill: m.azul, fillAlpha: 0.9, w: 3.4, seed: 'v08:mar', poly: true });
     for (var i = 0; i < 3; i++) ink.line(g, ink.wavePoints(470 + i * 20, 462 + i * 34, 820 - i * 24, 5, 48, i), { w: 2.8, profile: 'swell', seed: 'v08:ola' + i, color: m.celeste });
     // Two shores (no borders, no flags): biomorphic land on each side.
-    ink.shape(g, [0, 452, 160, 440, 330, 446, 470, 470, 500, 560, 0, 560], { fill: m.tierra, w: 3.6, seed: 'v08:orilla1' });
-    ink.shape(g, [800, 474, 900, 448, 1060, 440, 1280, 450, 1280, 560, 780, 560], { fill: m.verde, w: 3.6, seed: 'v08:orilla2' });
+    ink.shape(g, [-20, 452, 160, 440, 330, 446, 470, 470, 510, 680, -20, 680], { fill: m.tierra, w: 3.6, seed: 'v08:orilla1' });
+    ink.shape(g, [800, 474, 900, 448, 1060, 440, 1300, 450, 1300, 680, 770, 680], { fill: m.verde, w: 3.6, seed: 'v08:orilla2' });
     // A university (pediment and columns) and a company (a block of windows) on each shore.
     function building(x, base, w, h, color, kind, seed) {
       polyInk(g, env, [x - w / 2, base, x - w / 2, base - h, x + w / 2, base - h, x + w / 2, base], pal.mix(color, m.lienzo, 0.3), seed);
@@ -1264,7 +1269,7 @@
     }
     if (ps[2] > 0) fig.keyRing(ctx, SOC.keys.x, SOC.keys.y + Math.sin(s.t * 0.7) * 2, 1.1, { seed: 'v08:llavero', p: ps[2] });
     if (ps[3] > 0) {
-      fig.person(ctx, SOC.person.x, SOC.person.y, SOC.person.k, { role: 'desarrollador', pose: 'carrying', seed: 'v08:sin-tiempo', skin: 3, hair: 'short', facing: -1, p: ps[3] });
+      fig.person(ctx, SOC.person.x, SOC.person.y, SOC.person.k, { role: 'desarrollador', pose: 'walking', prop: 'folder', seed: 'v08:sin-tiempo', skin: 3, hair: 'short', facing: -1, p: ps[3] });
       fig.stopwatch(ctx, SOC.person.x + 66, SOC.person.y - 254, 0.5, { turn: 0.92, seed: 'v08:prisa', p: ps[3] });
     }
     // Sparks between the lamp and each piece, after the last one is named.
@@ -1372,7 +1377,8 @@
     };
     var K = LEY.cards;
     st.ley = { cardString: [0, 0, 0, 0] };
-    st.ley.cardString = [K.x + K.w / 2, TL.y + TL.h + 2, K.x + K.w / 2 + 2, (TL.y + K.y) / 2 + 20, K.x + K.w / 2, K.y + 2];
+    var csx = K.x + K.w * 0.68;
+    st.ley.cardString = [csx, TL.y + TL.h + 2, csx + 2, (TL.y + K.y) / 2 + 20, csx, K.y + 2];
 
     // por-que-importa: threads across the sea and the stars of the international reference.
     st.pqi = {
