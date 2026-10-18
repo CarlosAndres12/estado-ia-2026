@@ -229,7 +229,8 @@
    *   max + x + len; x, y (h-bar: y = top) | x, baseY (v-bar); h (thickness, 34); orient 'h' | 'v';
    *   p; color (mundo.azul); style 'warm' | 'ruled'; cap override; seed; cifras (ids: source tag);
    *   labelSize (22); labelWidth (max width of the description, 360); labels (true); tag (true);
-   *   tagOpts; mono; textColor. */
+   *   tagOpts; mono; textColor; tickColor (the value-edge cap: stroke, ≈ dots, chevrons; default the
+   *   outline color — e.g. lienzo for a cap that must read on a dark field). */
   chart.bar = function (ctx, o) {
     o = o || {};
     var p = o.p == null ? 1 : o.p;
@@ -263,7 +264,7 @@
         I().rRect(ctx, g.x0, g.y0, g.x1 - g.x0, g.y1 - g.y0, { color: line, w: 1.2 });
       }
       drawCap(ctx, g.orient === 'v' ? { x0: g.x0, x1: g.x1, y0: g.y0, y1: g.y0, orient: 'v' } :
-        { x0: g.x1, x1: g.x1, y0: g.y0, y1: g.y1, orient: 'h' }, p >= 1 ? g.cap : 'exact', line, ruled, lw);
+        { x0: g.x1, x1: g.x1, y0: g.y0, y1: g.y1, orient: 'h' }, p >= 1 ? g.cap : 'exact', o.tickColor || line, ruled, lw);
     }
     // Labels and tag, once the mark has landed.
     var lp = seg(p, 0.9, 1);
@@ -373,7 +374,11 @@
 
   /* chart.unitGrid(ctx, opts) -> geometry. opts as geom.unitGrid plus p, litColor, offColor,
    * style 'warm' | 'ruled', halo (soft halo color behind lit dots), seed. Lit count grows with p and
-   * lands exactly on the value. */
+   * lands exactly on the value. approx (false): the ≈ cap of an approximate value (rounded to whole
+   * dots) — once the dots land, a dotted edge runs along the boundary between lit and unlit dots
+   * (returned as g.edge, flat [x, y, …]); approxSign (false) adds legend «≈» right of the grid at the
+   * boundary row; tickColor (tinta, linea when ruled) colors both. */
+  var edgeCache = new Map();
   chart.unitGrid = function (ctx, o) {
     o = o || {};
     var g = chart.geom.unitGrid(o), p = o.p == null ? 1 : o.p, ruled = o.style === 'ruled';
@@ -404,6 +409,27 @@
       ctx.restore();
     }
     g.shown = k;
+    if (o.approx && g.lit > 0 && g.lit < g.total) {
+      var rows = Math.floor(g.lit / g.cols), rest = g.lit - rows * g.cols, pc = g.pitch;
+      // Stepped edge after the last lit dot: under the partial row, up its end, along the rows above.
+      var ek = x + '|' + y + '|' + g.lit + '|' + g.cols + '|' + pc;
+      g.edge = edgeCache.get(ek);
+      if (!g.edge) {
+        g.edge = rest ? [x, y + (rows + 1) * pc, x + rest * pc, y + (rows + 1) * pc, x + rest * pc, y + rows * pc, x + g.w, y + rows * pc]
+          : [x, y + rows * pc, x + g.w, y + rows * pc];
+        if (edgeCache.size > 200) edgeCache.clear();
+        edgeCache.set(ek, g.edge);   // one array per grid: the dotted line caches by its identity
+      }
+      var ap = seg(p, 0.9, 1);
+      if (ap > 0) {
+        var tick = o.tickColor || (ruled ? Q().linea : M().tinta);
+        ctx.save();
+        ctx.globalAlpha *= ap;
+        I().dotted(ctx, g.edge, { r: Math.max(1.2, g.r * 0.32), gap: Math.max(5, pc * 0.42), seed: seed + ':approx', color: tick });
+        if (o.approxSign) I().text(ctx, W().aprox, x + g.w + pc * 0.5, y + rows * pc - pc * 0.2, { size: Math.max(18, pc * 1.4), weight: 700, color: tick });
+        ctx.restore();
+      }
+    }
     return g;
   };
 
@@ -442,7 +468,7 @@
 
   /* chart.band(ctx, opts): a range ("14–15%", "5,8–8,8%") as a band with end ticks on a shared
    * scale. opts: text (parsed lo–hi) or lo, hi; scale (shared) or max + x + len; y (top), h (26);
-   * color; p; zeroLine (dotted guide from zero, true). Returns { x0, x1, y0, y1 }. */
+   * color; p; zeroLine (dotted guide from zero, true); tickColor (end ticks, tinta). Returns { x0, x1, y0, y1 }. */
   chart.band = function (ctx, o) {
     o = o || {};
     var pv = o.text ? chart.parseValue(o.text) : null;
@@ -456,7 +482,7 @@
     ctx.fillRect(x0, y + 3, Math.max(0, x1 - x0), h - 6);
     ctx.restore();
     ctx.save();
-    ctx.strokeStyle = M().tinta;
+    ctx.strokeStyle = o.tickColor || M().tinta;
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(x0, y); ctx.lineTo(x0, y + h);
