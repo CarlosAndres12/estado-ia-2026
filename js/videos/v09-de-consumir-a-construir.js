@@ -39,6 +39,12 @@
   function seg(p, a, b) { return b <= a ? (p >= b ? 1 : 0) : clamp01((p - a) / (b - a)); }
   // A beat inside a line: like seg on s.at(i), but never before the line starts (a cue at 0).
   function beat(at, a, b) { return at <= 0 ? 0 : seg(at, Math.max(0, a), b); }
+  // A beat around cue c of a line: from c - before to c + after, but always finished by the end of
+  // the line (a cue near the end never leaves its beat half drawn).
+  function cueBeat(at, c, before, after) {
+    var e = Math.min(0.995, c + after);
+    return beat(at, Math.min(c - before, e - 0.03), e);
+  }
   function out3(t) { t = 1 - clamp01(t); return 1 - t * t * t; }
   function inOut3(t) { t = clamp01(t); return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
   function noise(x, seed) { return EIA.engine.rng.noise1(x, seed); }
@@ -238,11 +244,11 @@
 
   var REG = {
     land: { x: -236, y: 10, k: 0.8 },
-    rows: [{ key: 'visitas', cue: 'visitas', y: 108 }, { key: 'usuarios', cue: 'usuarios', y: 252 }],
+    rows: [{ key: 'visitas', cue: 'visitas', y: 96 }, { key: 'usuarios', cue: 'usuarios', y: 226 }],
     x: 590, len: 600, trackDy: 74, h: 40, hero: 54, desc: 24,
-    tag: { x: 590, y: 400 },
-    descargas: { x: 930, y: 404, w: 300 },
-    phones: [[-40, 0], [10, -46], [60, 18], [100, -30], [150, 6]]   // spread of the flock (px)
+    tag: { x: 590, y: 372 },
+    descargas: { x: 930, y: 424, w: 290 },
+    phones: [[-100, 4], [-50, -8], [0, 8], [50, -6], [100, 6]]   // the flock's places around its center (px)
   };
 
   function region(ctx, s, env) {
@@ -250,7 +256,7 @@
     ground(ctx, s, env);
     var a0 = s.at(0), a1 = s.at(1), L = REG.land;
     fig.latam(ctx, L.x, L.y, L.k, { ground: false, p: out3(seg(s.t, 0, 0.6) * 0.15 + beat(a0, 0, 0.2) * 0.85), seed: 'v09:latam' });
-    floaters(ctx, s, env, [['estrella', 1210, 76, 36], ['sol', 560, 520, 40, { a: m.rojo }]], out3(s.intro));
+    floaters(ctx, s, env, [['estrella', 1210, 76, 36], ['espiral', 560, 536, 34]], out3(s.intro));
 
     // One 0–100% scale for both shares: a dashed track is the whole (100%), the bar the share.
     var sc = chart.scale(100, REG.x, REG.len), last = null;
@@ -264,7 +270,7 @@
       chart.baseline(ctx, REG.x, ty - 10, ty + REG.h + 10, { p: tp });
       var bp = beat(a0, win[0], win[1]);
       var g = chart.bar(ctx, { value: val(env, text), scale: sc, y: ty, h: REG.h, color: i ? m.azul : m.rojo, labels: false, seed: 'v09:region' + i, p: bp });
-      var lp = beat(a0, win[1] - 0.02, win[1] + 0.03);
+      var lp = cueBeat(a0, win[1], 0.02, 0.03);
       if (lp > 0) {
         var vt = env.chart.parseValue(text).raw;
         var HL = hero(ctx, env, vt, REG.x, r.y, REG.hero, { seed: 'v09:reg' + i, p: lp });
@@ -275,7 +281,7 @@
     });
     // One tag for the three figures of alc-1, under the bars, tied to the lower bar's value edge.
     var t0 = landWindow(C.visitas)[1];
-    var tp2 = beat(a0, t0 - 0.02, t0 + 0.04);
+    var tp2 = cueBeat(a0, t0, 0.02, 0.04);
     if (tp2 > 0) {
       var lowY = REG.rows[1].y + REG.trackDy + REG.h, topY = REG.rows[0].y + REG.trackDy + REG.h;
       var anc = last && last.p > 0 && s.at(0) >= landWindow(C.usuarios)[1] ? { x: last.x - 6, y: lowY } : { x: sc(val(env, rot(s, 'visitas'))) - 6, y: topY };
@@ -285,18 +291,18 @@
     // Line 2: phones flutter out of the Caribbean toward the phrase.
     var fp = beat(a1, 0, Math.max(0.2, C.descargas));
     if (fp > 0) {
-      var D = REG.descargas, from = { x: 360, y: 150 }, to = { x: D.x + 120, y: D.y - 60 };
+      var D = REG.descargas, from = { x: 360, y: 150 }, to = { x: D.x + 130, y: D.y - 42 };
       for (var k = 0; k < REG.phones.length; k++) {
         var ph = REG.phones[k], e = inOut3(seg(fp, k * 0.08, 0.6 + k * 0.08));
         var px = lerp(from.x, to.x + ph[0], e) + noise(s.t * 0.4 + k, 'v09:phx') * 10 * calm(s);
-        var py = lerp(from.y, to.y + ph[1], e) - Math.sin(e * Math.PI) * 120 + noise(s.t * 0.5 + k * 2, 'v09:phy') * 8 * calm(s);
+        var py = lerp(from.y, to.y + ph[1], e) - Math.sin(e * Math.PI) * 120 + noise(s.t * 0.5 + k * 2, 'v09:phy') * 5 * calm(s);
         ctx.save();
         ctx.translate(px, py);
         ctx.rotate(noise(s.t * 0.3 + k * 3, 'v09:phr') * 0.4 + (k % 2 ? 0.25 : -0.2));
         fig.phone(ctx, 0, 0, 0.42, { seed: 'v09:tel' + (k % 3), p: seg(e, 0, 0.3) });
         ctx.restore();
       }
-      ink.text(ctx, rot(s, 'descargas'), D.x, D.y, { size: 26, weight: 700, maxWidth: D.w, lineHeight: 1.16, p: beat(a1, C.descargas - 0.05, C.descargas + 0.1) });
+      ink.text(ctx, rot(s, 'descargas'), D.x, D.y, { size: 26, weight: 700, maxWidth: D.w, lineHeight: 1.16, p: cueBeat(a1, C.descargas, 0.14, 0.02) });
     }
   }
 
@@ -305,10 +311,10 @@
   // ribbons weave through them as the three dimensions are named.
 
   var ILIA = {
-    rows: [10, 9], card: { w: 62, h: 84 }, gap: 14, rowGap: 22, x: 72, y: 128,
+    rows: [10, 9], card: { w: 68, h: 104 }, gap: 12, rowGap: 24, x: 60, y: 120,
     ribbons: [{ key: 'habilitantes', cue: 'hab', color: 'rojo', ph: 0 }, { key: 'investigacion', cue: 'inv', color: 'amarillo', ph: 2.1 },
       { key: 'gobernanza', cue: 'gob', color: 'azul', ph: 4.2 }],
-    labels: { y: 388, x: 72, w: 250, gap: 14 },
+    labels: { y: 410, x: 72, w: 250, gap: 14 },
     tag: { x: 880, y: 92 }
   };
 
@@ -353,11 +359,11 @@
       ctx.restore();
     }
     // One tag for the count of cards (ctx-ilia-indicadores), from when the cards are there.
-    tag(ctx, env, 'ctx-ilia-indicadores', ILIA.tag.x, ILIA.tag.y, { x: last.x + ILIA.card.w - 4, y: last.y + 10 }, beat(a, cardsEnd - 0.04, cardsEnd + 0.04));
+    tag(ctx, env, 'ctx-ilia-indicadores', ILIA.tag.x, ILIA.tag.y, { x: last.x + ILIA.card.w - 4, y: last.y + 10 }, cueBeat(a, cardsEnd, 0.04, 0.04));
     // The three ribbons weave across the cards, one per dimension, each with its name below.
     var Lb = ILIA.labels;
     ILIA.ribbons.forEach(function (rb, j) {
-      var rp = beat(a, C[rb.cue] - 0.03, C[rb.cue] + 0.08);
+      var rp = cueBeat(a, C[rb.cue], 0.03, 0.08);
       if (rp <= 0) return;
       var g = st.ribbons[j];
       ink.line(ctx, g.ctrl, { w: 16, profile: 'blunt', color: m[rb.color], seed: 'v09:cinta' + j, p: rp, alpha: 0.92 });
@@ -376,17 +382,19 @@
   var CONS = {
     horizon: 268,
     near: [0, 382, 140, 362, 300, 374, 470, 366, 610, 388, 676, 440, 690, 540, 668, 720, 0, 720],
-    far: [820, 266, 960, 252, 1100, 247, 1280, 242, 1280, 300, 1100, 304, 940, 300, 830, 292],
-    towers: [[1004, 52], [1066, 72], [1130, 60], [1192, 44]],          // x, height (bottom at 262)
+    far: [796, 272, 850, 244, 940, 222, 1060, 210, 1180, 214, 1290, 226, 1290, 296, 1100, 302, 900, 298],
+    towers: [[1000, 46], [1056, 64], [1112, 54], [1168, 40]],          // x, height (bottom at TOWER_BASE)
     stalls: [{ x: 116, shop: false }, { x: 300, shop: true }, { x: 486, shop: false }],
     table: 470, feet: 566,
     people: [
       { x: 52, skin: 1, hair: 'long', facing: 1 }, { x: 196, skin: 4, hair: 'short', facing: -1 }, { x: 226, skin: 2, hair: 'bun', facing: 1 },
       { x: 384, skin: 0, hair: 'curly', facing: -1 }, { x: 420, skin: 3, hair: 'braids', facing: 1 }, { x: 572, skin: 1, hair: 'ponytail', facing: -1 }
     ],
-    stream: [560, 418, 700, 404, 820, 360, 930, 312, 1060, 262],
+    stream: [560, 418, 700, 404, 820, 356, 930, 300, 1056, 236],
     n: 18, coins: 4
   };
+
+  var TOWER_BASE = 232;
 
   function consumoLayer(env) {
     var c = env.canvas(W, H), g = c.getContext('2d'), ink = env.ink, m = env.pal.mundo, q = env.pal.maquina;
@@ -399,11 +407,11 @@
       var y = CONS.horizon + 40 + i * 48 + r.range(-8, 8), x0 = r.range(700, 900);
       ink.wave(g, x0, y, x0 + r.range(160, 300), { amp: 4, len: 70, w: 2.6, color: env.pal.rgba(m.celeste, 0.8), seed: 'v09:ola' + i });
     }
-    ink.shape(g, densify(CONS.far, 30), { fill: m.siena, w: 3.6, fillScale: 0, fillJitter: 1.5, seed: 'v09:lejos' });
+    ink.shape(g, densify(CONS.far, 30), { fill: env.pal.mix(m.verde, m.tierra, 0.45), w: 3.6, fillScale: 0, fillJitter: 1.5, seed: 'v09:lejos' });
     // Far away, a row of identical ruled cells: someone else's data centers.
     CONS.towers.forEach(function (tw) {
-      ink.rRect(g, tw[0] - 16, 262 - tw[1], 32, tw[1], { color: q.linea, w: 1.2, fill: q.noche });
-      for (var k = 12; k < tw[1] - 4; k += 12) ink.rLine(g, tw[0] - 12, 262 - k, tw[0] + 12, 262 - k, { color: q.rejilla, w: 1 });
+      ink.rRect(g, tw[0] - 16, TOWER_BASE - tw[1], 32, tw[1], { color: q.linea, w: 1.2, fill: q.noche });
+      for (var k = 12; k < tw[1] - 4; k += 12) ink.rLine(g, tw[0] - 12, TOWER_BASE - k, tw[0] + 12, TOWER_BASE - k, { color: q.rejilla, w: 1 });
     });
     ink.shape(g, densify(CONS.near, 30), { fill: m.lienzoOcre, w: 4.4, fillScale: 0, fillJitter: 2, seed: 'v09:cerca' });
     ink.grain(g, 0, 0, W, H, { alpha: 0.5 });
@@ -425,10 +433,10 @@
     var C = cuesOf(s, 'consumo'), st = s.state.consumo, ink = env.ink, fig = env.fig, m = env.pal.mundo, q = env.pal.maquina;
     ground(ctx, s, env);
     var a0 = s.at(0), a1 = s.at(1), intro = out3(s.intro);
-    floaters(ctx, s, env, [['sol', 1180, 110, 70, { a: m.rojo }], ['pajaro', 760, 150, 54]], intro);
+    floaters(ctx, s, env, [['sol', 1180, 110, 70, { a: m.rojo }], ['pajaro', 760, 150, 54], ['estrella', 260, 110, 38], ['espiral', 520, 70, 34]], intro);
     // The market: stalls draw on, their lamps light up; the small shop's lamps join on «mipymes».
     CONS.stalls.forEach(function (sl, k) {
-      var lit = sl.shop ? beat(a0, C.mipymes - 0.04, C.mipymes + 0.08) : beat(a0, 0.04 + k * 0.05, 0.16 + k * 0.05);
+      var lit = sl.shop ? cueBeat(a0, C.mipymes, 0.04, 0.08) : beat(a0, 0.04 + k * 0.05, 0.16 + k * 0.05);
       stall(ctx, s, env, sl, k, out3(seg(s.t, 0, 0.6) * 0.3 + beat(a0, 0, 0.12) * 0.7), lit);
     });
     // Many small figures buying, each with a lamp box in hand once they have bought it.
@@ -440,10 +448,10 @@
         skin: pp.skin, hair: pp.hair, p: pp0 });
       // «productividad a corto plazo»: a small star over some heads.
       var sp = beat(a0, C.productividad - 0.02 + i * 0.01, C.productividad + 0.06 + i * 0.01);
-      if (sp > 0 && i % 2 === 0) fig.sign(ctx, 'estrella', P.head.x, P.top - 20 + Math.sin(s.t + i) * 2, 26 * out3(sp), { seed: 'v09:chispa' + i, colors: { a: m.amarillo } });
+      if (sp > 0 && i % 2 === 0) fig.sign(ctx, 'estrella', P.head.x, P.top - 26 + Math.sin(s.t + i) * 2, 36 * out3(sp), { seed: 'v09:chispa' + i, colors: { a: m.amarillo } });
     });
     // Line 2. «dependencia tecnológica»: ruled threads from the market's lamps to the far shore.
-    var dp = beat(a1, C.dependencia - 0.04, C.dependencia + 0.12);
+    var dp = cueBeat(a1, C.dependencia, 0.04, 0.12);
     if (dp > 0) {
       ctx.save();
       ctx.setLineDash([4, 6]);
@@ -452,7 +460,7 @@
       ctx.lineWidth = 1.4;
       ctx.beginPath();
       CONS.stalls.forEach(function (sl, k) {
-        var x0 = sl.x + 34, y0 = CONS.table - 64, tw = CONS.towers[k % CONS.towers.length], x1 = tw[0], y1 = 262 - tw[1];
+        var x0 = sl.x + 34, y0 = CONS.table - 64, tw = CONS.towers[k % CONS.towers.length], x1 = tw[0], y1 = TOWER_BASE - tw[1];
         ctx.moveTo(x0, y0);
         ctx.quadraticCurveTo(lerp(x0, x1, 0.5), Math.min(y0, y1) - 70, lerp(x0, x1, dp), lerp(y0, y1, dp) - Math.sin(dp * Math.PI) * 50);
       });
@@ -460,25 +468,29 @@
       ctx.restore();
     }
     // «salida de datos»: a thin stream of small ruled cells drifts across the sea.
-    var g = st.stream, flow = beat(a1, C.datos - 0.04, C.datos + 0.1);
+    var g = st.stream, flow = cueBeat(a1, C.datos, 0.04, 0.1);
     if (flow > 0) {
       for (var i = 0; i < CONS.n; i++) {
         var u = (i / CONS.n + s.t * 0.035) % 1;
         if (u > flow) continue;
         pathAt(g, u, Q1);
-        var sz = 5 + (i % 3);
-        ink.rRect(ctx, Q1.x - sz / 2 + Q1.nx * (i % 2 ? 6 : -6), Q1.y - sz / 2 + Q1.ny * (i % 2 ? 6 : -6), sz, sz,
-          { color: q.linea, w: 1, fill: q.noche, alpha: seg(u, 0, 0.08) * seg(1 - u, 0, 0.08) });
+        var sz = 8 + (i % 3) * 1.5, fa = seg(u, 0, 0.08) * seg(1 - u, 0, 0.08);
+        if (fa <= 0) continue;
+        ctx.save();
+        ctx.globalAlpha *= fa;
+        ink.rRect(ctx, Q1.x - sz / 2 + Q1.nx * (i % 2 ? 7 : -7), Q1.y - sz / 2 + Q1.ny * (i % 2 ? 7 : -7), sz, sz, { color: q.noche, w: 1.2, fill: q.linea });
+        ctx.restore();
       }
     }
     // «captura externa del valor»: a few coins float away along the stream.
-    var vp = beat(a1, C.valor - 0.04, C.valor + 0.06);
+    var vp = cueBeat(a1, C.valor, 0.04, 0.06);
     if (vp > 0) {
       for (var k2 = 0; k2 < CONS.coins; k2++) {
-        var uc = clamp01(seg(a1, C.valor + k2 * 0.05, 1) * 0.85 + 0.05);
+        var uc = ((k2 + 0.3) / CONS.coins + s.t * 0.028) % 1;
+        if (uc > 0.15 + 0.85 * vp) continue;
         pathAt(g, uc, Q1);
         ctx.save();
-        ctx.globalAlpha *= vp * (1 - seg(uc, 0.8, 0.92) * 0.6);
+        ctx.globalAlpha *= seg(uc, 0, 0.08) * seg(1 - uc, 0, 0.1);
         fig.coin(ctx, Q1.x, Q1.y - 14 + Math.sin(s.t * 1.2 + k2) * 4, 0.36, { seed: 'v09:moneda' + k2 });
         ctx.restore();
       }
@@ -507,17 +519,21 @@
     PIO.keys.forEach(function (key, i) {
       var text = rot(s, key), y = PIO.y + i * (PIO.h + PIO.gap), win = landWindow(cues[i]);
       var np = beat(a, win[0] - 0.05, win[0]);
-      if (np > 0) ink.text(ctx, beforeValue(env, text), PIO.x - 20, y + PIO.h / 2 - 15, { size: 28, weight: 700, align: 'right', p: np });
+      if (np > 0) {
+        ink.text(ctx, beforeValue(env, text), PIO.x - 20, y + PIO.h / 2 - 15, { size: 28, weight: 700, align: 'right', p: np });
+        // The whole 0–100 scale as a dashed track behind the bar.
+        faded(ctx, np, function () { ink.rRect(ctx, sc(0), y, sc(100) - sc(0), PIO.h, { color: env.pal.mix(m.tinta, m.lienzo, 0.45), w: 1.4, dash: [6, 6] }); });
+      }
       var bp = beat(a, win[0], win[1]);
       var g = chart.bar(ctx, { value: val(env, text), scale: sc, y: y, h: PIO.h, color: [m.rojo, m.amarillo, m.verde][i], labels: false, seed: 'v09:pionero' + i, p: bp });
-      var lp = beat(a, win[1] - 0.01, win[1] + 0.03);
+      var lp = cueBeat(a, win[1], 0.01, 0.03);
       if (lp > 0) hero(ctx, env, chart.parseValue(text).raw, g.x1 + 14, y + PIO.h / 2 - 22, 40, { seed: 'v09:valor' + i, p: lp });
       ends.push({ x: g.x1, y: y, p: lp });
     });
     // One tag for the three pioneers (alc-2), tied to the first bar's value edge.
     if (ends[0].p > 0) tag(ctx, env, 'alc-2', PIO.tag.x, PIO.tag.y, { x: ends[0].x + 120, y: ends[0].y + 6 }, ends[0].p);
     // The adoptantes: a group label on a paper card (Colombia is adoptante, never pionera).
-    var G = PIO.group, gp = beat(a, C.adoptantes - 0.04, C.adoptantes + 0.08);
+    var G = PIO.group, gp = cueBeat(a, C.adoptantes, 0.04, 0.08);
     if (gp > 0) {
       ink.card(ctx, G.x, G.y, G.w, G.h, { seed: 'v09:adoptantes', weight: 3.6, radius: 12, p: gp, peek: m.azul, peekCorner: 'tl' });
       ink.text(ctx, rot(s, 'adoptantes'), G.x + G.w / 2, G.y + G.h / 2 - 17, { size: 30, weight: 700, align: 'center', maxWidth: G.w - 50, fit: true, minSize: 22, p: seg(gp, 0.4, 1) });
@@ -529,9 +545,9 @@
   // Central Asia (2025): exactly that many identical ruled cells (compute is the machine's).
 
   var COMP = {
-    pitch: 30, cell: 19,
-    groups: [{ key: 'americaLatina', cue: 'ocho', x: 330, y: 270 }, { key: 'europa', cue: 'cuarenta', x: 900, y: 270 }],
-    labelY: 440, labelW: 440, year: { x: 640, y: 64 }, tag: { x: 470, y: 96 }
+    pitch: 40, cell: 27,
+    groups: [{ key: 'americaLatina', cue: 'ocho', x: 300, y: 272 }, { key: 'europa', cue: 'cuarenta', x: 960, y: 272 }],
+    labelY: 452, labelW: 460, year: { x: 640, y: 36 }, tag: { x: 440, y: 120 }
   };
 
   function cellCluster(ctx, env, cx, cy, n, p, t) {
@@ -541,7 +557,7 @@
       var x = g.centers[2 * i], y = g.centers[2 * i + 1];
       env.ink.rRect(ctx, x - c / 2, y - c / 2, c, c, { color: q.linea, w: 1.2, fill: q.noche });
       var on = 0.5 + 0.5 * Math.sin(t * 1.6 + i * 2.3);
-      env.ink.rRect(ctx, x - 3, y - 3, 6, 6, { color: q.linea, w: 0.8, fill: on > 0.75 ? q.brilloVerde : q.rejilla });
+      env.ink.rRect(ctx, x - 4, y - 4, 8, 8, { color: q.linea, w: 0.8, fill: on > 0.75 ? q.brilloVerde : q.rejilla });
     }
     return g;
   }
@@ -558,14 +574,14 @@
       if (gp <= 0) return;
       ink.glow(ctx, gr.x, gr.y, 120 + n * 1.5, env.pal.maquina.linea, 0.18 * gp);
       var g = cellCluster(ctx, env, gr.x, gr.y, n, gp, s.t);
-      var lp = beat(a, win[1] - 0.01, win[1] + 0.04);
+      var lp = cueBeat(a, win[1], 0.01, 0.04);
       ink.text(ctx, text, gr.x, COMP.labelY, { size: 26, weight: 700, align: 'center', maxWidth: COMP.labelW, lineHeight: 1.15, p: lp });
       if (i === 0) firstTag = { x: gr.x + g.radius * 0.7, y: gr.y - g.radius * 0.7, p: lp };
     });
     var a0w = landWindow(C.ocho);
     var yp = beat(a, a0w[0], a0w[1]);
     if (yp > 0) label(ctx, env, rot(s, 'anio'), COMP.year.x, COMP.year.y, 46, { align: 'center', seed: 'v09:anio', p: yp });
-    if (firstTag && firstTag.p > 0) tag(ctx, env, 'eco-7', COMP.tag.x + 60, COMP.tag.y + 10, firstTag, firstTag.p);
+    if (firstTag && firstTag.p > 0) tag(ctx, env, 'eco-7', COMP.tag.x, COMP.tag.y, firstTag, firstTag.p);
   }
 
   // ---------------------------------------------------------------------------------------------
@@ -574,9 +590,9 @@
   // 76,01 («gobernanza avanzada»); the group label «Grupo: adoptante».
 
   var COL = {
-    big: { x: 330, y: 268, r: 150 }, small: [{ key: 'adopcion', cue: 'adopcion', x: 820, y: 236 }, { key: 'gobernanza', cue: 'gobernanza', x: 1070, y: 236 }],
-    smallR: 88, ribbon: { x: 330, y: 438, w: 230, h: 54 }, tagBig: { x: 520, y: 404 }, tagSmall: { x: 780, y: 404 },
-    group: { x: 330, y: 520 }, avanzada: { x: 1070, y: 330 }
+    big: { x: 330, y: 262, r: 150 }, small: [{ key: 'adopcion', cue: 'adopcion', x: 800, y: 196 }, { key: 'gobernanza', cue: 'gobernanza', x: 1060, y: 196 }],
+    smallR: 86, ribbon: { x: 330, y: 432, w: 230, h: 54 }, tagBig: { x: 510, y: 396 }, tagSmall: { x: 820, y: 400 },
+    group: { x: 330, y: 496 }, avanzada: { x: 1060, y: 308 }
   };
 
   // A cream paper disc behind each dial, so it reads over the mountains.
@@ -596,10 +612,10 @@
       chart.gauge(ctx, { x: B.x, y: B.y, r: B.r, min: 0, max: 100, value: val(env, rot(s, 'puntaje')), p: dp < 1 ? dp * 0.3 : 0.3 + 0.7 * beat(a0, win[0], win[1]),
         color: m.amarillo, ticks: 10 });
     }
-    var lp = beat(a0, win[1] - 0.01, win[1] + 0.03);
+    var lp = cueBeat(a0, win[1], 0.01, 0.03);
     if (lp > 0) hero(ctx, env, rot(s, 'puntaje'), B.x, B.y + 34, 64, { align: 'center', seed: 'v09:5584', p: lp });
     // «4.º de 19»: a ribbon under the dial, when the rank is said.
-    var rp = beat(a0, C.puesto - 0.04, C.puesto + 0.06), R = COL.ribbon;
+    var rp = cueBeat(a0, C.puesto, 0.04, 0.06), R = COL.ribbon;
     if (rp > 0) {
       ink.shape(ctx, s.state.colombia.ribbon, { fill: m.rojo, w: 3.4, seed: 'v09:cinta', p: rp, fillScale: 0, fillJitter: 1 });
       faded(ctx, seg(rp, 0.5, 1), function () {
@@ -617,7 +633,7 @@
       dialPaper(ctx, env, g.x, g.y, COL.smallR, sp, 'v09:dialchico' + i);
       chart.gauge(ctx, { x: g.x, y: g.y, r: COL.smallR, min: 0, max: 100, value: val(env, text), p: sp < 1 ? sp * 0.3 : 0.3 + 0.7 * beat(a1, w2[0], w2[1]),
         color: m.amarillo, ticks: 10 });
-      var vp = beat(a1, w2[1] - 0.01, w2[1] + 0.03);
+      var vp = cueBeat(a1, w2[1], 0.01, 0.03);
       if (vp > 0) {
         ink.text(ctx, beforeValue(env, text), g.x, g.y + 18, { size: 20, weight: 700, align: 'center', p: vp });
         hero(ctx, env, chart.parseValue(text).raw, g.x, g.y + 40, 30, { align: 'center', seed: 'v09:chico' + i, p: vp });
@@ -626,21 +642,39 @@
     });
     if (lastSmall) {
       var first = COL.small[0];
-      tag(ctx, env, 'alc-3', COL.tagSmall.x, COL.tagSmall.y, { x: first.x + 30, y: first.y + COL.smallR * 0.84 }, beat(a1, landWindow(C.adopcion)[1] - 0.01,
+      tag(ctx, env, 'alc-3', COL.tagSmall.x, COL.tagSmall.y, { x: first.x + 4, y: first.y + COL.smallR * 1.1 }, beat(a1, landWindow(C.adopcion)[1] - 0.01,
         landWindow(C.adopcion)[1] + 0.03));
     }
-    var av = beat(a1, C.avanzada - 0.03, C.avanzada + 0.08);
+    var av = cueBeat(a1, C.avanzada, 0.03, 0.08);
     if (av > 0) label(ctx, env, rot(s, 'gobernanzaAvanzada'), COL.avanzada.x, COL.avanzada.y, 30, { align: 'center', seed: 'v09:avanzada', p: av });
     // «Colombia es adoptante, no pionera»: the group label under the big dial.
-    var gp = beat(a1, C.adoptante - 0.04, C.adoptante + 0.08);
-    if (gp > 0) label(ctx, env, rot(s, 'grupo'), COL.group.x, COL.group.y, 36, { align: 'center', seed: 'v09:grupo', underline: true, p: gp });
+    var gp = cueBeat(a1, C.adoptante, 0.04, 0.08);
+    if (gp > 0) {
+      var GL = env.ink.measureLetter(ctx, rot(s, 'grupo'), { size: 36 });
+      ink.card(ctx, COL.group.x - GL.w / 2 - 22, COL.group.y - 12, GL.w + 44, GL.h + 26, { seed: 'v09:grupocard', weight: 3.4, radius: 10, p: gp, peek: m.azul, peekCorner: 'br' });
+      label(ctx, env, rot(s, 'grupo'), COL.group.x, COL.group.y, 36, { align: 'center', seed: 'v09:grupo', p: seg(gp, 0.3, 1) });
+    }
   }
 
+  // A warm Andean range: jagged peaks with dense outlines (sharp summits, no rounded gumdrops),
+  // flat gouache fields, one snow cap; behind it the territorio sky.
+  var ANDES = { base: 604, peaks: [[40, 150, 150, 'verde'], [250, 236, 190, 'tierra'], [470, 170, 170, 'azul'], [690, 250, 210, 'siena'], [900, 190, 180, 'verde'],
+    [1110, 226, 200, 'tierra'], [1290, 160, 150, 'azul']] };
   function colombiaLayer(env) {
-    var c = env.canvas(W, H), g = c.getContext('2d');
-    env.fig.cordillera(g, 0, 40, 1, { seed: 'v09:andes',
-      peaks: [{ x: 0.06, h: 0.32 }, { x: 0.22, h: 0.44, lit: true }, { x: 0.42, h: 0.36, deep: true }, { x: 0.6, h: 0.5, lit: true }, { x: 0.8, h: 0.38, deep: true },
-        { x: 0.96, h: 0.46, lit: true }] });
+    var c = env.canvas(W, H), g = c.getContext('2d'), ink = env.ink, m = env.pal.mundo, b = ANDES.base;
+    ink.background(g, 'territorio', { seed: 'v09:andes', horizon: 0.78, contours: false });
+    ANDES.peaks.forEach(function (pk, i) {
+      var x = pk[0], h = pk[1], hw = pk[2], col = m[pk[3]];
+      var pts = [x - hw, b, x - hw * 0.62, b - h * 0.42, x - hw * 0.34, b - h * 0.62, x - hw * 0.12, b - h * 0.9, x, b - h, x + hw * 0.16, b - h * 0.84,
+        x + hw * 0.4, b - h * 0.6, x + hw * 0.7, b - h * 0.3, x + hw, b];
+      ink.shape(g, densify(pts, 16), { fill: i % 2 ? env.pal.mix(col, m.lienzo, 0.08) : col, w: 4.2, fillScale: 0, fillJitter: 1.2, seed: 'v09:pico' + i });
+      if (h > 230) {
+        ink.shape(g, densify([x - hw * 0.12, b - h * 0.9, x, b - h, x + hw * 0.16, b - h * 0.84, x + hw * 0.08, b - h * 0.78, x - 2, b - h * 0.84,
+          x - hw * 0.08, b - h * 0.76], 8), { fill: m.lienzo, w: 3, fillScale: 0, fillJitter: 0.6, seed: 'v09:nieve' + i });
+      }
+    });
+    ink.line(g, [-10, b, 640, b + 3, 1290, b], { w: 5, profile: 'blunt', seed: 'v09:valle' });
+    ink.grain(g, 0, 0, W, H, { alpha: 0.4 });
     return { bg: c };
   }
 
@@ -649,7 +683,7 @@
   // its axes are named; the counter «106 acciones · 479.273 millones de pesos · hasta 2030».
 
   var CON = {
-    k: 1.42, y: 176, title: { x: 74, y: 30 }, counter: { x: 74, y: 104 }, tag: { x: 900, y: 50 },
+    k: 1.5, y: 194, title: { x: 74, y: 30 }, counter: { x: 74, y: 104 }, tag: { x: 900, y: 50 },
     keys: ['etica', 'datos', 'investigacion', 'talento', 'riesgos', 'adopcion'],
     signs: ['volante', 'constelacion', 'microscopio', 'escalera', 'grieta', 'casa'],
     colors: ['rojo', 'azul', 'verde', 'amarillo', 'rojo', 'verde']
@@ -681,9 +715,9 @@
       });
     }
     // Each section: its sign and its name, as it is said.
-    var est = beat(a1, C.estrategia - 0.03, C.estrategia + 0.08);
+    var est = cueBeat(a1, C.estrategia, 0.03, 0.08);
     for (i = 0; i < 6; i++) {
-      var sp = beat(a1, cues[i] - 0.02, cues[i] + 0.06);
+      var sp = cueBeat(a1, cues[i], 0.02, 0.06);
       if (sp <= 0 || open * 6 < i + 0.98) continue;
       var px = x0 + i * pw, cx = px + pw / 2;
       // «En 2026, la Estrategia de Datos Abiertos…»: the data section lights up.
@@ -725,6 +759,28 @@
     labelY: 210
   };
 
+  // fig.suspensionBridge's design, rebuilt here with dense outlines so its banks, towers and deck
+  // keep their straight edges at this size (a closed four-point shape smooths into a lens), one
+  // drawing per stage of the deck. Local units: (0, 0) = middle of the deck, banks at ±(230…340).
+  function bridgeDrawing(env, built) {
+    var ink = env.ink, m = env.pal.mundo, b = ink.drawing('v09:puente' + built, { w: 4, jitter: 0.8 });
+    b.fill(densify([-240, 26, 240, 26, 240, 130, -240, 130], 20), { fill: m.azul, fillScale: 0, fillJitter: 0.8, fillAlpha: 0.92 });
+    b.stroke(ink.wavePoints(-220, 60, 220, 3, 60, 0), { w: 2.4, profile: 'swell', color: m.celeste });
+    b.stroke(ink.wavePoints(-200, 96, 200, 2.4, 70, 1.3), { w: 2, profile: 'swell', color: m.celeste });
+    b.shape(densify([-346, 4, -300, -3, -262, 1, -230, 0, -226, 44, -238, 88, -228, 134, -284, 138, -340, 130, -352, 70], 14), { fill: m.amarillo, w: 4, fillScale: 0, fillJitter: 0.8 });
+    b.shape(densify([230, 0, 266, -3, 304, 2, 344, -2, 354, 64, 342, 132, 290, 138, 230, 134, 240, 90, 226, 46], 14), { fill: m.tierra, w: 4, fillScale: 0, fillJitter: 0.8 });
+    [-170, 170].forEach(function (tx) { b.shape(densify([tx - 9, -150, tx + 9, -150, tx + 9, 40, tx - 9, 40], 10), { fill: m.rojo, w: 3.4, fillScale: 0, fillJitter: 0.5 }); });
+    b.stroke([-230, -6, -170, -146, 0, -40, 170, -146, 230, -6], { w: 2.6, profile: 'even' });
+    var xb = lerp(-230, 230, built);
+    for (var hx = -150; hx < 160; hx += 30) {
+      var cy = hx < 0 ? -146 + (hx + 170) / 170 * 106 : -40 - hx / 170 * 106;
+      b.stroke([hx, cy, hx + 0.5, hx < xb ? -6 : 10], { w: 1.4, profile: 'hair' });
+    }
+    b.shape(densify([-230, -8, xb, -8, xb, 6, -230, 6], 12), { fill: m.madera, w: 3.4, fillScale: 0, fillJitter: 0.5 });
+    for (var px = -200; px < xb - 10; px += 22) b.stroke([px, -7, px + 0.4, 5], { w: 1.2, profile: 'hair' });
+    return { d: b.done(), end: xb };
+  }
+
   function falta(ctx, s, env) {
     var C = cuesOf(s, 'falta'), ink = env.ink, fig = env.fig, m = env.pal.mundo;
     ground(ctx, s, env);
@@ -733,9 +789,11 @@
     var leftX = FAL.x - 285 * k, rightX = FAL.x + 285 * k, deckY = FAL.y - 8 * k;
     ink.glow(ctx, leftX, FAL.y - 10, 190, m.amarillo, 0.6 * intro);
     // How many planks are already laid (one per cue of the reto line).
-    var laid = [beat(a1, C.reto - 0.04, C.reto + 0.04), beat(a1, C.indicadores - 0.04, C.indicadores + 0.04), beat(a1, C.convertir - 0.04, C.convertir + 0.04)];
+    var laid = [cueBeat(a1, C.reto, 0.04, 0.04), cueBeat(a1, C.indicadores, 0.04, 0.04), cueBeat(a1, C.convertir, 0.04, 0.04)];
     var nLaid = (laid[0] >= 1 ? 1 : 0) + (laid[1] >= 1 ? 1 : 0) + (laid[2] >= 1 ? 1 : 0);
-    var br = fig.suspensionBridge(ctx, FAL.x, FAL.y, k, { built: FAL.built[nLaid], seed: 'v09:puente', p: out3(beat(a0, 0, 0.16) * 0.8 + seg(s.t, 0, 0.6) * 0.2) });
+    var bd = s.state.falta[nLaid];
+    ink.draw(ctx, bd.d, FAL.x, FAL.y, k, { p: out3(beat(a0, 0, 0.16) * 0.8 + seg(s.t, 0, 0.6) * 0.2) });
+    var br = { end: { x: FAL.x + bd.end * k, y: FAL.y } };
     fig.lamp(ctx, leftX, FAL.y - 60, 0.4, { t: s.t, glow: 1, p: out3(beat(a0, 0.06, 0.2)) });
     // Each bank's name, brush-lettered above it (kept clear of the towers).
     label(ctx, env, rot(s, 'orillaUso'), leftX - 10, FAL.labelY + 20, 46, { align: 'center', seed: 'v09:uso', p: beat(a0, 0.08, 0.2) });
@@ -744,12 +802,12 @@
     FAL.planks.forEach(function (pk, i) {
       var arrive = inOut3(beat(a0, pk.start, Math.max(pk.start + 0.3, C.pide)));
       if (arrive <= 0 && s.line < 1) return;
-      var endX = br.end.x - 30 * k - i * 46;
+      var endX = FAL.x + s.state.falta[0].end * k - 34 * k - i * 104;
       var wx = lerp(leftX + 40, endX, arrive), wy = deckY - 2;
       var bob = Math.abs(Math.sin(s.t * 2.4 + i)) * 2 * (1 - arrive * 0.8);
       var done = laid[i];
       fig.person(ctx, wx, wy, 0.7, { role: 'persona', pose: done >= 1 ? 'standing' : 'carrying', facing: 1, seed: 'v09:obrero' + i, skin: pk.skin, hair: pk.hair,
-        cloth: m[pk.cloth], legs: m.tinta, p: out3(beat(a0, pk.start - 0.02, pk.start + 0.06)) });
+        cloth: m[pk.cloth], legs: m.tinta, p: out3(cueBeat(a0, pk.start, 0.02, 0.06)) });
       if (done < 1) {
         // The plank rides on the shoulder, then is laid at the deck's end.
         var px = lerp(wx + 6, br.end.x + 30 * k, inOut3(done)), py = lerp(wy - 78 - bob, deckY + 2, inOut3(done));
@@ -766,13 +824,13 @@
   // compass star where the road leads; the common indicator at the end.
 
   var AGE = {
-    x0: 40, x1: 812, tip: 870, top: 168, lane: 80, start: 214,
-    stone: { w: 76, h: 44 }, note: { x: 40, y: 104 },
+    x0: 40, x1: 812, tip: 870, top: 196, lane: 84, start: 214,
+    stone: { w: 76, h: 44 }, note: { x: 40, y: 98 },
     lanes: ['gobiernos', 'universidades', 'organizaciones'],
     items: [['gobiernos1', 'gobiernos2', 'gobiernos3'], ['universidades1', 'universidades2', 'universidades3'], ['organizaciones1', 'organizaciones2', 'organizaciones3']],
     years: ['hito2026', 'hito2027', 'hito2028'],
-    path: { y: 452 }, research: ['microscopio', 'libro', 'espiral', 'constelacion'],
-    compass: { x: 1060, y: 132, size: 124 }, comun: { y: 500 }
+    path: { y: 500, x0: 250 }, research: ['microscopio', 'libro', 'espiral', 'constelacion'],
+    compass: { x: 1060, y: 132, size: 124 }, comun: { y: 538 }
   };
 
   function setupAgenda(env) {
@@ -797,7 +855,7 @@
     });
     // The thinner research path alongside the road.
     var py = AGE.path.y, path = [];
-    for (var k = 0; k <= 16; k++) { var u = k / 16; path.push(lerp(AGE.x0, AGE.tip + 40, u), py + Math.sin(u * TAU * 1.2) * 8); }
+    for (var k = 0; k <= 16; k++) { var u = k / 16; path.push(lerp(AGE.path.x0, AGE.tip + 40, u), py + Math.sin(u * TAU * 1.2) * 6); }
     // The compass rose behind the star (D16's).
     var rb = env.ink.drawing('v09:rosa', { w: 3, jitter: 0.6 }), rr = env.rng('v09:rosa'), ring = [];
     rb.blob(5, 6, 52, 48, { fill: m.amarillo, line: false, irr: 0.12, n: 9 });
@@ -823,7 +881,7 @@
     // The KB note: the order by year is only a proposed sequence (after the chapter title).
     ink.text(ctx, rot(s, 'nota'), AGE.note.x, AGE.note.y, { size: 21, italic: true, color: env.pal.mix(m.tinta, m.lienzo, 0.15), p: beat(a[0], 0.1, 0.2) });
     // The compass star where the road leads; on the last line it settles toward the road's end.
-    var sway = noise(s.t * 0.25, 'v09:brujula') * 0.12 * calm(s), turn = inOut3(beat(a[3], C.comun - 0.05, C.comun + 0.3));
+    var sway = noise(s.t * 0.25, 'v09:brujula') * 0.12 * calm(s), turn = inOut3(cueBeat(a[3], C.comun, 0.05, 0.3));
     faded(ctx, intro, function () {
       ink.draw(ctx, st.rose, AGE.compass.x, AGE.compass.y, AGE.compass.size / 124);
       fig.sign(ctx, 'brujula', AGE.compass.x, AGE.compass.y, AGE.compass.size, { seed: 'v09:brujula', rot: lerp(0.42, -1.1, turn) + sway });
@@ -833,37 +891,38 @@
     var itemCue = [[C.g0, C.g1, C.g2], [C.u0, C.u1, C.u2], [C.o0, C.o1, C.o2]];
     AGE.lanes.forEach(function (key, l) {
       var li = laneCue[l][0], lc = laneCue[l][1], y0 = AGE.top + l * AGE.lane, cy = y0 + AGE.lane / 2;
-      var on = beat(a[li], lc - 0.03, lc + 0.03);
+      var on = cueBeat(a[li], lc, 0.03, 0.03);
       var said = li === 0 ? s.line >= 0 && a[0] > lc : s.line > 1 || (s.line === 1 && a[1] > lc);
       var active = l === 0 ? s.line === 0 && a[0] > lc : l === 1 ? s.line === 1 && a[1] > C.uni && a[1] < C.org : s.line === 1 && a[1] > C.org;
       if (active) ink.blob(ctx, AGE.x0 + 86, cy, 88, 24, { fill: m.amarillo, line: false, irr: 0.15, seed: 'v09:carril' + l, alpha: 0.85 });
       ink.text(ctx, rot(s, key), AGE.x0 + 14, cy - 14, { size: 25, weight: 700, font: 'display', maxWidth: AGE.start - AGE.x0 - 22, fit: true, minSize: 16,
         p: seg(rp, 0.5, 0.9) * (said || on > 0 ? 1 : 0.55) });
       for (var c = 0; c < 3; c++) {
-        var ip = beat(a[li], itemCue[l][c] - 0.03, itemCue[l][c] + 0.06);
+        var ip = cueBeat(a[li], itemCue[l][c], 0.03, 0.06);
         if (ip <= 0) continue;
-        var col = st.cols[c];
-        ink.text(ctx, rot(s, AGE.items[l][c]), col.cx, cy - 12, { size: 20, weight: 700, align: 'center', maxWidth: col.w - 26, maxLines: 2, lineHeight: 1.12, p: ip });
+        var col = st.cols[c], io = { size: 20, weight: 700, align: 'center', maxWidth: col.w - 26, maxLines: 2, fit: true, minSize: 15, lineHeight: 1.1, p: ip };
+        var il = ink.measureText(ctx, rot(s, AGE.items[l][c]), io);
+        ink.text(ctx, rot(s, AGE.items[l][c]), col.cx, cy - il.h / 2 + 2, io);
       }
     });
     // Line 3: the thinner research path draws on with its name; signs bloom along it.
     var pp = beat(a[2], 0, 0.14);
     if (pp > 0) {
-      ink.line(ctx, st.path, { w: 18, profile: 'even', color: m.lienzoOcre, seed: 'v09:sendero', p: pp });
-      ink.line(ctx, st.path, { w: 3, profile: 'swell', seed: 'v09:senderoborde', p: pp, dot: 'detached' });
-      ink.text(ctx, rot(s, 'investigacion'), AGE.x0 + 10, AGE.path.y - 46, { size: 23, weight: 700, font: 'display', p: seg(pp, 0.4, 1) });
+      ink.line(ctx, st.path, { w: 30, profile: 'even', color: m.tinta, seed: 'v09:senderoborde', p: pp });
+      ink.line(ctx, st.path, { w: 24, profile: 'even', color: m.lienzoOcre, seed: 'v09:sendero', p: pp });
+      ink.text(ctx, rot(s, 'investigacion'), AGE.x0 + 14, AGE.path.y - 15, { size: 25, weight: 700, font: 'display', p: seg(pp, 0.4, 1) });
       var rc = [C.r0, C.r1, C.r2, C.r3];
       for (var r = 0; r < 4; r++) {
-        var sp = beat(a[2], rc[r] - 0.03, rc[r] + 0.06);
+        var sp = cueBeat(a[2], rc[r], 0.03, 0.06);
         if (sp <= 0) continue;
-        pathAt(st.pathG, 0.3 + r * 0.17, Q1);
-        fig.sign(ctx, AGE.research[r], Q1.x, Q1.y - 30 + Math.sin(s.t * 0.8 + r) * 2 * calm(s), 46, { seed: 'v09:inv' + r, p: sp,
+        pathAt(st.pathG, 0.12 + r * 0.22, Q1);
+        fig.sign(ctx, AGE.research[r], Q1.x, Q1.y - 28 + Math.sin(s.t * 0.8 + r) * 2 * calm(s), 38, { seed: 'v09:inv' + r, p: sp,
           colors: { a: [m.rojo, m.azul, m.verde, m.amarillo][r] } });
       }
     }
     // Line 4: one indicator common to all.
-    var cp = beat(a[3], C.comun - 0.03, C.comun + 0.2);
-    if (cp > 0) label(ctx, env, rot(s, 'comun'), 470, AGE.comun.y, 30, { align: 'center', maxWidth: 860, fit: true, minSize: 22, seed: 'v09:comun', underline: true, p: cp });
+    var cp = cueBeat(a[3], C.comun, 0.03, 0.2);
+    if (cp > 0) label(ctx, env, rot(s, 'comun'), 470, AGE.comun.y, 27, { align: 'center', maxWidth: 860, fit: true, minSize: 22, seed: 'v09:comun', underline: true, p: cp });
   }
 
   // ---------------------------------------------------------------------------------------------
@@ -872,9 +931,9 @@
   // reviewer; a ladder without its first rung; a large stamp «Obligaciones». The lectora asks.
 
   var ESC = {
-    w: 238, h: 206, y: 112, x0: 64, step: 290, titleY: 334,
+    w: 252, h: 220, y: 132, x0: 52, step: 296, titleY: 366,
     keys: ['difusion', 'transformacion', 'automatizacion', 'reaccion'],
-    lectora: { x: 1176, y: 566, k: 1.5 }
+    lectora: { x: 1212, y: 568, k: 1.6 }
   };
 
   function windowScene(ctx, s, env, i, x, y, p) {
@@ -921,7 +980,7 @@
     ground(ctx, s, env);
     var a0 = s.at(0), a1 = s.at(1), a2 = s.at(2);
     floaters(ctx, s, env, [['pajaro', 1180, 470, 56], ['estrella', 640, 470, 30]], out3(s.intro));
-    var opens = [beat(a0, C.w0 - 0.03, C.w0 + 0.12), beat(a0, C.w1 - 0.03, C.w1 + 0.12), beat(a1, C.w2 - 0.03, C.w2 + 0.14), beat(a1, C.w3 - 0.03, C.sello + 0.06)];
+    var opens = [cueBeat(a0, C.w0, 0.03, 0.12), cueBeat(a0, C.w1, 0.03, 0.12), cueBeat(a1, C.w2, 0.03, 0.14), beat(a1, C.w3 - 0.03, Math.min(0.995, C.sello + 0.06))];
     var pats = env.pal.legend.escenarios;
     for (var i = 0; i < 4; i++) {
       var op = opens[i];
@@ -975,9 +1034,9 @@
     floaters(ctx, s, env, [['estrella', 1200, 96, 34], ['luna', 1210, 470, 40]], intro);
     st.rails.forEach(function (r, i) { ink.line(ctx, r, { w: 7, profile: 'swell', color: m.madera, seed: 'v09:larguero' + i, p: out3(beat(a0, 0, 0.08)) }); });
     var cues = [C.n0, C.n1, C.n2, C.n3, C.n4, C.n5, C.n6, C.n7, C.n8];
-    var hiA = beat(a1, C.apr - 0.04, C.apr + 0.06) * (1 - beat(a1, C.dis - 0.05, C.dis)), hiD = beat(a1, C.dis - 0.04, C.dis + 0.06);
+    var hiA = cueBeat(a1, C.apr, 0.04, 0.06) * (1 - beat(a1, C.dis - 0.05, C.dis)), hiD = cueBeat(a1, C.dis, 0.04, 0.06);
     for (var i = 0; i < 9; i++) {
-      var y = IND.y0 - i * IND.step, rp = beat(a0, cues[i] - 0.04, cues[i] + 0.03);
+      var y = IND.y0 - i * IND.step, rp = cueBeat(a0, cues[i], 0.04, 0.03);
       if (rp <= 0) continue;
       ink.line(ctx, st.rungs[i], { w: 6, profile: 'blunt', seed: 'v09:peldano' + i, p: rp });
       var hi = i === 4 ? hiA : i === 5 ? hiD : 0;
@@ -995,21 +1054,24 @@
   // «88% vs 39%» with the tag of both figures (adop-1, adop-5).
 
   var MEN = {
-    x: 70, w: 650, y0: 62, h: 84, gap: 12, sign: 62,
+    x: 60, w: 760, y0: 62, h: 84, gap: 12, sign: 62,
     keys: ['capacidad', 'adopcion', 'tareas', 'aprendizaje', 'gobernanza'],
     signs: ['cordillera', 'iceberg', 'escalera-sin-peldano', 'lancha-brujula', 'volante'],
     peeks: ['amarillo', 'celeste', 'rojo', 'verde', 'amarillo'],
-    tag: { x: 760, y: 96 }
+    tag: { x: 856, y: 96 }
   };
 
   function mensajes(ctx, s, env) {
     var C = cuesOf(s, 'mensajes'), ink = env.ink, fig = env.fig, m = env.pal.mundo;
     ground(ctx, s, env);
     var a0 = s.at(0), a1 = s.at(1);
-    floaters(ctx, s, env, [['estrella', 1150, 470, 40], ['espiral', 900, 520, 40], ['sol', 1200, 120, 50, { a: m.rojo }]], out3(s.intro));
+    floaters(ctx, s, env, [['estrella', 1210, 250, 36], ['espiral', 300, 548, 36], ['sol', 1210, 130, 46, { a: m.rojo }]], out3(s.intro));
+    // The session's sign, the lighthouse, waits on the right once the first message is told.
+    var fp = out3(beat(a1, 0, 0.15));
+    if (fp > 0) fig.sign(ctx, 'faro', 1050, 420 + noise(s.t * 0.2, 'v09:faro') * 4, 230, { seed: 'v09:faro', p: fp });
     var cues = [[a0, C.m0], [a0, C.m1], [a1, C.m2], [a1, C.m3], [a1, C.m4]];
     for (var i = 0; i < 5; i++) {
-      var cp = beat(cues[i][0], cues[i][1] - 0.03, cues[i][1] + 0.1);
+      var cp = cueBeat(cues[i][0], cues[i][1], 0.03, 0.1);
       if (cp <= 0) continue;
       var x = MEN.x, y = MEN.y0 + i * (MEN.h + MEN.gap);
       ink.card(ctx, x, y, MEN.w, MEN.h, { seed: 'v09:mensaje' + i, weight: 3.4, radius: 12, p: cp, peek: m[MEN.peeks[i]], peekCorner: i % 2 ? 'br' : 'tl' });
@@ -1019,7 +1081,7 @@
         var win = landWindow(C.cifra), np = beat(a0, win[0], win[1]);
         if (np > 0) {
           var txt = rot(s, 'usoVsImpacto');
-          var HL = hero(ctx, env, txt, x + MEN.w - 24, y + MEN.h / 2 - 20, 38, { align: 'right', seed: 'v09:8839', p: np });
+          var HL = hero(ctx, env, txt, x + MEN.w - 26, y + MEN.h / 2 - 20, 36, { align: 'right', seed: 'v09:8839', p: np });
           tag(ctx, env, ['adop-1', 'adop-5'], MEN.tag.x, MEN.tag.y, { x: x + MEN.w - 18, y: y + MEN.h / 2 - 4 }, np);
           void HL;
         }
@@ -1032,9 +1094,9 @@
   // a lighthouse; V01's iceberg rests in the distance; the final title; slow fade to navy.
 
   var CIE = {
-    horizon: 0.6, berg: { x: 250, y: 434, k: 0.3 }, light: { x: 1090, y: 452, k: 0.62 },
+    horizon: 0.6, berg: { x: 240, y: 434, k: 0.42 }, light: { x: 1090, y: 452, k: 0.62 },
     star: { x: 620, y: 490, size: 150 }, title: { y: 34, size: 50 },
-    stars: [[150, 250, 30], [420, 300, 22], [860, 220, 26], [980, 330, 20], [700, 360, 18], [60, 380, 20]]
+    stars: [[150, 250, 30], [420, 300, 22], [1180, 180, 26], [980, 330, 20], [700, 360, 18], [60, 380, 20]]
   };
 
   function cierre(ctx, s, env) {
@@ -1045,7 +1107,7 @@
       var tw = 0.86 + 0.14 * Math.sin(s.t * 1.3 + i * 1.7) * c;
       fig.sign(ctx, 'estrella', st[0], st[1], st[2] * tw, { seed: 'v09:noche' + i, colors: { a: m.rojo, ink: i % 3 ? m.amarillo : m.lienzo } });
     });
-    fig.sign(ctx, 'luna', 1190, 250, 70, { seed: 'v09:luna' });
+    fig.sign(ctx, 'luna', 930, 200, 64, { seed: 'v09:luna' });
     // V01's iceberg, small in the distance, with the lamp on its summit.
     var B = CIE.berg;
     fig.iceberg(ctx, B.x, B.y + Math.sin(s.t * 0.4) * 1.2 * c, B.k, { reveal: 0 });
@@ -1091,14 +1153,14 @@
 
     // consumo: the stall (posts, striped awning, table) and the open lamp box, in local units.
     var sb = ink.drawing('v09:puesto', { w: 3.6, jitter: 0.8 });
-    sb.stroke([-70, 0, -70, -128], { w: 4.4, profile: 'blunt', color: m.madera });
-    sb.stroke([70, 0, 70, -128], { w: 4.4, profile: 'blunt', color: m.madera });
-    var awning = [-86, -150, 86, -150, 92, -118, -92, -118];
+    sb.stroke([-62, 0, -62, -128], { w: 4.4, profile: 'blunt', color: m.madera });
+    sb.stroke([62, 0, 62, -128], { w: 4.4, profile: 'blunt', color: m.madera });
+    var awning = [-74, -150, 74, -150, 80, -118, -80, -118];
     sb.shape(densify(awning, 16), { fill: '@a', w: 3.6, fillScale: 0, fillJitter: 1 });
-    for (var i = -60; i <= 60; i += 40) sb.fill(densify([i - 10, -149, i + 10, -149, i + 12, -119, i - 12, -119], 8), { fill: m.lienzo, fillScale: 0 });
-    sb.shape(densify([-88, -4, 88, -4, 88, 8, -88, 8], 16), { fill: m.madera, w: 3.4, fillScale: 0, fillJitter: 0.6 });
-    sb.stroke([-80, 8, -82, 70], { w: 3.4, profile: 'blunt' });
-    sb.stroke([80, 8, 82, 70], { w: 3.4, profile: 'blunt' });
+    for (var i = -54; i <= 54; i += 36) sb.fill(densify([i - 10, -149, i + 10, -149, i + 12, -119, i - 12, -119], 8), { fill: m.lienzo, fillScale: 0 });
+    sb.shape(densify([-80, -4, 80, -4, 80, 8, -80, 8], 16), { fill: m.madera, w: 3.4, fillScale: 0, fillJitter: 0.6 });
+    sb.stroke([-72, 8, -74, 70], { w: 3.4, profile: 'blunt' });
+    sb.stroke([72, 8, 74, 70], { w: 3.4, profile: 'blunt' });
     var bx = ink.drawing('v09:caja', { w: 3, jitter: 0.6 });
     bx.shape(densify([-24, -36, 24, -36, 24, -4, -24, -4], 8), { fill: m.tierra, w: 3, fillScale: 0, fillJitter: 0.6 });
     bx.shape(densify([-24, -36, -36, -46, -14, -48, -6, -36], 6), { fill: env.pal.mix(m.tierra, m.lienzo, 0.25), w: 2.4, fillScale: 0 });
@@ -1114,6 +1176,7 @@
     for (var k = 0; k < 4; k++) scr.push(ink.wavePoints(26, 60 + k * 34, pw - 26 - (k === 3 ? 50 : 0), 2.2, 22, k));
     st.conpes = { scribbles: scr };
 
+    st.falta = FAL.built.map(function (b) { return bridgeDrawing(env, b); });
     st.agenda = setupAgenda(env);
     st.indicadores = setupIndicadores(env);
     return st;
