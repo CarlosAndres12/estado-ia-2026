@@ -258,7 +258,8 @@
   };
 
   // causal: a common cause (items[0], a biomorphic cloud) with solid arrows to two effects
-  // (items[1], items[2]); between the effects only a dotted line labeled items[3].
+  // (items[1], items[2]); between the effects only a dotted line labeled diagrama.enlace (the
+  // deck's field; items[3].text is read only when enlace is absent).
   DRAW.causal = function (ctx, d, r, o) {
     var it = d.items || [], ink = I(), m = M(), p = o.p;
     var cx = r.x + r.w / 2, cy = r.y + r.h * 0.22;
@@ -276,7 +277,8 @@
     var dp = seg(p, 0.7, 1);
     if (dp > 0 && it[1] && it[2]) {
       ink.dotted(ctx, [cx - ex + bw / 2 + 10, ey, cx, ey + 4, cx + ex - bw / 2 - 10, ey], { r: 2.6, gap: 10, seed: 'assoc', p: dp });
-      if (it[3]) ink.text(ctx, it[3].text, cx, ey + 12, { size: 18, italic: true, align: 'center', p: dp });
+      var link = d.enlace != null && d.enlace !== '' ? d.enlace : it[3] && it[3].text;
+      if (link) ink.text(ctx, link, cx, ey + 12, { size: 18, italic: true, align: 'center', p: dp });
     }
   };
 
