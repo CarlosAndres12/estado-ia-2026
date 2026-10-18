@@ -106,7 +106,7 @@ CSS mirror (`css/tokens.css`): `--lienzo`, `--lienzo-ocre`, `--tinta`, `--rojo`,
 | Call | Options (defaults) |
 |---|---|
 | `line(ctx, pts, o)` | `w` 3, `profile` `swell` \| `blunt` \| `outline` \| `lift` \| `press` \| `even` \| `hair`, `dot` (true \| `'detached'`), `startDot`, `second` (thin second stroke: true or probability), `closed`, `color` tinta, `p`, `seed`, `alpha` |
-| `shape(ctx, pts, o)` | closed shape: `fill` (offset gouache field), `line` true, `w`, `poly` (straight-edged field), `tex`, `offset` px, `p`, `seed` |
+| `shape(ctx, pts, o)` | closed shape: `fill` (offset gouache field), `line` true, `w`, `poly` (straight-edged field; the outline still rounds corners), `sharp` (straight field AND an outline that keeps the polygon's corners; also on `drawing().shape`), `tex`, `offset` px, `p`, `seed` |
 | `blob(ctx, cx, cy, rx, ry, o)` · `circle(ctx, cx, cy, r, o)` | biomorphic / hand-drawn circle; `irr` irregularity, `n` points, `rot`, plus shape options |
 | `dot(ctx, x, y, r, color)` · `dotted(ctx, pts, o)` | dot · hand-dabbed dotted line (`r`, `gap`) |
 | `arrow(ctx, pts, o)` | calligraphic arrow, open head (`headSize`, `dotted`, `head: 'none'`) |
@@ -138,7 +138,7 @@ CSS mirror (`css/tokens.css`): `--lienzo`, `--lienzo-ocre`, `--tinta`, `--rojo`,
 |---|---|
 | `text(ctx, text, x, y, o)` → layout | `size` 18, `weight`, `italic`, `font` `sans` \| `display`, `maxWidth`, `maxLines`, `fit` (shrink, never truncates), `minSize`, `maxHeight`, `lineHeight` 1.3, `align`, `color`, `p` (fade) |
 | `measureText(ctx, text, o)` | `{ lines, w, h, size, lineH, font, overflow }` |
-| `letter(ctx, text, x, y, o)` → layout | brush lettering written glyph by glyph: `size` 56, `font` display, `maxWidth`, `maxLines` 2, `fit`, `align`, `p`, `seed`, `counters` (0.4 share of filled counters), `stars`, `underline` (wavy, ends in a dot), `color` |
+| `letter(ctx, text, x, y, o)` → layout | brush lettering written glyph by glyph: `size` 56, `font` display, `maxWidth`, `maxLines` 2, `fit`, `align`, `p`, `seed`, `counters` (0.4 share of filled counters), `stars`, `underline` (wavy, ends in a dot), `color`. Every glyph's window ends within the span, so the last glyphs finish as `p` reaches it (no jump to whole at `p = 1`) |
 | `measureLetter(ctx, text, o)` | `{ w, h, size, lines, … }` for layout before drawing |
 | `wrap(ctx, text, maxWidth, font)` · `font(o)` · `FONTS` | helpers; fonts are "EIA Sans" (400/700/italic) and "EIA Display" (700/900) |
 | `card(ctx, x, y, w, h, o)` | paper card, thick irregular outline (always closed: it may loop a little past its start, never leaves a gap): `weight` 4, `radius` 12, `peek` (color behind a corner), `peekCorner`, `dashed`, `fill`, `p` |
@@ -168,13 +168,14 @@ on one edge; `maxGap: 0` turns any gap into a short overlap (cards use it).
 |---|---|---|
 | `parseValue(text)` | → `{ value, lo, hi, approx, bound, unit, raw, index }` from a data string ("66,3%", "~1/3", "hasta −83%", "14–15%", "más de 90%") | fractions become % ("~1/3" → 33,3) |
 | `linear(d0, d1, r0, r1)` · `scale(max, x0, len)` | scales (`.invert`) | share ONE scale per frame |
-| `bar(ctx, o)` | gouache bar, exact value edge, cap by wording (≈ dotted, chevrons, "hasta" tick) | `text` or `value`, `scale`, `x`, `y`, `h` 34, `orient` h \| v (`baseY`), `style` warm \| ruled, `color`, `cifras` (tag), `label`, `labelWidth`, `p` |
+| `bar(ctx, o)` | gouache bar, exact value edge, cap by wording (≈ dotted, chevrons, "hasta" tick) | `text` or `value`, `scale`, `x`, `y`, `h` 34, `orient` h \| v (`baseY`), `style` warm \| ruled, `color`, `cifras` (tag), `label`, `labelWidth`, `tickColor` (the cap: stroke, ≈ dots, chevrons; default the outline color), `p` |
 | `bars(ctx, items, o)` | horizontal bars on one zero-based scale + zero line | `max` (100 for % data), `x`, `y`, `len`, `h`, `gap`, `p` (staggered) |
-| `unitGrid(ctx, o)` | 100 (or 1.000) dots, `value` lit in reading order (or `percent`) | `x`, `y`, `w`, `litColor`, `halo`, `style` |
+| `unitGrid(ctx, o)` | 100 (or 1.000) dots, `value` lit in reading order (or `percent`) | `x`, `y`, `w`, `litColor`, `halo`, `style`; `approx` (≈ cap for a value rounded to whole dots: a dotted edge along the lit/unlit boundary once the dots land, returned as `g.edge`), `approxSign` (legend «≈» right of the grid at that row), `tickColor` (tinta; linea when ruled) |
 | `dots(ctx, o)` | exact count as an organic cluster | `x`, `y` (center), `count`, `pitch`, `sign` |
-| `band(ctx, o)` · `interval(ctx, o)` | range band with end ticks · interval line, point and zero mark | `text`/`lo`/`hi`; `min`, `max`, `labels`, `zeroLabel` |
+| `band(ctx, o)` · `interval(ctx, o)` | range band with end ticks · interval line, point and zero mark | `text`/`lo`/`hi`, band `tickColor` (tinta); `min`, `max`, `labels`, `zeroLabel` |
 | `gauge(ctx, o)` | hand-drawn dial, needle at the exact angle, optional ghost needle | `x`, `y`, `r`, `min`, `max`, `value`/`text`, `ghost`, `style` |
 | `timeline(ctx, o)` | paper strip, pins at positions proportional to the dates | `from`, `to`, `items: [{ text, date? }]` (Spanish dates parsed) |
+| `parseDate(d)` | → days since 1970-01-01 UTC | «2 de agosto de 2025», «agosto de 2025», «Ago 2027», «sept. 2026», ISO, a year; a text with several dates gives its **leading** one («Ago 2027: … agosto de 2025» → 1 Aug 2027); a month without a day is its 1st |
 | `funnel(ctx, o)` | centered proportional bars, bottleneck bracketed | `items`, `w`, `h`, `pitch`, `labelX`, `labelWidth` |
 | `panels(ctx, o)` | separate cards + "No se compara directamente" | `panels: [{ draw(ctx, rect, p) }]`, `gap` |
 | `geom.bar / unitGrid / dots / gauge / timeline` | pure value → px geometry (tests, label placement) | |
@@ -186,9 +187,9 @@ label fades in only after it lands. Example: `chart.bars(ctx, items, { x: 120, y
 
 | Call | Notes |
 |---|---|
-| `sourceTag(ctx, idOrIds, o)` → `{ x, y, w, h, hole }` | cream paper tag + thread: chip, short source label, scope when it fits, estado sign (ribbon for "Actualización"). `x, y` or `near: { x, y, side, gap }`; `anchor`; `p`; `scale`; `maxWidth` 300; `scope` auto \| true \| false; `mono`; `chip` (false leaves the evidence chip out, only while a quiz asks for that type). The whole tag follows the caller's `globalAlpha` |
+| `sourceTag(ctx, idOrIds, o)` → `{ x, y, w, h, hole, label, lines }` | cream paper tag + thread: chip, short source label, scope when it fits, estado sign (ribbon for "Actualización"). `x, y` or `near: { x, y, side, gap }`; `anchor`; `p`; `scale`; `maxWidth` 300 (× `scale`); `scope` auto \| true \| false; `mono`; `chip` (false leaves the evidence chip out, only while a quiz asks for that type); `hole` `'left'` (default) \| `'right'` (mirrored tag, for one hanging left of its number); `threadColor` (tinta; e.g. lienzo on navy). One id shows its first source; **several ids show every source they rest on, each once** («AI Act Service Desk · EUR-Lex»), and their distinct scopes joined with « · » when that fits (auto: ≤ 2 lines). A label wider than `maxWidth` wraps, between sources first. The whole tag follows the caller's `globalAlpha` |
 | `measureTag(ctx, id, o)` | `{ w, h }` |
-| `labelTag(ctx, text, o)` → `{ x, y, w, h, hole }` | the same paper tag holding free text from data (a template such as «Fuente · Alcance · Tipo de evidencia»); never stands in for a figure's real tag. `x, y` or `near`, `anchor`, `p`, `scale`, `size` 17, `maxWidth` 300, `tilt`, `seed` |
+| `labelTag(ctx, text, o)` → `{ x, y, w, h, hole }` | the same paper tag holding free text from data (a template such as «Fuente · Alcance · Tipo de evidencia»); never stands in for a figure's real tag. `x, y` or `near`, `anchor`, `p`, `scale`, `size` 17, `maxWidth` 300, `tilt`, `seed`, `hole`, `threadColor` |
 | `chip(ctx, clase, label, o)` | sign + verbatim label; `size` 15, `mono`, `pill`, `x`, `y`, `p` |
 | `estadoSign(ctx, key, x, y, size)` | center; tinta |
 | `warningStamp(ctx, n, x, y, size, p, o)` | round ink stamp, center; `o.text`, `o.number` |
@@ -227,7 +228,7 @@ label fades in only after it lands. Example: `chart.bars(ctx, items, { x: 120, y
 | `lamp(ctx, x, y, scale, o)` | 100 px, center | `t` (stars flow), `glow`, `dim` 0–1, `p` |
 | `lamps(ctx, x, y, scale, o)` | row of identical lamps | `n`, `gap` |
 | `panel(ctx, x, y, w, h, o)` | ruled navy panel | `cell` |
-| `agentLoop(ctx, x, y, scale, o)` → `{ stations, at(u) }` | 560×300, top-left | `labels` (from data), `n`, `returnTo`, `at`, `t` |
+| `agentLoop(ctx, x, y, scale, o)` → `{ stations, at(u) }` | 560×300, top-left | `labels` (from data), `n`, `returnTo`, `at`, `t`, `lamp` (false: no lamp, the caller draws its own), `labelSize` (px at scale 1, 15) |
 | `ruledLadder(ctx, x, y, scale, o)` → `{ rungs, scale }` | bottom-center at zero | `max`, `h` 360, `rungs: [{ value, crack }]`, `ref`, `lampAt` |
 | `examPanel(…)` · `serverTower(…)` · `computeBlock(…)` | 420×280 top-left · 120×300 bottom-center · cells top-left (`fraction` exact) | |
 | `lampOnWheels(…)` · `ruledSieve(…)` · `weightsBox(…)` | ground · center · top-left | `pattern` · `t` · `lid` open \| closed \| transparent, `drawers` |
@@ -235,7 +236,8 @@ label fades in only after it lands. Example: `chart.bars(ctx, items, { x: 120, y
 ### Places (1280×720 stages, `(x, y)` = top-left; cached as layers)
 
 `oficina`, `patio`, `aula`, `biblioteca`, `laboratorio`, `hospital`, `consultorio`, `marNocturno`
-(`horizon`, `moon`, `stars`, `t`) with `iceberg(ctx, x, y, scale, { reveal, glow })`, `cordillera`
+(`horizon`, `moon`, `stars`, `t`) with `iceberg(ctx, x, y, scale, { reveal, glow, waterline, waterColor })` (`waterline`: true; false draws
+no line; a number moves the line that many px at scale 1 below (+) or above (−) the iceberg's own waterline), `cordillera`
 (`peaks: [{ x, h, lit, deep }]` → `{ peaks, valleys }`), `river` (`coins`, `t` → `{ at(u), reservoir, gate }`),
 `ciudad`, `latam` (→ `anchors`), `road` (`stations`, `signs`, `points` → `{ stations, at(u) }`).
 Fit any stage into a zone with `fig.inRect(ctx, rect, function (x, y, k) { … })`.
@@ -252,7 +254,7 @@ watches compared on one scale = same share of a turn per unit of time), `telesco
 `spyglass`, `flask`, `compass`, `chair`, `trafficLight` (`lit` → `lights`), `stamp`, `folder`,
 `envelope`, `key`, `keyRing`, `lock`, `mailbox`, `phone`, `calendar` (`marked`), `drawer` (`cards`),
 `bucket`, `chain` (`crack`), `doorway`, `roadSign` (`text`), `lever`, `steppingStones` (`n`),
-`steeringWheel` (`turn`), `lighthouse` (`beam`), `boat` (`motor`, `compass`, `passengers`), `net`
+`steeringWheel` (`turn`), `lighthouse` (`beam`), `boat` (`motor`: the lamp on a ruled motor bolted to the stern by a ruled bracket, `compass`, `passengers`), `net`
 (→ `path` for `isPointInPath`), `foldingDoc` (`n`, `open`), `pennant` (`pattern`), `flipCard`
 (`flip`, `front`, `back`), `bubble(ctx, x, y, w, h, { tail, thought })`, `desk`. All take `p`.
 
@@ -263,13 +265,13 @@ watches compared on one scale = same share of a turn per unit of time), `telesco
 | `render(ctx, id, { t, still })` | full lámina from `EIA.data.deck`; `still` freezes the 8 s ambient loop (print, thumbnails, reduced motion) |
 | `mountRender(id, q)` | `index.html?lamina=<id>[&dpr=2][&still=1][&t=…]`: bare canvas, `window.renderFrame(t)`, `window.renderReady` |
 | `layout(entry, module)` → zones | `titular`, `subtitulo`, `cifras`, `figs[]`, `diagrama`, `ilustracion`, `idea`, `pie`, `sesion`, `full` |
-| `diagram(ctx, diagrama, rect, { p, mono })` | `flujo`, `pasos`, `embudo`, `causal`, `columnas` (item `sign`), `ciclo`, `semaforo`, `linea`, `tarjetas` |
+| `diagram(ctx, diagrama, rect, { p, mono, titulo })` | `flujo`, `pasos` (item `luz`: 1 lit with a glow, 0.5 half-lit, 0 dark; without `luz` the stones alternate cream/yellow), `embudo`, `causal` (dotted line labeled `diagrama.enlace`, else `items[3].text`), `columnas` (item `sign`), `ciclo`, `semaforo`, `linea`, `tarjetas`, `barras` (one bar per item on a shared zero-based scale: value from `parseValue(item.text)` else `item.valor`, label `item.etiqueta`, one tag for all the items' `cifras`; always letters its `titulo`). `titulo` (default true when called directly): `flujo` and `pasos` letter `diagrama.titulo` above their band. Inside `render` they do so only when the module's `layout.diagramTitle` is true (D9 letters its own title, so the default stays off) |
 | `bigFigure(ctx, item, rect, o)` · `entry(id)` · `fontsReady()` · `reset(id)` | |
 
 Module contract: `EIA.laminas.dNN = { setup(env), draw(ctx, s, env), drawAfter?(ctx, s, env), layout? }`,
 `s = { t, still, loop, lamina, zones, state }`. Draw order: background → `draw` → diagram → big
 figures → titular → session sign → Idea central → pie → `drawAfter`. `layout` may move or hide a
-zone (`{ cifras: false }`, `{ diagrama: rect }`, `{ drawDiagram: false }`, `{ ilustracion: rect }`).
+zone (`{ cifras: false }`, `{ diagrama: rect }`, `{ drawDiagram: false }`, `{ ilustracion: rect }`, `{ diagramTitle: true }`).
 
 ## Video modules and the player's overlays (T05 runtime, conventions fixed by V02 in T06)
 
