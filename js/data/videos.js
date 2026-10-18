@@ -2352,7 +2352,8 @@ EIA.data.videos = [
         seVe: 'Dos grupos exactos de puntos, con datos de 2025: «América Latina y el Caribe: 8 clústeres de supercomputación con respaldo estatal» y «Europa y Asia Central: 44».',
         rotulos: {
           americaLatina: { text: 'América Latina y el Caribe: 8 clústeres de supercomputación con respaldo estatal', cifras: ['eco-7'] },
-          europa: { text: 'Europa y Asia Central: 44', cifras: ['eco-7'] }
+          europa: { text: 'Europa y Asia Central: 44', cifras: ['eco-7'] },
+          anio: { text: '2025', cifras: ['eco-7'] }
         },
         lines: [
           {
@@ -2444,7 +2445,20 @@ EIA.data.videos = [
           universidades: { text: 'Universidades' },
           organizaciones: { text: 'Organizaciones' },
           investigacion: { text: 'Investigación' },
-          nota: { text: 'El orden por año es una secuencia propuesta' }
+          nota: { text: 'El orden por año es una secuencia propuesta' },
+          hito2026: { text: '2026' },
+          hito2027: { text: '2027' },
+          hito2028: { text: '2028' },
+          gobiernos1: { text: 'medición' },
+          gobiernos2: { text: 'cómputo compartido' },
+          gobiernos3: { text: 'regulación por riesgo' },
+          universidades1: { text: 'política común' },
+          universidades2: { text: 'alfabetización transversal' },
+          universidades3: { text: 'evaluación auténtica' },
+          organizaciones1: { text: 'pocos flujos de alto valor' },
+          organizaciones2: { text: 'línea base' },
+          organizaciones3: { text: 'agentes con permisos mínimos' },
+          comun: { text: 'Indicador común: valor verificable, costo total y riesgo controlado' }
         },
         lines: [
           {
@@ -2505,7 +2519,16 @@ EIA.data.videos = [
           distribucion: { text: 'Distribución' },
           seguridad: { text: 'Seguridad' },
           sostenibilidad: { text: 'Sostenibilidad' },
-          gobernanza: { text: 'Gobernanza' }
+          gobernanza: { text: 'Gobernanza' },
+          preguntaInsumos: { text: '¿Qué capacidades están disponibles y para quién?' },
+          preguntaUso: { text: '¿Quién usa IA y con qué finalidad?' },
+          preguntaIntegracion: { text: '¿La IA forma parte del flujo real o es un piloto aislado?' },
+          preguntaResultado: { text: '¿Mejora el desempeño frente a una línea base?' },
+          preguntaAprendizaje: { text: '¿La mejora se sostiene cuando se retira la ayuda?' },
+          preguntaDistribucion: { text: '¿Quién recibe los beneficios y quién soporta los riesgos?' },
+          preguntaSeguridad: { text: '¿Los riesgos están identificados y controlados?' },
+          preguntaSostenibilidad: { text: '¿El valor justifica la huella material?' },
+          preguntaGobernanza: { text: '¿Existe rendición de cuentas efectiva?' }
         },
         lines: [
           {
