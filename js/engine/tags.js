@@ -126,14 +126,40 @@
       if (c) cs.push(c);
     }
     if (!cs.length) return null;
-    var labels = [];
-    cs.forEach(function (c) { if (c.etiqueta && labels.indexOf(c.etiqueta) < 0) labels.push(c.etiqueta); });
+    // One figure shows its first source (what the KB cites first); several figures show every
+    // source they rest on, each short label once, in order.
+    var labels = [], scopes = [];
+    function addLabel(t) { if (t && labels.indexOf(t) < 0) labels.push(t); }
+    cs.forEach(function (c) {
+      if (cs.length === 1) addLabel(c.etiqueta);
+      else if (c.fuentesList && c.fuentesList.length) c.fuentesList.forEach(function (f) { addLabel(f.etiqueta); });
+      else addLabel(c.etiqueta);
+      if (c.alcanceTexto && scopes.indexOf(c.alcanceTexto) < 0) scopes.push(c.alcanceTexto);
+    });
     var estado = '';
     for (i = 0; i < cs.length; i++) if (cs[i].estadoKey && cs[i].estadoKey !== 'verificada') { estado = cs[i].estadoKey; break; }
     return {
       first: cs[0], chip: cs[0].chip, label: labels.join(' · '),
-      scope: cs.length === 1 ? cs[0].alcanceTexto : '', estado: estado, key: cs.map(function (c) { return c.id; }).join('+')
+      scope: scopes.join(' · '), estado: estado, key: cs.map(function (c) { return c.id; }).join('+'), multi: cs.length > 1
     };
+  }
+
+  // Breaks a source label between its sources («A · B») first, then between words.
+  function wrapLabel(ctx, label, room, font) {
+    var parts = String(label).split(' · '), lines = [], cur = '';
+    ctx.font = font;
+    for (var i = 0; i < parts.length; i++) {
+      var next = cur ? cur + ' · ' + parts[i] : parts[i];
+      if (ctx.measureText(next).width <= room) { cur = next; continue; }
+      if (cur) lines.push(cur);
+      if (ctx.measureText(parts[i]).width <= room) { cur = parts[i]; continue; }
+      var words = I().wrap(ctx, parts[i], room, font);
+      cur = words.pop() || '';
+      lines = lines.concat(words);
+      ctx.font = font;
+    }
+    if (cur) lines.push(cur);
+    return lines;
   }
 
   var tagLayoutCache = new Map();
@@ -147,9 +173,17 @@
     var padL = 32 * k, padR = 14 * k, padT = 9 * k, padB = 10 * k;
     var chipSize = 13 * k, labelSize = 15.5 * k, scopeSize = 13 * k;
     var chip = o.chip === false ? { w: 0, h: 0 } : chipLayout(ctx, tc.chip.clase, tc.chip.label, { size: chipSize });
+    var room = maxW - padL - padR;
     ctx.font = fontSans(labelSize, 700);
     var labelW = ctx.measureText(tc.label).width;
-    var contentW = Math.min(Math.max(chip.w, labelW), maxW - padL - padR);
+    // A source label longer than the tag allows wraps inside maxWidth (never truncated).
+    var labelLines = labelW > room ? wrapLabel(ctx, tc.label, room, fontSans(labelSize, 700)) : [tc.label];
+    if (labelLines.length > 1) {
+      labelW = 0;
+      ctx.font = fontSans(labelSize, 700);
+      for (var li = 0; li < labelLines.length; li++) labelW = Math.max(labelW, ctx.measureText(labelLines[li]).width);
+    }
+    var contentW = Math.min(Math.max(chip.w, labelW), room);
     var scopeLines = [];
     if (tc.scope && o.scope !== false) {
       var sw = Math.max(contentW, Math.min(200 * k, maxW - padL - padR));
@@ -161,10 +195,10 @@
         for (var i = 0; i < lines.length; i++) contentW = Math.max(contentW, ctx.measureText(lines[i]).width);
       }
     }
-    var h = padT + (chip.h ? chip.h + 3 * k : 0) + labelSize * 1.2 + (scopeLines.length ? 4 * k + scopeLines.length * scopeSize * 1.25 : 0) + padB;
+    var h = padT + (chip.h ? chip.h + 3 * k : 0) + labelSize * 1.2 * labelLines.length + (scopeLines.length ? 4 * k + scopeLines.length * scopeSize * 1.25 : 0) + padB;
     var w = padL + contentW + padR;
     var out = { tc: tc, k: k, w: w, h: h, padL: padL, padT: padT, chip: chip, chipSize: chipSize, labelSize: labelSize,
-      scopeSize: scopeSize, scopeLines: scopeLines, labelW: labelW };
+      scopeSize: scopeSize, scopeLines: scopeLines, labelW: labelW, labelLines: labelLines };
     try { if (!document.fonts || document.fonts.check(fontSans(labelSize, 700))) tagLayoutCache.set(key, out); } catch (e) { /* no DOM */ }
     return out;
   }
@@ -209,7 +243,7 @@
     var anchor = o.anchor || (o.near ? { x: o.near.x, y: o.near.y } : null);
     var p = o.p == null ? 1 : o.p;
     var hole = { x: x + 15 * k, y: y + h / 2 };
-    if (p <= 0) return { x: x, y: y, w: w, h: h, hole: hole };
+    if (p <= 0) return { x: x, y: y, w: w, h: h, hole: hole, label: l.tc.label, lines: l.labelLines };
     var m = M(), ink = I();
     var seed = 'tag:' + l.tc.key;
     var tilt = o.tilt == null ? E.rng.create(seed).jitter(0.018) : o.tilt;
@@ -247,8 +281,10 @@
       ctx.fillStyle = m.tinta;
       ctx.textBaseline = 'alphabetic';
       ctx.font = fontSans(l.labelSize, 700);
-      ctx.fillText(l.tc.label, l.padL, cy + l.labelSize * 0.95);
-      cy += l.labelSize * 1.2;
+      for (var lj = 0; lj < l.labelLines.length; lj++) {
+        ctx.fillText(l.labelLines[lj], l.padL, cy + l.labelSize * 0.95);
+        cy += l.labelSize * 1.2;
+      }
       if (l.scopeLines.length) {
         cy += 4 * k;
         ctx.font = fontSans(l.scopeSize, 400, true);
@@ -277,7 +313,7 @@
         ink.line(ctx, pts, { w: 2 * k, profile: 'hair', seed: seed + 'th', p: thp, color: m.tinta, dot: 1.6 });
       }
     }
-    return { x: x, y: y, w: w, h: h, hole: hole };
+    return { x: x, y: y, w: w, h: h, hole: hole, label: l.tc.label, lines: l.labelLines };
   };
 
   /* tags.labelTag(ctx, text, opts) -> { x, y, w, h, hole }: a paper tag in the source-tag style

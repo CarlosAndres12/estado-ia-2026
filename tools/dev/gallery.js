@@ -495,6 +495,13 @@
       log(!!ok, 'parseValue("' + cse[0] + '") -> ' + (pv ? pv.value + (pv.unit ? ' ' + pv.unit : '') + (pv.approx ? ' ≈' : '') + (pv.bound ? ' ' + pv.bound : '') : 'null'));
     });
 
+    // 4b. Source tags: every source of several figures; long labels wrap inside maxWidth.
+    var tgM = E.tags.sourceTag(ctx, ['ries-4', 'ctx-ley-vigor'], { x: 0, y: 0, p: 0 });
+    log(!!tgM && tgM.label === 'AI Act Service Desk · EUR-Lex · ' + EIA.cifra('ctx-ley-vigor').fuentesList[0].etiqueta,
+      'multi-id sourceTag shows every source once: «' + (tgM && tgM.label) + '»');
+    var tgW = E.tags.sourceTag(ctx, ['ries-4', 'ctx-ley-vigor'], { x: 0, y: 0, p: 0, maxWidth: 200, scope: false });
+    log(!!tgW && tgW.w <= 200 + 1e-6 && tgW.lines.length > 1, 'long source label wraps inside maxWidth 200 (w ' + (tgW && tgW.w.toFixed(1)) + ', ' + (tgW && tgW.lines.length) + ' lines)');
+
     // 5. Legend rules: the five evidence colors belong only to the evidence types.
     var ev = E.palette.evidencia, decorUsesEv = E.palette.decor.some(function (col) { return Object.keys(ev).some(function (k) { return ev[k] === col; }); });
     log(!decorUsesEv, 'decorative palette excludes the five evidence colors');
