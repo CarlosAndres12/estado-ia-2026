@@ -2395,7 +2395,7 @@
   };
 
   /* fig.boat(ctx, x, y, scale, opts) -> { motor, deck }: a fast warm boat; opts.motor (true: a small
-   * ruled motor — the lamp — pushes it), compass (false), passengers (0..4), t, p. (x, y) = waterline
+   * ruled motor — the lamp — bolted to the stern by a ruled bracket, pushes it), compass (false), passengers (0..4), t, p. (x, y) = waterline
    * center; 300 px long at scale 1. */
   fig.boat = function (ctx, x, y, scale, o) {
     o = o || {};
@@ -2412,6 +2412,8 @@
     var motor = { x: x - 170 * s, y: y - 12 * s };
     if (o.motor !== false) {
       I().rRect(ctx, motor.x - 30 * s, motor.y - 22 * s, 30 * s, 44 * s, { fill: Q().noche, color: Q().linea, w: 1.4, p: p });
+      // A short ruled bracket bolts the motor to the stern (the machine stays ruled and navy).
+      I().rRect(ctx, motor.x - 2 * s, motor.y - 16 * s, 26 * s, 7 * s, { fill: Q().noche, color: Q().linea, w: 1.2, p: p });
       fig.lamp(ctx, motor.x - 15 * s, motor.y - 34 * s, 0.32 * s, { t: o.t, p: p });
     }
     if (o.compass) fig.sign(ctx, 'brujula', x + 60 * s, y - 110 * s, 80 * s, { seed: 'boat', p: p, rot: o.compassRot || 0 });
