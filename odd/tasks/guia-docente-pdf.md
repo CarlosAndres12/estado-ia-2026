@@ -15,7 +15,7 @@ A printable PDF guide for the teacher (facilitator) of «Estado de la IA 2026»,
 
 ## Tasks
 - [x] G01 Build tool + PDF + site link + README note (delegated writer: 3+ non-trivial files)
-- [ ] G02 Verify (tests, check-content, route check, visual readback of PDF pages), publish to GitHub Pages
+- [x] G02 Verify (tests, check-content, route check, visual readback of PDF pages), publish to GitHub Pages
 
 ## Acceptance
 - PDF opens, has cover with authors, course overview, how to use the site, per-session guide (objectives, preparation, agenda, facilitator notes, quiz key, resources), evaluation/rubric, project, glossary/sources pointers.
@@ -27,3 +27,4 @@ A printable PDF guide for the teacher (facilitator) of «Estado de la IA 2026»,
   - Evidence: `node --test tools/test` 207/207 pass; `check-content` 0 errors 0 warnings; `check-routes --width 360` 30 routes, 0 problems; visual readback of pages 1, 2, 9, 11, 23, 36, 41, 50, 52 (cover, TOC, sessions, annex) OK.
   - Gaps: no per-session "preparation" field in the data (built from the session's videos, láminas, activities and notebook sheets); session `contenido` (lecture body) not reproduced, it stays on the site; tool activities without a KB block (s2-pasos, s3-embudo, s6-calendario, s7-plan…) show title plus their data (fases, hitos, indicadores, escenarios) and a pointer to the site tool.
 
+- G02 done: parent spot check (check-content 0 errors, pages 1 and 11 read back OK); published to GitHub Pages.
