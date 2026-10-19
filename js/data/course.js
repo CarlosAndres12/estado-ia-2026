@@ -433,8 +433,7 @@ EIA.data.course = {
     ]
   },
   footer: {
-    texto: 'Ilustraciones y animaciones dibujadas con código, con un lenguaje visual inspirado en el arte de Joan Miró. Narración con voces sintéticas. Contenido: Base de conocimiento del curso «Estado de la IA 2026», versión 1.1 (17 de octubre de 2026), a partir del informe base *Estado del arte de la inteligencia artificial en 2026* (corte: 14 de octubre de 2026). Cifras verificadas contra las fuentes originales el 17 de octubre de 2026, salvo las marcadas como «Informe base». Revisado por [nombre del facilitador].',
-    placeholder: '[nombre del facilitador]',
+    texto: 'Ilustraciones y animaciones dibujadas con código, con un lenguaje visual inspirado en el arte de Joan Miró. Narración con voces sintéticas. Contenido: Base de conocimiento del curso «Estado de la IA 2026», versión 1.1 (17 de octubre de 2026), a partir del informe base *Estado del arte de la inteligencia artificial en 2026* (corte: 14 de octubre de 2026). Cifras verificadas contra las fuentes originales el 17 de octubre de 2026, salvo las marcadas como «Informe base». Revisado por Carlos Andrés Pérez-Aguirre.',
     autoresTitulo: 'Autores',
     autores: [
       {

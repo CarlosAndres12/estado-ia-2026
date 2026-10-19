@@ -767,7 +767,7 @@ export function checkCourse(EIA, kb, report) {
   const filas = ((c.mapa || {}).filas || []).length;
   if (filas !== 7) report.error('course.mapa.filas', filas + ' rows, KB §2 has 7');
   if (!c.ui) report.error('course.ui', 'missing');
-  if (!c.footer || !/\[nombre del facilitador\]/.test(c.footer.texto || '')) report.error('course.footer', 'texto must keep the "[nombre del facilitador]" placeholder (prompt §9.10)');
+  if (!c.footer || !/Revisado por (\[nombre del facilitador\]|[^.\s][^.]*)\.\s*$/.test(c.footer.texto || '')) report.error('course.footer', 'texto must end with "Revisado por <facilitator name or [nombre del facilitador]>." (prompt §9.10)');
 }
 
 export function checkKbMatch(EIA, kb, report) {
