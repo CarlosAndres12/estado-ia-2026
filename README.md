@@ -18,6 +18,7 @@ Este README es para quienes facilitan y mantienen el curso.
 | Cambiar una cifra | Editar `js/data/cifras.js` **y** la base, luego `node tools/check-content.mjs` |
 | Regenerar la narración | `node tools/generate-voiceover.mjs` (Edge TTS) |
 | Revisar cómo se ve | `node tools/snapshots.mjs` y `node tools/check-routes.mjs` |
+| Regenerar la guía docente (PDF) | `node tools/build-teacher-guide.mjs` |
 
 Las herramientas de `tools/` son solo para desarrollo: el sitio no las necesita para funcionar.
 
@@ -306,6 +307,21 @@ node tools/check-routes.mjs --interact      # juegos, quiz, cuaderno, rúbrica, 
 - También: **Copiar como texto** e **Imprimir cuaderno**.
 - En ventanas privadas o con el almacenamiento bloqueado puede que no se guarde: el sitio lo avisa;
   exporten seguido.
+
+### Guía docente en PDF
+
+`docs/guia-docente.pdf` (enlazada en el pie y en «Cómo usar este sitio») reúne para quien facilita
+la ficha y el mapa del curso, el uso del sitio en clase, cada sesión (agenda, notas del orador,
+puntos de control de los videos, actividades con sus claves, quiz con respuestas), la evaluación y
+los anexos (banco de cifras, glosario, referencias). Se genera desde `js/data/`, así que después de
+cambiar la base o una cifra hay que regenerarla:
+
+```bash
+node tools/build-teacher-guide.mjs          # docs/guia-docente.html y docs/guia-docente.pdf
+node tools/build-teacher-guide.mjs --html   # solo el HTML, sin navegador
+```
+
+Usa un solo Chromium con límites (`tools/dev/chromium-safe.sh`) y lo cierra al terminar.
 
 ---
 

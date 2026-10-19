@@ -871,7 +871,9 @@ EIA.data.course = EIA.data.course || {}; EIA.data.course.ui = EIA.data.course.ui
     abrirSesion: 'Abrir la sesión {n}'
   },
   footer: {
-    region: 'Créditos del sitio'
+    region: 'Créditos del sitio',
+    guia: 'Descargar guía docente (PDF)',
+    guiaHref: 'docs/guia-docente.pdf'
   }
 };
 

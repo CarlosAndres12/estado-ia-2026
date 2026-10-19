@@ -541,6 +541,7 @@
     usar.appendChild(h('div', { class: 'grid grid--two' }, c.comoUsar.tarjetas.map(function (tc) {
       return card({ peek: true, class: 'como-usar como-usar--' + tc.id }, [h('h3', { class: 'card__title', text: tc.titulo }), h('p', { html: mi(tc.texto) })]);
     })));
+    usar.appendChild(guideLink('como-usar__guia'));
 
     var vb = block(el, 'video', t('page.inicio.video'));
     var ve = ui.videoEmbed('v01', 'inicio');
@@ -1186,6 +1187,11 @@
   // =============================================================================================
   // Footer (prompt §9.10)
 
+  // Link to the printable teacher guide (docs/guia-docente.pdf, built by tools/build-teacher-guide.mjs).
+  function guideLink(cls) {
+    return h('p', { class: cls }, [h('a', { class: 'btn btn--small', href: t('page.footer.guiaHref'), text: t('page.footer.guia') })]);
+  }
+
   function renderFooter(footer) {
     var f = course().footer || {};
     var html = mi(f.texto || '');
@@ -1199,6 +1205,7 @@
       h('span', { class: 'site-footer__sign', 'aria-hidden': 'true' }),
       h('p', { class: 'site-footer__text', html: html })
     ]));
+    footer.appendChild(guideLink('site-footer__guia'));
     if (f.autores && f.autores.length) {
       footer.appendChild(h('div', { class: 'site-footer__authors' }, [
         h('h2', { class: 'site-footer__authors-title', text: f.autoresTitulo || '' }),
