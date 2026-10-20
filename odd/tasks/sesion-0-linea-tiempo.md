@@ -63,3 +63,5 @@ how we got here. The CSV already holds 24 verified milestones with sources.
 
 ## Next step
 Commit `base_linea_del_tiempo/` (user decision), listen to a few clips (human check), then push/PR per policy.
+
+- 2026-10-20 CSV + poster committed (64ad9eb); main fast-forwarded and GitHub Pages rebuilt (built 64ad9eb, s0 audio manifest returns 200).
