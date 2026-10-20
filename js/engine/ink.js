@@ -52,9 +52,12 @@
   }
 
   // LRU keyed by string; optional cost function bounds memory (for offscreen layers).
-  function LRU(limit, costFn) {
+  // `onEvict(value)` (optional) runs for every value pushed out by set(), in a microtask: the frame
+  // that caused the eviction may still draw a value it fetched a moment earlier.
+  function LRU(limit, costFn, onEvict) {
     this.limit = limit;
     this.cost = costFn || null;
+    this.onEvict = onEvict || null;
     this.total = 0;
     this.map = new Map();
   }
@@ -71,14 +74,25 @@
       while (this.total > this.limit && this.map.size > 1) {
         var oldK = this.map.keys().next().value;
         this.total -= this.cost(this.map.get(oldK));
-        this.map.delete(oldK);
+        this.evict(oldK);
       }
     } else {
-      while (this.map.size > this.limit) this.map.delete(this.map.keys().next().value);
+      while (this.map.size > this.limit) this.evict(this.map.keys().next().value);
     }
     return v;
   };
+  LRU.prototype.evict = function (k) {
+    var v = this.map.get(k), onEvict = this.onEvict;
+    this.map.delete(k);
+    if (onEvict && v != null) Promise.resolve().then(function () { onEvict(v); });
+  };
   LRU.prototype.clear = function () { this.map.clear(); this.total = 0; };
+
+  // iOS WebKit caps the total canvas memory of a page and frees a canvas's backing store late;
+  // setting an evicted canvas to 0x0 frees it at once.
+  function releaseCanvas(c) {
+    if (c && typeof c.width === 'number') { c.width = 0; c.height = 0; }
+  }
 
   // Pixels per logical unit of the current transform (DPR × any caller scaling), capped at 2.
   function deviceScale(ctx) {
@@ -1197,7 +1211,7 @@
   // ---------------------------------------------------------------------------------------------
   // Cached layers and backgrounds (prompt §3.6). Layers are rendered once at device resolution.
 
-  var layerCache = new LRU(26e6, function (c) { return c.width * c.height; });
+  var layerCache = new LRU(26e6, function (c) { return c.width * c.height; }, releaseCanvas);
   function layer(ctx, key, w, h, render) {
     var ds = deviceScale(ctx);
     var k = key + '@' + ds;
@@ -1643,11 +1657,18 @@
     return w;
   }
 
-  var counterCache = new Map();
+  // Counter masks per font/glyph/brush, plus their tinted copies: bounded so long sessions over many
+  // videos do not pile up canvases (iOS total-canvas limit). Entries without a hole cache null.
+  var COUNTER_LIMIT = 240;
+  var counterCache = new LRU(COUNTER_LIMIT, null, function (mask) {
+    releaseCanvas(mask.canvas);
+    for (var color in mask.tinted) releaseCanvas(mask.tinted[color]);
+  });
   // Finds the enclosed holes of a glyph by flood-filling its exterior on a 2× offscreen render.
   function counterMask(ch, font, size, brushW) {
     var key = font + '\u0001' + ch + '\u0001' + brushW;
-    if (counterCache.has(key)) return counterCache.get(key);
+    var hit = counterCache.get(key);
+    if (hit !== undefined) return hit;
     var S = 2, pad = Math.ceil(size * 0.35), base = Math.ceil(size * 1.2);
     var cw = Math.ceil((size * 1.4 + pad * 2) * S), ch2 = Math.ceil((size * 1.7) * S);
     var c = makeCanvas(cw, ch2);
