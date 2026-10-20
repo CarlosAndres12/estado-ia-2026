@@ -53,7 +53,19 @@ EIA.data.lineaTiempo = {
       fuente: 'Fuente de verificación',
       nota: 'Nota de verificación'
     },
-    fuenteDe: 'CSV de la línea del tiempo del curso'
+    fuenteDe: 'CSV de la línea del tiempo del curso',
+    verFicha: 'Ver ficha',
+    // The ficha of each milestone (js/ui/linea-tiempo-fichas.js), shown in the láminas viewer.
+    ficha: {
+      kicker: 'Sesión 0 · Línea del tiempo',
+      titulo: '{fecha} · {hito}',
+      descripcion: 'Ficha del hito. {texto}',
+      anterior: 'Ficha anterior',
+      siguiente: 'Ficha siguiente',
+      cerrarAria: 'Cerrar el visor de fichas',
+      imprimir: 'Imprimir fichas',
+      atajos: 'Flechas o Re Pág y Av Pág: cambiar de ficha · N: notas · Esc: cerrar'
+    }
   },
   eras: [
     {

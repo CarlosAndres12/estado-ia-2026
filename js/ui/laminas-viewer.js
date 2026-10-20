@@ -6,7 +6,12 @@
  *       notes must name and links to the related "Contenido" points), Esc closes and gives the focus
  *       back. "Imprimir láminas" prints the láminas of `list` two per page with their notes.
  *   EIA.ui.laminasViewer = { open, close, draw(canvas, id, cssWidth), preparePrint(list) -> cleanup,
- *       describe(id) }
+ *       describe(id), page(id) }
+ *   open(id, list, { onClose({ id, user }) })   onClose gets the last page shown; user is false when the
+ *       viewer closed because the route changed.
+ * Pages beyond the deck: a page provider in EIA.ui.laminasPages ({ has(id), ids(), render(ctx, id),
+ *   title(id), describe(id), notes(id, o), copy(key) -> chrome string or null }) draws and describes the
+ *   ids it has (the fichas of sesión 0, js/ui/linea-tiempo-fichas.js); the deck stays the default.
  *   EIA.ui.kit.modal(el, { onKey, onClose }) -> { close }   the dialog shell shared with Modo clase
  *       (presenter.js): mounted in #overlays (so figure popovers still open above it), page scroll
  *       locked, Tab kept inside, focus returned to the opener on close.
@@ -23,6 +28,13 @@
   function kit() { return ui.kit; }
   function deck() { return EIA.data.deck || []; }
   function entry(id) { return deck().filter(function (d) { return d.id === id; })[0] || null; }
+  // The page provider that has `id` (registered by any script, before or after this one), or null.
+  function page(id) {
+    var list = ui.laminasPages || [];
+    for (var i = 0; i < list.length; i++) if (list[i].has(id)) return list[i];
+    return null;
+  }
+  function known(id) { return !!(entry(id) || page(id)); }
 
   // =============================================================================================
   // Modal shell (also used by presenter.js)
@@ -75,8 +87,8 @@
 
   // Draws lámina `id` (still frame) into canvas at cssWidth CSS px (16:9), DPR capped at 2.
   function draw(canvas, id, cssWidth, scale) {
-    var lam = EIA.engine.lamina;
-    if (!lam || !lam.render) return;
+    var lam = EIA.engine.lamina, pg = page(id);
+    if (!pg && (!lam || !lam.render)) return;
     var w = Math.max(160, Math.round(cssWidth));
     var hh = Math.round(w * 9 / 16);
     var k = Math.min(2, root.devicePixelRatio || 1) * (scale || 1);
@@ -86,11 +98,13 @@
     canvas.style.height = hh + 'px';
     var ctx = canvas.getContext('2d');
     ctx.setTransform(canvas.width / 1280, 0, 0, canvas.height / 720, 0, 0);
-    try { lam.render(ctx, id, { t: 0, still: true }); } catch (err) { if (root.console) root.console.warn('[visor] ' + id + ': ' + err.message); }
+    try { if (pg) pg.render(ctx, id); else lam.render(ctx, id, { t: 0, still: true }); } catch (err) { if (root.console) root.console.warn('[visor] ' + id + ': ' + err.message); }
   }
 
   // The lámina's drawn words, in reading order (aria-label of the canvas).
   function describe(id) {
+    var pg = page(id);
+    if (pg) return pg.describe(id);
     var d = entry(id);
     if (!d) return '';
     var parts = [d.titular, d.subtitulo];
@@ -108,6 +122,8 @@
   // Notes: KB "Qué decir" and "Nota" verbatim, corrections the notes must name, related contenido.
   function notesFor(id, o) {
     o = o || {};
+    var pg = page(id);
+    if (pg) return pg.notes(id, o);
     var d = entry(id), k = kit();
     var box = h('div', { class: 'lamina-notes' });
     if (!d) return box;
@@ -141,12 +157,23 @@
 
   var current = null;
 
-  function open(id, list) {
+  // The bar title of a page.
+  function titleOf(id) {
+    var pg = page(id), d = entry(id);
+    return pg ? pg.title(id) : t('visor.lamina', { n: d.n, titulo: d.titulo });
+  }
+
+  function open(id, list, opts) {
+    opts = opts || {};
     if (current) current.close(false);
-    var ids = (Array.isArray(list) && list.length ? list : deck().map(function (d) { return d.id; })).filter(entry);
+    var pg0 = page(id);
+    var all = pg0 ? pg0.ids() : deck().map(function (d) { return d.id; });
+    var ids = (Array.isArray(list) && list.length ? list : all).filter(known);
     var i = Math.max(0, ids.indexOf(id));
     if (!ids.length) return;
     var k = kit();
+    // Chrome strings: the provider's own words for its pages (e.g. "Ficha anterior"), else the deck's.
+    function label(key, fallback) { var v = pg0 && pg0.copy ? pg0.copy(key) : null; return v != null ? v : t(fallback); }
     var titleId = k.uid('visor-titulo');
     var notesId = k.uid('visor-notas');
     var title = h('h2', { class: 'visor__title', id: titleId });
@@ -157,18 +184,18 @@
     var notes = h('aside', { class: 'visor__notes', id: notesId, hidden: true, 'aria-label': t('laminas.notas') }, [
       h('h3', { class: 'visor__notes-title', text: t('laminas.notas') }), notesBody
     ]);
-    var bPrev = h('button', { type: 'button', class: 'visor__nav visor__nav--prev', 'aria-label': t('visor.anterior') }, [h('span', { 'aria-hidden': 'true', text: '‹' })]);
-    var bNext = h('button', { type: 'button', class: 'visor__nav visor__nav--next', 'aria-label': t('visor.siguiente') }, [h('span', { 'aria-hidden': 'true', text: '›' })]);
+    var bPrev = h('button', { type: 'button', class: 'visor__nav visor__nav--prev', 'aria-label': label('anterior', 'visor.anterior') }, [h('span', { 'aria-hidden': 'true', text: '‹' })]);
+    var bNext = h('button', { type: 'button', class: 'visor__nav visor__nav--next', 'aria-label': label('siguiente', 'visor.siguiente') }, [h('span', { 'aria-hidden': 'true', text: '›' })]);
     var bNotes = h('button', { type: 'button', class: 'btn btn--small btn--night', 'aria-expanded': 'false', 'aria-controls': notesId, text: t('laminas.notas') });
-    var bPrint = h('button', { type: 'button', class: 'btn btn--small btn--night', text: t('laminas.imprimir') });
-    var bClose = h('button', { type: 'button', class: 'btn btn--small btn--night visor__close', 'aria-label': t('visor.cerrarAria'), text: t('visor.cerrar') });
+    var bPrint = h('button', { type: 'button', class: 'btn btn--small btn--night', text: label('imprimir', 'laminas.imprimir') });
+    var bClose = h('button', { type: 'button', class: 'btn btn--small btn--night visor__close', 'aria-label': label('cerrarAria', 'visor.cerrarAria'), text: t('visor.cerrar') });
     var el = h('div', { class: 'visor', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': titleId }, [
       h('div', { class: 'visor__bar' }, [
         h('div', { class: 'visor__heading' }, [count, title]),
         h('div', { class: 'visor__tools' }, [bNotes, bPrint, bClose])
       ]),
       h('div', { class: 'visor__main' }, [bPrev, stage, bNext, notes]),
-      h('p', { class: 'visor__keys', text: t('visor.atajos') })
+      h('p', { class: 'visor__keys', text: label('atajos', 'visor.atajos') })
     ]);
 
     function fit() {
@@ -178,8 +205,7 @@
     }
     function show(j) {
       i = Math.max(0, Math.min(ids.length - 1, j));
-      var d = entry(ids[i]);
-      title.textContent = t('visor.lamina', { n: d.n, titulo: d.titulo });
+      title.textContent = titleOf(ids[i]);
       count.textContent = t('visor.posicion', { n: i + 1, total: ids.length });
       canvas.setAttribute('aria-label', describe(ids[i]));
       bPrev.disabled = i === 0;
@@ -235,6 +261,7 @@
       root.removeEventListener('eia:route', onRoute);
       shell.close(restore);
       current = null;
+      if (opts.onClose) opts.onClose({ id: ids[i], user: restore !== false });
     }
     current = { close: close, show: show, el: el };
     show(i);
@@ -246,11 +273,10 @@
   // "Imprimir láminas": two per page, still frames, with their notes.
 
   function preparePrint(list) {
-    var ids = (list && list.length ? list : deck().map(function (d) { return d.id; })).filter(entry);
+    var ids = (list && list.length ? list : deck().map(function (d) { return d.id; })).filter(known);
     var old = doc.getElementById('print-laminas');
     if (old) old.remove();
     var sheet = h('div', { id: 'print-laminas', class: 'print-sheet print-laminas' }, ids.map(function (id) {
-      var d = entry(id);
       var canvas = h('canvas', { class: 'print-laminas__canvas', role: 'img', 'aria-label': describe(id) });
       draw(canvas, id, 1280, 1.25 / Math.min(2, root.devicePixelRatio || 1));
       canvas.style.width = '';
@@ -258,7 +284,7 @@
       return h('figure', { class: 'print-laminas__item' }, [
         canvas,
         h('figcaption', {}, [
-          h('p', { class: 'print-laminas__title', text: t('visor.lamina', { n: d.n, titulo: d.titulo }) }),
+          h('p', { class: 'print-laminas__title', text: titleOf(id) }),
           notesFor(id, { noLinks: true, cite: 'text' })
         ])
       ]);
@@ -271,13 +297,14 @@
     };
   }
 
-  ui.openLamina = function (id, list) { return open(id, list); };
+  ui.openLamina = function (id, list, opts) { return open(id, list, opts); };
   ui.laminasViewer = {
     open: open,
     close: function () { if (current) current.close(); },
     draw: draw,
     describe: describe,
     notes: notesFor,
+    page: page,
     preparePrint: preparePrint
   };
 })(typeof window !== 'undefined' ? window : globalThis);
