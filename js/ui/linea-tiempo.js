@@ -6,6 +6,10 @@
  *       plays its narration with captions. Anterior / Siguiente, "Reproducir todo" (auto-advance) and
  *       the introduction. Arrow keys, Home and End move along the track (roving tabindex).
  *       state.block names the milestone of a deep link: it is selected, never played on load.
+ *       A tap, click or Enter on a milestone also opens its ficha (js/ui/linea-tiempo-fichas.js) in the
+ *       láminas viewer, as does "Ver ficha" in the card; arrow keys, Anterior / Siguiente and
+ *       "Reproducir todo" never open it. Closing the viewer on another ficha selects that milestone
+ *       without playing it.
  *
  * Audio: EIA.timelineAudio (assets/audio/s0/manifest.js, written by tools/generate-timeline-voiceover.mjs)
  * maps 'intro' and each milestone id to { file, duration, chunks: [{ text, start, end }] }. A plain
@@ -393,6 +397,7 @@
     var caption = h('p', { class: 'timeline__caption', 'aria-hidden': 'true' });
     var notice = h('p', { class: 'timeline__notice', hidden: true, text: copy('sinAudio') });
     var listenBtn = h('button', { type: 'button', class: 'btn btn--small', text: copy('escuchar') });
+    var fichaBtn = h('button', { type: 'button', class: 'btn btn--small btn--quiet timeline__ficha', text: copy('verFicha') });
     body.appendChild(detail);
 
     var player = createPlayer(function (clip, i) {
@@ -424,7 +429,7 @@
         detail.appendChild(h('p', { class: 'kicker timeline__detail-fecha', text: hito.fecha }));
         detail.appendChild(h('h3', { class: 'card__title', id: 's0--detalle-titulo', tabindex: '-1', text: hito.hito }));
       }
-      detail.appendChild(h('div', { class: 'timeline__narration' }, [listenBtn, h('div', { class: 'timeline__caption-box' }, [
+      detail.appendChild(h('div', { class: 'timeline__narration' }, [listenBtn, hito ? fichaBtn : null, h('div', { class: 'timeline__caption-box' }, [
         h('span', { class: 'timeline__caption-label', text: copy('subtitulos') }), caption
       ])]));
       detail.appendChild(notice);
@@ -493,13 +498,32 @@
       return -1;
     }
 
+    /* The ficha of milestone i in the láminas viewer, with ←/→ across all 24. When the viewer is closed
+     * by the user on another ficha, that milestone is selected (no playback) and gets the focus, or
+     * "Ver ficha" keeps it when the viewer was opened from the card. */
+    function openFicha(i, fromCard) {
+      var F = ui.lineaTiempoFichas;
+      if (!F || !ui.openLamina || !hitos[i]) return;
+      ui.openLamina(F.idOf(hitos[i]), F.ids(), { onClose: function (st) {
+        var hito = st.user ? F.hitoOf(st.id) : null;
+        var j = hito ? indexOf(hito.id) : -1;
+        if (j < 0 || j === selected) return;
+        select(j, { user: true, focus: !fromCard });
+        if (fromCard) { try { fichaBtn.focus({ preventScroll: true }); } catch (err) { fichaBtn.focus(); } }
+      } });
+    }
+
     // Events
     buttons.forEach(function (btn, i) {
-      btn.addEventListener('click', function () { select(i, { play: true, user: true }); });
+      // focus: Safari does not focus a tapped button, and the viewer gives the focus back to it on close.
+      btn.addEventListener('click', function () { select(i, { play: true, user: true, focus: true }); openFicha(i); });
     });
     poster.addEventListener('click', function (e) {
       var art = e.target.closest && e.target.closest('[data-first]');
-      if (art) select(Number(art.getAttribute('data-first')), { play: true, user: true });
+      if (!art) return;
+      var first = Number(art.getAttribute('data-first'));
+      select(first, { play: true, user: true });
+      openFicha(first);
     });
     poster.addEventListener('keydown', function (e) {
       var btn = e.target.closest && e.target.closest('.timeline__hito');
@@ -520,6 +544,10 @@
       if (playAll) { setPlayAll(false); player.stop(); return; }
       setPlayAll(true);
       select(selected < 0 || selected >= hitos.length - 1 ? 0 : selected, { play: true, user: true });
+    });
+    fichaBtn.addEventListener('click', function () {
+      try { fichaBtn.focus({ preventScroll: true }); } catch (err) { fichaBtn.focus(); }
+      openFicha(selected, true);
     });
     listenBtn.addEventListener('click', function () {
       var key = hitos[selected] ? hitos[selected].id : 'intro';

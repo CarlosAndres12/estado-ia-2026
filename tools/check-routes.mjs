@@ -264,7 +264,7 @@ const INTERACT_STEPS = [
   },
   {
     // Captions only: the audio manifest is emptied first, so nothing is played (no audio checks here).
-    name: 'sesión 0 timeline: two poster panels drawn, 24 milestones, click selects + captions, arrows move focus, deep link',
+    name: 'sesión 0 timeline: two poster panels drawn, 24 milestones, click selects + captions + opens its ficha, arrows move focus, deep link',
     expr: `(async () => {
       await __chk.go('s0');
       EIA.timelineAudio = {};
@@ -275,26 +275,48 @@ const INTERACT_STEPS = [
       const arts = __chk.$$('#s0--hitos .poster__art').filter(inked).length;
       const pageScroll = document.documentElement.scrollWidth > document.documentElement.clientWidth;
       const btns = __chk.$$('#s0--hitos .timeline__hito');
+      // Every ficha fits its page with the real fonts.
+      await EIA.engine.lamina.fontsReady();
+      const F = EIA.ui.lineaTiempoFichas;
+      const over = EIA.data.lineaTiempo.hitos.filter((h) => F.layout(null, h).overflow).map((h) => h.id);
       btns[2].click();
       await __chk.wait(600);
       const title = __chk.$('#s0--detalle-titulo').textContent;
       const pressed = btns[2].getAttribute('aria-pressed');
       const caption = __chk.$('.timeline__caption').textContent;
+      // The tap opened the ficha in the viewer; → moves to the next one, Esc syncs the selection without playing.
+      const ficha = __chk.$('.visor') ? __chk.$('.visor__count').textContent + ' «' + __chk.$('.visor__title').textContent + '»' : 'none';
+      __chk.key('ArrowRight');
+      const fichaBlank = __chk.$('.visor') ? __chk.colors(__chk.$('.visor__canvas')) < 5 : true;
+      const next = __chk.$('.visor') ? __chk.$('.visor__count').textContent : '';
+      __chk.key('Escape');
+      await __chk.wait(300);
+      const synced = !__chk.$('.visor') && __chk.$('#s0--detalle-titulo').textContent === 'ELIZA' && btns[3].getAttribute('aria-pressed') === 'true' &&
+        document.activeElement === btns[3] && __chk.$('.timeline__narration .btn').getAttribute('aria-pressed') !== 'true';
       const hash = location.hash;
-      btns[2].focus();
-      btns[2].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
-      const moved = document.activeElement === btns[3];
+      btns[3].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
+      const moved = document.activeElement === btns[4] && !__chk.$('.visor');
       __chk.$('.timeline__controls .btn--primary').click();
       await __chk.wait(300);
       const all = __chk.$('.timeline__controls .btn--primary').getAttribute('aria-pressed');
+      const allNoFicha = !__chk.$('.visor');
       __chk.$('.timeline__controls .btn--primary').click();
+      const verFicha = __chk.$('.timeline__ficha');
+      verFicha.click();
+      await __chk.wait(300);
+      const fromCard = __chk.$('.visor') ? __chk.$('.visor__count').textContent : 'none';
+      __chk.key('Escape');
+      await __chk.wait(200);
+      const back = !__chk.$('.visor') && document.activeElement === __chk.$('.timeline__ficha');
       await __chk.go('s0/chatgpt');
       await __chk.wait(300);
       const deep = __chk.$('#s0--detalle-titulo').textContent;
-      const ok = panels === 2 && lines === 2 && arts === 19 && !pageScroll && btns.length === 24 && title === 'Lisp y programación simbólica' &&
-        pressed === 'true' && caption.length > 0 && hash === '#s0/lisp' && moved && all === 'true' && deep === 'ChatGPT';
-      return { ok, detail: 'panels=' + panels + ' lines=' + lines + ' arts=' + arts + ' pageScroll=' + pageScroll + ' n=' + btns.length + ' «' + title + '» pressed=' + pressed +
-        ' caption=' + caption.length + ' ' + hash + ' moved=' + moved + ' all=' + all + ' deep=«' + deep + '»' };
+      const ok = panels === 2 && lines === 2 && arts === 19 && !pageScroll && btns.length === 24 && !over.length && title === 'Lisp y programación simbólica' &&
+        pressed === 'true' && caption.length > 0 && ficha === '3 de 24 «1958 · Lisp y programación simbólica»' && !fichaBlank && next === '4 de 24' && synced &&
+        hash === '#s0/eliza' && moved && all === 'true' && allNoFicha && fromCard === '4 de 24' && back && deep === 'ChatGPT';
+      return { ok, detail: 'panels=' + panels + ' lines=' + lines + ' arts=' + arts + ' pageScroll=' + pageScroll + ' n=' + btns.length + ' overflow=[' + over.join(',') + '] «' + title + '» pressed=' + pressed +
+        ' caption=' + caption.length + ' ficha=' + ficha + ' blank=' + fichaBlank + ' next=' + next + ' synced=' + synced + ' ' + hash + ' moved=' + moved + ' all=' + all +
+        ' allNoFicha=' + allNoFicha + ' fromCard=' + fromCard + ' back=' + back + ' deep=«' + deep + '»' };
     })()`
   },
   {

@@ -53,6 +53,9 @@ Luego abran <http://localhost:8000/>. Cualquier servidor de archivos estáticos 
 - `#s0` se dibuja como el afiche `base_linea_del_tiempo/Untitled.jpg`: dos paneles (uno por era), una línea de
   tinta con bucles y un dibujo por columna (`js/ui/linea-tiempo-arte.js`). Las columnas, el `rotulo` y el
   `resumen` de cada hito están en `js/data/linea-tiempo.js`; el paso 7 rechaza cifras que no estén en su fila del CSV.
+- Cada hito tiene su ficha (`js/ui/linea-tiempo-fichas.js`): una página de 1280×720 al estilo de las láminas, solo
+  con los campos de su fila y el dibujo de su columna. Tocar un hito lo reproduce y abre su ficha en el visor de
+  láminas (←/→ entre las 24, Notas, Imprimir fichas, Esc); «Ver ficha» en la tarjeta hace lo mismo.
 - Una lámina sola, a 1280×720: `index.html?lamina=d07`.
 
 ---
