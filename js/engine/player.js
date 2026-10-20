@@ -634,7 +634,7 @@
       scale: 0, dirty: true, lastFrame: -1, raf: 0,
       initialized: false, initPromise: null, destroyed: false,
       recording: null, cpSeg: null, scene: -1, chapter: -1, second: -1, lastUi: 0, lastAria: 0, lastSave: 0,
-      prefetched: -1
+      prefetched: -1, pseudoFull: false
     };
     var uid = 'player-' + (++uidCounter);
     var renderer = null, preview = null, narrator = null, ctx = null;
@@ -1300,19 +1300,36 @@
     }
 
     function fullscreenElement() { return doc.fullscreenElement || doc.webkitFullscreenElement || null; }
+    function isFullscreen() { return st.pseudoFull || fullscreenElement() === frameEl; }
     function toggleFullscreen() {
-      if (fullscreenElement() === frameEl) {
+      if (st.pseudoFull) {
+        setPseudoFullscreen(false);
+      } else if (fullscreenElement() === frameEl) {
         (doc.exitFullscreen || doc.webkitExitFullscreen || function () {}).call(doc);
       } else {
         var req = frameEl.requestFullscreen || frameEl.webkitRequestFullscreen;
         if (req) {
           var p = req.call(frameEl);
           if (p && p.catch) p.catch(function () {});
+        } else {
+          setPseudoFullscreen(true);
         }
       }
     }
+    // iPhone Safari has no Fullscreen API for elements: the frame covers the viewport instead
+    // (css/components.css .is-pseudo-fullscreen) and the page behind it stops scrolling.
+    function setPseudoFullscreen(on) {
+      if (!!st.pseudoFull === on) return;
+      st.pseudoFull = on;
+      frameEl.classList.toggle('is-pseudo-fullscreen', on);
+      doc.documentElement.classList.toggle('eia-pseudo-fullscreen', on);
+      onFullscreen();
+    }
+    function onPseudoKey(e) {
+      if (st.pseudoFull && e.key === 'Escape') { setPseudoFullscreen(false); e.preventDefault(); }
+    }
     function onFullscreen() {
-      var on = fullscreenElement() === frameEl;
+      var on = isFullscreen();
       fullBtn.textContent = on ? txt('salirPantallaCompleta') : txt('pantallaCompleta');
       rootEl.classList.toggle('is-fullscreen', on);
       setTimeout(resize, 50);
@@ -1389,7 +1406,10 @@
       preview.render(previewCanvas.getContext('2d'), t, { overlays: false });
     }
 
-    function onRoute() { if (st.recording && recorderUi) recorderUi.cancel(); else pause(); }
+    function onRoute() {
+      setPseudoFullscreen(false);
+      if (st.recording && recorderUi) recorderUi.cancel(); else pause();
+    }
     function onVisibility() {
       if (doc.hidden && !st.recording && narrator && narrator.mode !== 'audio') pause();
     }
@@ -1398,13 +1418,14 @@
     doc.addEventListener('visibilitychange', onVisibility);
     doc.addEventListener('fullscreenchange', onFullscreen);
     doc.addEventListener('webkitfullscreenchange', onFullscreen);
+    doc.addEventListener('keydown', onPseudoKey);
 
     var io = null, ro = null;
     if (typeof root.IntersectionObserver === 'function') {
       io = new root.IntersectionObserver(function (entries) {
         entries.forEach(function (en) {
           if (en.isIntersecting) init();
-          if (en.intersectionRatio < 0.25 && !st.recording && !fullscreenElement()) pause();
+          if (en.intersectionRatio < 0.25 && !st.recording && !isFullscreen()) pause();
         });
       }, { rootMargin: '200px 0px', threshold: [0, 0.25] });
       io.observe(stage);
@@ -1496,6 +1517,8 @@
         doc.removeEventListener('visibilitychange', onVisibility);
         doc.removeEventListener('fullscreenchange', onFullscreen);
         doc.removeEventListener('webkitfullscreenchange', onFullscreen);
+        doc.removeEventListener('keydown', onPseudoKey);
+        if (st.pseudoFull) doc.documentElement.classList.remove('eia-pseudo-fullscreen');
         players = players.filter(function (p) { return p !== api; });
         if (activePlayer === api) activePlayer = null;
         rootEl.remove();

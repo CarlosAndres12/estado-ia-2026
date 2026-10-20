@@ -1202,6 +1202,25 @@ li.update--caja { margin-left: -1.4em; }
 .player__frame:fullscreen .player__controls, .player__frame:fullscreen .player__chapters {
   width: min(100%, calc((100vh - 9rem) * 16 / 9)); margin: 0 auto; background: var(--pl-paper); padding: 0.4rem; border-radius: 10px;
 }
+/* pseudo full screen: iPhone Safari has no Fullscreen API for elements, so the frame covers the
+   viewport (player.js setPseudoFullscreen) and the page behind it stops scrolling. */
+html.eia-pseudo-fullscreen, html.eia-pseudo-fullscreen body { overflow: hidden; }
+.player__frame.is-pseudo-fullscreen {
+  position: fixed; top: 0; right: 0; bottom: 0; left: 0; inset: 0; z-index: 10000;
+  height: 100vh; height: 100dvh; overflow-y: auto; overscroll-behavior: contain;
+  background: var(--pl-night); color: var(--pl-ink); justify-content: center;
+  padding: max(0.5rem, env(safe-area-inset-top)) max(0.5rem, env(safe-area-inset-right)) max(0.5rem, env(safe-area-inset-bottom)) max(0.5rem, env(safe-area-inset-left));
+}
+.player__frame.is-pseudo-fullscreen .player__stage {
+  width: min(100%, calc((100vh - 9rem) * 16 / 9));
+  width: min(100%, calc((100dvh - 9rem) * 16 / 9));
+  flex: none; margin: 0 auto;
+}
+.player__frame.is-pseudo-fullscreen .player__controls, .player__frame.is-pseudo-fullscreen .player__chapters {
+  width: min(100%, calc((100vh - 9rem) * 16 / 9));
+  width: min(100%, calc((100dvh - 9rem) * 16 / 9));
+  margin: 0 auto; background: var(--pl-paper); padding: 0.4rem; border-radius: 10px;
+}
 
 /* panels: transcript, sources, láminas, download */
 .player__panels { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.75rem; }
