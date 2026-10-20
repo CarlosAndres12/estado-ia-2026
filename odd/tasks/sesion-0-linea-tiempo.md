@@ -30,6 +30,7 @@ how we got here. The CSV already holds 24 verified milestones with sources.
 - [x] T02 Narration audio per milestone + manifest + player wiring + checks (route: same delegated writer) — commit 1bd8d1a
 
 - [x] T03 Redesign the timeline to match the poster `base_linea_del_tiempo/Untitled.jpg` (user feedback 2026-10-20: current strip does not look like the reference) (route: delegated writer; trigger: 2+ non-trivial files) — commit 675ad4c
+- [x] T04 One ficha per milestone (user request 2026-10-20: "add a ficha to each element of the timeline"). User clarified: "the fichas are like laminas of the sesiones". So: 24 fichas, each a 1280×720 canvas page in the lámina style (brush-lettered title, the milestone's poster drawing large, date/place, CSV fields, source tag, idea band), text only from that row; opened in the existing láminas viewer (←/→ across the 24, Esc, focus return, print). Tapping a milestone selects/plays as today and opens its ficha; "Reproducir todo" auto-advance does not open it; the detail card gets a "Ver ficha" button. Then push + publish (authorized). (route: delegated writer; trigger: 2+ non-trivial files) — commits 3d66f49, 183aa37 (push + publish: pending, parent)
 
 ## Acceptance
 - `#s0` renders 24 clickable milestones in chronological order; each opens detail + plays its clip.
@@ -90,3 +91,32 @@ Commit `base_linea_del_tiempo/` (user decision), listen to a few clips (human ch
   drawings are smaller than panel 1's because its columns are narrower.
 
 - 2026-10-20 T03 published: main fast-forwarded to 1bc7c30, GitHub Pages built 1bc7c30.
+
+- 2026-10-20 T04 done (route: delegated writer; trigger: 2+ non-trivial files). `js/ui/linea-tiempo-fichas.js` (new, in
+  index.html after linea-tiempo-arte.js; no precache list exists): 24 fichas `s0-<id>`, 1280×720 in the lámina language
+  (kicker + era title, brush titular, numbered disc "Hito n de 24", date as hero figure with a color field, labeled
+  Organización/personas, Lugar/contexto, Descripción del avance técnico at the largest size that fits (21 → 14), the
+  column's poster drawing on a paper card with a source tag of the URL hosts, an "Importancia histórica" band, the
+  Nota de verificación as pie). `js/ui/laminas-viewer.js`: page providers (`EIA.ui.laminasPages`) for draw/describe/
+  notes/print/bar title/chrome copy, `open(id, list, { onClose({ id, user }) })`; deck behavior unchanged.
+  `js/ui/linea-tiempo.js`: tap/click/Enter (and the group drawing) selects + plays + opens the ficha; arrows,
+  Anterior/Siguiente and Reproducir todo never open it; "Ver ficha" in the card; closing on another ficha selects it
+  without playback and focuses it (or keeps the focus on "Ver ficha"). Chrome strings in `ui.verFicha` / `ui.ficha`.
+  Commits 3d66f49 (fichas + viewer providers + tests), 183aa37 (timeline wiring + check-routes step + README).
+
+## Verification evidence T04 (2026-10-20)
+- RED: `node --test tools/test/linea-tiempo-fichas.test.mjs` failed (module missing); GREEN after: 5 pass (24 ids
+  resolve through the viewer, hosts, text only from the row/era/UI copy with no foreign numbers, layout fits with a
+  0.6 em stub context and zones stay inside 1280×720 without overlaps, describe/title/chrome).
+- `cd tools && node --test --test-concurrency=1 test/`: 246 pass, 0 fail.
+- `node tools/check-content.mjs`: 0 errors, 0 warnings.
+- `node tools/check-routes.mjs --only s0`: 1 route, 0 problems.
+- `node tools/check-routes.mjs --interact`: 9 checks, 0 problems; the s0 step now checks that all 24 fichas fit with
+  the real fonts (overflow=[]), tap opens «3 de 24 · 1958 · Lisp…», → shows 4 de 24 (canvas not blank), Esc syncs to
+  ELIZA without playback and with focus, arrows and Reproducir todo open nothing, Ver ficha opens and returns focus.
+- Print: `preparePrint(ids)` builds 24 items titled «1950 · Test de Turing» …; the deck still prints «D1 · Portada».
+- Inspected PNGs (gitignored): `review/fichas/era-agentica.png`, `ia-multimodal-fisica.png`, `razonamiento-avanzado.png`
+  (longest texts), `eliza.png`, `dartmouth.png`, `stanley.png`, `llama.png`; viewer `review/fichas/viewer-w1280.png`,
+  `viewer-w390.png`, `viewer-notes-w390.png`; card with «Ver ficha» `review/fichas/s0_alphago-w390-p4.png`.
+- Gaps: on a 390 px phone the ficha is small inside the viewer (same as deck láminas); the ELIZA poster drawing
+  carries its own English prompt text from T03.
