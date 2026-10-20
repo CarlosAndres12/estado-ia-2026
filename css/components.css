@@ -2226,7 +2226,13 @@ html.has-modal, html.has-modal body { overflow: hidden; }
 .clase-adv__sign { width: 3em; height: 3em; }
 .clase-video__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3em 1em; }
 .clase-video__badge { min-height: 1.6em; font-size: 0.75em; }
-.clase-video { max-width: min(100%, calc((100vh - 420px) * 16 / 9)); margin: 0 auto; font-size: 18px; }
+/* 100dvh after the vh fallback (iOS Safari toolbar); the max() floor keeps the width positive when
+   the viewport is shorter than 420px (iPhone landscape). */
+.clase-video {
+  max-width: min(100%, max(280px, calc((100vh - 420px) * 16 / 9)));
+  max-width: min(100%, max(280px, calc((100dvh - 420px) * 16 / 9)));
+  margin: 0 auto; font-size: 18px;
+}
 .clase-consigna, .clase-pasos { max-width: 44em; }
 .clase-pasos li { padding-left: 0.2em; }
 .clase-prose { max-width: 46em; }
