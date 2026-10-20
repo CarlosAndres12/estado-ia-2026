@@ -1195,6 +1195,9 @@
 
     // --- actions ---------------------------------------------------------------------------------
     function play() {
+      // iOS WebKit starts media and speech only inside the tap itself: unlock before any await.
+      if (narrator) narrator.unlock();
+      else if (EIA.engine.narrator && EIA.engine.narrator.unlock) EIA.engine.narrator.unlock();
       return init().then(function () {
         if (st.destroyed || (narrator && narrator.playing)) return;
         if (st.overlay === 'checkpoint') { continueCheckpoint(); return; }

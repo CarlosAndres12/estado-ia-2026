@@ -18,9 +18,14 @@
  *   nar.time()               last t
  *   nar.play() / pause() / seek(t) / setRate(r) / setVoice(on)
  *   nar.playing, nar.holding, nar.mode
+ *   nar.unlock()             call synchronously inside the Play tap, before any await: iOS WebKit
+ *                            loads and starts media, and lets speechSynthesis speak, only from a
+ *                            user gesture. Primes the track (muted play + pause), resumes the
+ *                            AudioContext and primes the browser voice.
  *   nar.canCapture()         { ok, reason: '' | 'file' | 'browser' | 'silent' | 'off' }
  *   nar.captureStream()      { stream, release() } with the narration for MediaRecorder, or null
  *   nar.destroy()
+ *   EIA.engine.narrator.unlock()   primes speechSynthesis only (a tap before any narrator exists)
  *   EIA.engine.narrator.pickVoices(voices) -> { narrador, lectora, pitch: { narrador, lectora } }
  */
 (function (root) {
@@ -31,6 +36,8 @@
 
   var MAX_DT = 0.25;        // a long frame never jumps the internal clock further than this
   var LEAD_SPEAK = 0.05;    // a seek that lands this close before a chunk still speaks it
+  var METADATA_WAIT = 8000; // ms the track gets to report its metadata before any tap
+  var UNLOCK_WAIT = 4000;   // ms the track gets to load once a tap has unlocked it
 
   function clamp(x, a, b) { return x < a ? a : x > b ? b : x; }
   function now() { return root.performance && root.performance.now ? root.performance.now() : Date.now(); }
@@ -118,6 +125,22 @@
     });
     return voicesPromise;
   }
+  // iOS WebKit ignores speechSynthesis until speak() is first called inside a tap; an empty,
+  // silent utterance unlocks it for the whole page, so later speak() calls from rAF are heard.
+  var speechPrimed = false;
+  function primeSpeech() {
+    var synth = root.speechSynthesis;
+    if (speechPrimed || !synth || typeof synth.speak !== 'function' || typeof root.SpeechSynthesisUtterance !== 'function') return;
+    speechPrimed = true;
+    try {
+      var u = new root.SpeechSynthesisUtterance('');
+      u.volume = 0;
+      synth.speak(u);
+    } catch (err) {
+      speechPrimed = false;
+    }
+  }
+
   // Ask early: browsers load their voice list asynchronously.
   if (root.speechSynthesis && typeof root.speechSynthesis.getVoices === 'function') {
     try { root.speechSynthesis.getVoices(); } catch (err) { /* voices load later */ }
@@ -172,6 +195,9 @@
     var resumeSlot = -1;        // slot interrupted by a pause, spoken again on play
     var audioCtx = null, mediaSource = null;
     var destroyed = false;
+    var settleAudio = null;     // decides the pending track choice (startAudio), null once decided
+    var unlockTimer = 0;        // UNLOCK_WAIT started by the first tap while the choice is pending
+    var priming = false, primed = false;
 
     function setMode(mode) {
       if (nar.mode === mode) return;
@@ -204,8 +230,10 @@
         function settle(ok) {
           if (settled) return;
           settled = true;
+          settleAudio = null;
           resolve(ok);
         }
+        settleAudio = settle;
         audio.addEventListener('loadedmetadata', function () { settle(true); });
         audio.addEventListener('error', function () {
           if (!settled) { settle(false); return; }
@@ -214,7 +242,9 @@
           fallbackMode();
         });
         audio.addEventListener('ended', function () { audioLive = false; });
-        setTimeout(function () { settle(audio && audio.readyState >= 1); }, 8000);
+        // iOS WebKit loads no media before a user gesture, so missing metadata here is not a
+        // failure: the track stays the candidate and the first tap (nar.unlock) decides it.
+        setTimeout(function () { if (audio && audio.readyState >= 1) settle(true); }, METADATA_WAIT);
         audio.src = (opts.base || '') + manifest.file;
       });
     }
@@ -223,7 +253,7 @@
     nar.ready = (canUseAudio ? startAudio().then(function (ok) {
       if (ok) {
         audioLive = true;
-        audio.muted = !voiceOn;
+        if (!priming) audio.muted = !voiceOn;   // a prime in flight restores it when it ends
         setMode('audio');
         return undefined;
       }
@@ -388,7 +418,7 @@
 
     nar.setVoice = function (on) {
       voiceOn = !!on;
-      if (audio) audio.muted = !voiceOn;
+      if (audio && !priming) audio.muted = !voiceOn;
       if (nar.mode === 'browser') {
         stopSpeech();
         nextSlot = firstSlotFrom(slots, t);
@@ -396,6 +426,53 @@
     };
 
     nar.voiceOn = function () { return voiceOn; };
+
+    // --- gesture unlock (iOS WebKit) ----------------------------------------------------------
+    // A muted play() inside the tap marks the element as started by the user; later play() calls
+    // from promise callbacks (player.play waits on nar.ready) are then allowed. It pauses again
+    // unless playback began meanwhile, and the muted state follows the voice option afterwards.
+    function primeAudio() {
+      if (primed || priming || !audio || !audio.paused) return;
+      var el = audio;
+      // HAVE_NOTHING and not loading: the preload was ignored, start the load inside the tap
+      if (el.readyState === 0 && el.networkState !== 2) {
+        try { el.load(); } catch (err) { /* play() loads it too */ }
+      }
+      priming = true;
+      el.muted = true;
+      var p;
+      try {
+        p = el.play();
+      } catch (err) {
+        priming = false;
+        el.muted = !voiceOn;
+        return;
+      }
+      function done(ok) {
+        priming = false;
+        if (ok) primed = true;
+        if (el !== audio) { el.pause(); return; }   // the track was dropped meanwhile
+        if (ok && !nar.playing) el.pause();
+        el.muted = !voiceOn;
+      }
+      if (p && typeof p.then === 'function') p.then(function () { done(true); }, function () { done(false); });
+      else done(true);
+    }
+
+    nar.unlock = function () {
+      if (destroyed) return;
+      primeSpeech();
+      if (audioCtx && audioCtx.state === 'suspended' && audioCtx.resume) {
+        try { audioCtx.resume(); } catch (err) { /* resumed on capture */ }
+      }
+      if (!audio) return;
+      if (settleAudio && !unlockTimer) {
+        unlockTimer = setTimeout(function () {
+          if (settleAudio) settleAudio(!!audio && audio.readyState >= 1);
+        }, UNLOCK_WAIT);
+      }
+      primeAudio();
+    };
 
     // --- recording ----------------------------------------------------------------------------
     nar.canCapture = function () {
@@ -449,6 +526,7 @@
   EIA.engine.narrator = {
     create: create,
     pickVoices: pickVoices,
+    unlock: primeSpeech,
     loadVoices: loadVoices,
     genderOf: genderOf
   };
