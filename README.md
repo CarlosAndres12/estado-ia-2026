@@ -175,6 +175,19 @@ Escribe `assets/audio/<id>.mp3`, `assets/audio/manifest.js` (tiempos de escenas,
 y `assets/captions/<id>.vtt`. El reporte indica, por video, duración contra la meta, escenas más
 largas, subtítulos demasiado rápidos y avisos del normalizador.
 
+**Sesión 0 (línea del tiempo).** Cada hito tiene su propio clip, con la misma voz, caché y normalización:
+
+```sh
+node tools/generate-timeline-voiceover.mjs --dry-run      # estima sin red
+node tools/generate-timeline-voiceover.mjs                # 25 clips: intro + 24 hitos
+node tools/generate-timeline-voiceover.mjs --only alphago # uno o varios (intro,alphago)
+```
+
+Escribe `assets/audio/s0/<id>.mp3` y `assets/audio/s0/manifest.js` (`EIA.timelineAudio`, subtítulos por clip).
+Si se edita una `narracion` de `js/data/linea-tiempo.js`, vuelvan a generar ese clip: la prueba
+`tools/test/timeline-voiceover.test.mjs` falla mientras el manifiesto no coincida. Sin manifiesto, la línea del
+tiempo muestra solo subtítulos.
+
 **La caché** (`tools/.cache/tts/`, fuera del repositorio) guarda cada clip según motor, voz, velocidad,
 tono y texto. Solo se vuelven a pedir las líneas que cambiaron; si todo está en caché, no se usa la red.
 `--force` la ignora.
