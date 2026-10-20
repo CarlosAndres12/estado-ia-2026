@@ -89,3 +89,4 @@ Commit `base_linea_del_tiempo/` (user decision), listen to a few clips (human ch
 - Gap: the 2023–2024 group column is taller than the poster's (five milestones with their own text); panel 2
   drawings are smaller than panel 1's because its columns are narrower.
 
+- 2026-10-20 T03 published: main fast-forwarded to 1bc7c30, GitHub Pages built 1bc7c30.
