@@ -29,6 +29,8 @@ how we got here. The CSV already holds 24 verified milestones with sources.
 - [x] T01 Data + route + interactive timeline UI + tests (route: delegated writer, 3+ non-trivial files) — commit 39a5fb5
 - [x] T02 Narration audio per milestone + manifest + player wiring + checks (route: same delegated writer) — commit 1bd8d1a
 
+- [x] T03 Redesign the timeline to match the poster `base_linea_del_tiempo/Untitled.jpg` (user feedback 2026-10-20: current strip does not look like the reference) (route: delegated writer; trigger: 2+ non-trivial files) — commit 675ad4c
+
 ## Acceptance
 - `#s0` renders 24 clickable milestones in chronological order; each opens detail + plays its clip.
 - Existing tests pass, new tests added; `check-content` 0 errors; `check-routes` 0 problems (incl. 360 px).
@@ -65,3 +67,25 @@ how we got here. The CSV already holds 24 verified milestones with sources.
 Commit `base_linea_del_tiempo/` (user decision), listen to a few clips (human check), then push/PR per policy.
 
 - 2026-10-20 CSV + poster committed (64ad9eb); main fast-forwarded and GitHub Pages rebuilt (built 64ad9eb, s0 audio manifest returns 200).
+- 2026-10-20 T03 done (route: delegated writer). `#s0` is now the poster: two era panels (poster titles, spaced
+  small-caps subtitle, colored rule, ink flourish), a brush line with loops through one dot per milestone and an
+  arrow at the end of panel 2, one ink drawing per column (`js/ui/linea-tiempo-arte.js`, 19 drawings + 2 flourishes,
+  no photos/logos/faces), year / rótulo / resumen / place under each dot, same-year columns (2022: Stable Diffusion
+  y ChatGPT; 2023–2024: GPT-4, Llama, Gemini, Sora, Claude 3.5 Sonnet) with one button per milestone, tinted cards
+  for the last three. Data: `rotulo` + `resumen` per milestone and `eras[].columnas`. Step 7 also checks numbers in
+  rotulo/resumen against the CSV row (stricter than "row or poster") and that every milestone sits once in a column
+  of its era. Spanish soft hyphenation for the narrow columns. Commit 675ad4c.
+
+## Verification evidence T03 (2026-10-20)
+- `node --test tools/test`: 231 pass, 0 fail (linea-tiempo.test.mjs 12 → 18: poster texts, columns, column order,
+  drawings exist, hyphenate, linePoints). RED observed first for linePoints/arte (missing), then GREEN.
+- `node tools/check-content.mjs`: 0 errors, 0 warnings.
+- `node tools/check-routes.mjs --width 360`: 32 routes and deep links, 0 problems.
+- `node tools/check-routes.mjs --interact --width 360`: 9 checks, 0 problems (s0: panels=2, both lines and all 19
+  drawings inked, no page horizontal scroll, 24 buttons, select/captions/arrows/play-all/deep link).
+- Snapshots (gitignored) `review/s0/s0.png`, `review/s0/s0_alphago.png` (1280 full page) and
+  `review/s0/s0-w360-p1|p2.png`, `review/s0/s0_alphago-w360-p1|p2.png` compared with the poster: both panels fit
+  1280 (poster breaks out to the window width ≥ 62rem); at 360 each panel scrolls inside itself.
+- Gap: the 2023–2024 group column is taller than the poster's (five milestones with their own text); panel 2
+  drawings are smaller than panel 1's because its columns are narrower.
+
