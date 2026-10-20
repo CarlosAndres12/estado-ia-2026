@@ -5,8 +5,8 @@
  *
  * EIA.data.lineaTiempo = {
  *   csv, titulo, kicker, lead, intro: { narracion }, ui: { … chrome strings },
- *   eras: [{ id, titulo, subtitulo }],
- *   hitos: [{ id, era, fecha, hito, actores, lugar, avance, importancia, fuente, nota, narracion }]
+ *   eras: [{ id, titulo, subtitulo, anios, columnas: [{ hitos: [id], arte, fecha?, ancho?, tinte? }] }],
+ *   hitos: [{ id, era, fecha, hito, actores, lugar, avance, importancia, fuente, nota, narracion, rotulo, resumen }]
  * }
  *   fecha … nota   the CSV columns Fecha, Hito, Organización/personas, Lugar/contexto, Descripción del avance
  *                  técnico, Importancia histórica, Fuente de verificación (one or more URLs joined by " ; ")
@@ -14,7 +14,13 @@
  *   narracion      the narrated line (assets/audio/s0/<id>.mp3, captions in assets/audio/s0/manifest.js),
  *                  composed only from that row's own text: no other facts or figures
  *   id             the deep link #s0/<id> and the audio file name
- * Era titles come from the timeline poster in base_linea_del_tiempo/Untitled.jpg. */
+ *   rotulo         the short title under the milestone's dot on the poster (the poster's own wording)
+ *   resumen        the short text under it: the poster's text where it matches the row, otherwise a
+ *                  literal excerpt of the row; step 7 rejects any number absent from the row
+ * The layout follows the timeline poster base_linea_del_tiempo/Untitled.jpg: one panel per era (its
+ * title and subtitle are the poster's), one column per poster column. A column holds one milestone or
+ * several of the same years (fecha: their shared date); arte names its drawing in
+ * js/ui/linea-tiempo-arte.js, ancho its relative width (1) and tinte its card color. */
 EIA.data.lineaTiempo = {
   csv: 'base_linea_del_tiempo/linea_tiempo_evolucion_IA_1950_2026.csv',
   titulo: 'Línea del tiempo de la IA',
@@ -50,8 +56,41 @@ EIA.data.lineaTiempo = {
     fuenteDe: 'CSV de la línea del tiempo del curso'
   },
   eras: [
-    { id: 'fundamentos', titulo: 'De los fundamentos a los primeros logros', subtitulo: '1950–2011' },
-    { id: 'generativa', titulo: 'De la IA generativa a la era agéntica', subtitulo: '2016–2026' }
+    {
+      id: 'fundamentos',
+      titulo: 'La evolución de la Inteligencia Artificial',
+      subtitulo: 'De los fundamentos a los primeros logros',
+      anios: '1950–2011',
+      columnas: [
+        { hitos: ['test-de-turing'], arte: 'turing' },
+        { hitos: ['dartmouth'], arte: 'dartmouth' },
+        { hitos: ['lisp'], arte: 'lisp' },
+        { hitos: ['eliza'], arte: 'eliza' },
+        { hitos: ['shakey'], arte: 'shakey' },
+        { hitos: ['deep-blue'], arte: 'ajedrez' },
+        { hitos: ['stanley'], arte: 'stanley' },
+        { hitos: ['watson'], arte: 'watson' }
+      ]
+    },
+    {
+      id: 'generativa',
+      titulo: 'De la IA generativa a la era agéntica',
+      subtitulo: 'Modelos escalables, multimodalidad y nuevos paradigmas',
+      anios: '2016–2026',
+      columnas: [
+        { hitos: ['alphago'], arte: 'go' },
+        { hitos: ['transformer'], arte: 'transformer' },
+        { hitos: ['bert'], arte: 'documento' },
+        { hitos: ['gpt'], arte: 'nudo' },
+        { hitos: ['gpt-3'], arte: 'documentos' },
+        { hitos: ['dall-e'], arte: 'paisaje' },
+        { hitos: ['stable-diffusion', 'chatgpt'], arte: 'paisaje-chat', fecha: '2022', ancho: 1.1 },
+        { hitos: ['gpt-4', 'llama', 'gemini', 'sora', 'claude-3-5-sonnet'], arte: 'video', fecha: '2023–2024', ancho: 2 },
+        { hitos: ['razonamiento-avanzado'], arte: 'razonamiento', tinte: 'rosa', ancho: 1.3 },
+        { hitos: ['era-agentica'], arte: 'agente', tinte: 'celeste', ancho: 1.3 },
+        { hitos: ['ia-multimodal-fisica'], arte: 'robot', tinte: 'amarillo', ancho: 1.3 }
+      ]
+    }
   ],
   hitos: [
     {
@@ -65,7 +104,9 @@ EIA.data.lineaTiempo = {
       importancia: 'Plantea una pregunta fundacional sobre la inteligencia de las máquinas.',
       fuente: 'https://doi.org/10.1093/mind/LIX.236.433',
       nota: 'Artículo original: Computing Machinery and Intelligence.',
-      narracion: '1950, Test de Turing. Alan Turing propone evaluar si una máquina puede producir respuestas indistinguibles de las de una persona en una conversación. Plantea una pregunta fundacional sobre la inteligencia de las máquinas.'
+      narracion: '1950, Test de Turing. Alan Turing propone evaluar si una máquina puede producir respuestas indistinguibles de las de una persona en una conversación. Plantea una pregunta fundacional sobre la inteligencia de las máquinas.',
+      rotulo: 'Test de Turing',
+      resumen: 'Alan Turing propone evaluar si una máquina responde como una persona.'
     },
     {
       id: 'dartmouth',
@@ -78,7 +119,9 @@ EIA.data.lineaTiempo = {
       importancia: 'Punto de referencia institucional para el nacimiento del campo moderno de IA.',
       fuente: 'https://home.dartmouth.edu/about/artificial-intelligence-ai-coined-dartmouth',
       nota: 'Fuente institucional de Dartmouth.',
-      narracion: '1956, Conferencia de Dartmouth. Taller de investigación que contribuye a consolidar la inteligencia artificial como campo de estudio y populariza el término. Punto de referencia institucional para el nacimiento del campo moderno de IA.'
+      narracion: '1956, Conferencia de Dartmouth. Taller de investigación que contribuye a consolidar la inteligencia artificial como campo de estudio y populariza el término. Punto de referencia institucional para el nacimiento del campo moderno de IA.',
+      rotulo: 'Conferencia de Dartmouth',
+      resumen: 'Consolida la IA como campo de estudio y populariza el término.'
     },
     {
       id: 'lisp',
@@ -91,7 +134,9 @@ EIA.data.lineaTiempo = {
       importancia: 'Proporciona herramientas para representar conocimiento y construir sistemas simbólicos.',
       fuente: 'https://www-formal.stanford.edu/jmc/recursive.html',
       nota: 'Precisión: la cronología original menciona SLIP; el hito más reconocido de McCarthy en 1958 es Lisp. SLIP fue un lenguaje distinto.',
-      narracion: '1958, Lisp y programación simbólica. McCarthy desarrolla Lisp, un lenguaje para manipular símbolos que se vuelve fundamental en la investigación temprana de IA. Proporciona herramientas para representar conocimiento y construir sistemas simbólicos.'
+      narracion: '1958, Lisp y programación simbólica. McCarthy desarrolla Lisp, un lenguaje para manipular símbolos que se vuelve fundamental en la investigación temprana de IA. Proporciona herramientas para representar conocimiento y construir sistemas simbólicos.',
+      rotulo: 'Lisp',
+      resumen: 'John McCarthy desarrolla Lisp, un lenguaje clave para la IA.'
     },
     {
       id: 'eliza',
@@ -104,7 +149,9 @@ EIA.data.lineaTiempo = {
       importancia: 'Ilustra la simulación del diálogo y el riesgo de atribuir comprensión humana a un sistema.',
       fuente: 'https://news.mit.edu/2008/obit-weizenbaum-0410',
       nota: 'Fuente institucional del MIT.',
-      narracion: 'Entre 1964 y 1967, ELIZA, de Joseph Weizenbaum. Programa pionero de procesamiento del lenguaje natural que simula conversaciones mediante reglas y patrones. Ilustra la simulación del diálogo y el riesgo de atribuir comprensión humana a un sistema.'
+      narracion: 'Entre 1964 y 1967, ELIZA, de Joseph Weizenbaum. Programa pionero de procesamiento del lenguaje natural que simula conversaciones mediante reglas y patrones. Ilustra la simulación del diálogo y el riesgo de atribuir comprensión humana a un sistema.',
+      rotulo: 'ELIZA',
+      resumen: 'Programa pionero de lenguaje natural: simula una conversación (guion DOCTOR).'
     },
     {
       id: 'shakey',
@@ -117,7 +164,9 @@ EIA.data.lineaTiempo = {
       importancia: 'Precursor de la robótica autónoma basada en percepción y planificación.',
       fuente: 'https://www.sri.com/hoi/shakey-the-robot/',
       nota: 'Fuente institucional de SRI.',
-      narracion: '1972, SHAKEY, de SRI International. Robot móvil experimental que combina percepción, planificación y movimiento para realizar tareas en un entorno controlado. Precursor de la robótica autónoma basada en percepción y planificación.'
+      narracion: '1972, SHAKEY, de SRI International. Robot móvil experimental que combina percepción, planificación y movimiento para realizar tareas en un entorno controlado. Precursor de la robótica autónoma basada en percepción y planificación.',
+      rotulo: 'SHAKEY',
+      resumen: 'Robot móvil experimental que percibe, planifica y se mueve.'
     },
     {
       id: 'deep-blue',
@@ -130,7 +179,9 @@ EIA.data.lineaTiempo = {
       importancia: 'Demuestra la potencia de búsqueda y cálculo especializado en un dominio estratégico.',
       fuente: 'https://www.ibm.com/history/deep-blue',
       nota: 'Distinguir la victoria de 1997 del enfrentamiento de 1996, que Kasparov ganó.',
-      narracion: '1997, Deep Blue derrota a Garry Kasparov. El sistema de ajedrez de IBM vence al campeón mundial en una competición de seis partidas. Demuestra la potencia de búsqueda y cálculo especializado en un dominio estratégico.'
+      narracion: '1997, Deep Blue derrota a Garry Kasparov. El sistema de ajedrez de IBM vence al campeón mundial en una competición de seis partidas. Demuestra la potencia de búsqueda y cálculo especializado en un dominio estratégico.',
+      rotulo: 'Deep Blue',
+      resumen: 'IBM derrota a Garry Kasparov en ajedrez.'
     },
     {
       id: 'stanley',
@@ -143,7 +194,9 @@ EIA.data.lineaTiempo = {
       importancia: 'Impulsa la investigación en percepción, planificación y navegación autónoma.',
       fuente: 'https://robots.stanford.edu/papers/thrun.stanley05.pdf',
       nota: 'Artículo técnico del equipo de Stanford.',
-      narracion: '2005, STANLEY gana el DARPA Grand Challenge. Vehículo autónomo que completa el recorrido del desafío de DARPA en un entorno desértico no estructurado. Impulsa la investigación en percepción, planificación y navegación autónoma.'
+      narracion: '2005, STANLEY gana el DARPA Grand Challenge. Vehículo autónomo que completa el recorrido del desafío de DARPA en un entorno desértico no estructurado. Impulsa la investigación en percepción, planificación y navegación autónoma.',
+      rotulo: 'STANLEY',
+      resumen: 'Vehículo autónomo ganador del DARPA Grand Challenge.'
     },
     {
       id: 'watson',
@@ -156,7 +209,9 @@ EIA.data.lineaTiempo = {
       importancia: 'Muestra avances en recuperación de información, análisis lingüístico y respuesta a preguntas.',
       fuente: 'https://www.ibm.com/history/watson',
       nota: 'Fuente histórica oficial de IBM.',
-      narracion: '2011, IBM Watson gana Jeopardy. Sistema de preguntas y respuestas que compite con campeones humanos en un concurso basado en pistas en lenguaje natural. Muestra avances en recuperación de información, análisis lingüístico y respuesta a preguntas.'
+      narracion: '2011, IBM Watson gana Jeopardy. Sistema de preguntas y respuestas que compite con campeones humanos en un concurso basado en pistas en lenguaje natural. Muestra avances en recuperación de información, análisis lingüístico y respuesta a preguntas.',
+      rotulo: 'IBM Watson',
+      resumen: 'Gana Jeopardy! contra campeones humanos.'
     },
     {
       id: 'alphago',
@@ -169,7 +224,9 @@ EIA.data.lineaTiempo = {
       importancia: 'Hito en aprendizaje por refuerzo y juegos de alta complejidad combinatoria.',
       fuente: 'https://doi.org/10.1038/nature16961',
       nota: 'Artículo en Nature; la victoria pública ocurrió en marzo de 2016.',
-      narracion: '2016, AlphaGo derrota a Lee Sedol. Sistema de Go que combina redes neuronales profundas, búsqueda de árbol y aprendizaje por refuerzo; vence 4–1 en marzo de 2016. Hito en aprendizaje por refuerzo y juegos de alta complejidad combinatoria.'
+      narracion: '2016, AlphaGo derrota a Lee Sedol. Sistema de Go que combina redes neuronales profundas, búsqueda de árbol y aprendizaje por refuerzo; vence 4–1 en marzo de 2016. Hito en aprendizaje por refuerzo y juegos de alta complejidad combinatoria.',
+      rotulo: 'AlphaGo',
+      resumen: 'DeepMind derrota a Lee Sedol en Go con redes neuronales y búsqueda.'
     },
     {
       id: 'transformer',
@@ -182,7 +239,9 @@ EIA.data.lineaTiempo = {
       importancia: 'Base técnica de numerosos modelos modernos de lenguaje y sistemas multimodales.',
       fuente: 'https://arxiv.org/abs/1706.03762',
       nota: 'Artículo original: Attention Is All You Need.',
-      narracion: '2017, Transformer, del equipo de investigación de Google. Arquitectura basada en atención que modela secuencias sin recurrencia como mecanismo principal. Base técnica de numerosos modelos modernos de lenguaje y sistemas multimodales.'
+      narracion: '2017, Transformer, del equipo de investigación de Google. Arquitectura basada en atención que modela secuencias sin recurrencia como mecanismo principal. Base técnica de numerosos modelos modernos de lenguaje y sistemas multimodales.',
+      rotulo: 'Transformer',
+      resumen: 'Nueva arquitectura basada en mecanismos de atención.'
     },
     {
       id: 'bert',
@@ -195,7 +254,9 @@ EIA.data.lineaTiempo = {
       importancia: 'Populariza el preentrenamiento contextual para tareas de lenguaje natural.',
       fuente: 'https://arxiv.org/abs/1810.04805',
       nota: 'Artículo técnico original.',
-      narracion: '2018, BERT, de Google. Modelo preentrenado con representaciones bidireccionales que mejora tareas de comprensión textual. Populariza el preentrenamiento contextual para tareas de lenguaje natural.'
+      narracion: '2018, BERT, de Google. Modelo preentrenado con representaciones bidireccionales que mejora tareas de comprensión textual. Populariza el preentrenamiento contextual para tareas de lenguaje natural.',
+      rotulo: 'BERT',
+      resumen: 'Mejora la comprensión de textos con representaciones bidireccionales.'
     },
     {
       id: 'gpt',
@@ -208,7 +269,9 @@ EIA.data.lineaTiempo = {
       importancia: 'Precursor de la familia GPT y de modelos generativos de gran escala.',
       fuente: 'https://openai.com/index/language-unsupervised/',
       nota: 'Publicación técnica: Improving Language Understanding by Generative Pre-Training.',
-      narracion: '2018, GPT inicial, de OpenAI. Presenta el preentrenamiento generativo de modelos de lenguaje seguido de adaptación a tareas posteriores. Precursor de la familia GPT y de modelos generativos de gran escala.'
+      narracion: '2018, GPT inicial, de OpenAI. Presenta el preentrenamiento generativo de modelos de lenguaje seguido de adaptación a tareas posteriores. Precursor de la familia GPT y de modelos generativos de gran escala.',
+      rotulo: 'GPT',
+      resumen: 'OpenAI presenta el preentrenamiento generativo de modelos de lenguaje.'
     },
     {
       id: 'gpt-3',
@@ -221,7 +284,9 @@ EIA.data.lineaTiempo = {
       importancia: 'Acelera el interés en modelos de propósito general y aprendizaje few-shot.',
       fuente: 'https://arxiv.org/abs/2005.14165',
       nota: 'Artículo original: Language Models are Few-Shot Learners.',
-      narracion: '2020, GPT-3, de OpenAI. Modelo de lenguaje de gran escala que demuestra aprendizaje de tareas mediante instrucciones y ejemplos en el contexto. Acelera el interés en modelos de propósito general y aprendizaje few-shot.'
+      narracion: '2020, GPT-3, de OpenAI. Modelo de lenguaje de gran escala que demuestra aprendizaje de tareas mediante instrucciones y ejemplos en el contexto. Acelera el interés en modelos de propósito general y aprendizaje few-shot.',
+      rotulo: 'GPT-3',
+      resumen: 'Gran escala: aprende tareas con instrucciones y ejemplos.'
     },
     {
       id: 'dall-e',
@@ -234,7 +299,9 @@ EIA.data.lineaTiempo = {
       importancia: 'Hace más visible la generación de imágenes condicionada por lenguaje natural.',
       fuente: 'https://openai.com/index/dall-e/',
       nota: 'Anuncio oficial del modelo original en enero de 2021.',
-      narracion: '2021, DALL·E, de OpenAI. Modelo que genera imágenes a partir de descripciones textuales. Hace más visible la generación de imágenes condicionada por lenguaje natural.'
+      narracion: '2021, DALL·E, de OpenAI. Modelo que genera imágenes a partir de descripciones textuales. Hace más visible la generación de imágenes condicionada por lenguaje natural.',
+      rotulo: 'DALL·E',
+      resumen: 'Genera imágenes a partir de descripciones de texto.'
     },
     {
       id: 'stable-diffusion',
@@ -247,7 +314,9 @@ EIA.data.lineaTiempo = {
       importancia: 'Amplía el acceso a la generación de imágenes y a la experimentación comunitaria.',
       fuente: 'https://arxiv.org/abs/2112.10752',
       nota: 'Artículo técnico sobre síntesis de imágenes; el lanzamiento público de Stable Diffusion fue en 2022.',
-      narracion: '2022, Stable Diffusion, de Stability AI y colaboradores. Modelo de generación de imágenes basado en difusión latente cuyos pesos se distribuyeron públicamente. Amplía el acceso a la generación de imágenes y a la experimentación comunitaria.'
+      narracion: '2022, Stable Diffusion, de Stability AI y colaboradores. Modelo de generación de imágenes basado en difusión latente cuyos pesos se distribuyeron públicamente. Amplía el acceso a la generación de imágenes y a la experimentación comunitaria.',
+      rotulo: 'Stable Diffusion',
+      resumen: 'Generación de imágenes con pesos públicos.'
     },
     {
       id: 'chatgpt',
@@ -260,7 +329,9 @@ EIA.data.lineaTiempo = {
       importancia: 'Populariza el acceso público a la IA generativa mediante lenguaje natural.',
       fuente: 'https://openai.com/index/chatgpt/',
       nota: 'Anuncio oficial de noviembre de 2022.',
-      narracion: '2022, ChatGPT, de OpenAI. Interfaz conversacional basada en modelos generativos, optimizada para seguir instrucciones y dialogar con usuarios. Populariza el acceso público a la IA generativa mediante lenguaje natural.'
+      narracion: '2022, ChatGPT, de OpenAI. Interfaz conversacional basada en modelos generativos, optimizada para seguir instrucciones y dialogar con usuarios. Populariza el acceso público a la IA generativa mediante lenguaje natural.',
+      rotulo: 'ChatGPT',
+      resumen: 'Populariza la IA conversacional.'
     },
     {
       id: 'gpt-4',
@@ -273,7 +344,9 @@ EIA.data.lineaTiempo = {
       importancia: 'Expande capacidades multimodales y de rendimiento general.',
       fuente: 'https://openai.com/index/gpt-4-research/',
       nota: 'Fuente oficial; no confundir capacidad anunciada con disponibilidad simultánea en todos los productos.',
-      narracion: '2023, GPT-4, de OpenAI. Modelo que acepta texto e imágenes como entrada, con disponibilidad variable según producto, y mejora el desempeño en múltiples tareas. Expande capacidades multimodales y de rendimiento general.'
+      narracion: '2023, GPT-4, de OpenAI. Modelo que acepta texto e imágenes como entrada, con disponibilidad variable según producto, y mejora el desempeño en múltiples tareas. Expande capacidades multimodales y de rendimiento general.',
+      rotulo: 'GPT-4',
+      resumen: 'Acepta texto e imágenes como entrada.'
     },
     {
       id: 'llama',
@@ -286,7 +359,9 @@ EIA.data.lineaTiempo = {
       importancia: 'Impulsa un ecosistema amplio de modelos con pesos disponibles; no equivale necesariamente a código abierto en todos los sentidos.',
       fuente: 'https://ai.meta.com/blog/large-language-model-llama-meta-ai/',
       nota: 'Revisar la licencia de cada generación.',
-      narracion: '2023, Llama, de Meta. Familia de modelos de lenguaje distribuida para investigación y desarrollo bajo licencias específicas. Impulsa un ecosistema amplio de modelos con pesos disponibles; no equivale necesariamente a código abierto en todos los sentidos.'
+      narracion: '2023, Llama, de Meta. Familia de modelos de lenguaje distribuida para investigación y desarrollo bajo licencias específicas. Impulsa un ecosistema amplio de modelos con pesos disponibles; no equivale necesariamente a código abierto en todos los sentidos.',
+      rotulo: 'Llama',
+      resumen: 'Modelos de lenguaje distribuidos para investigación.'
     },
     {
       id: 'gemini',
@@ -299,7 +374,9 @@ EIA.data.lineaTiempo = {
       importancia: 'Refuerza la transición desde modelos principalmente textuales hacia sistemas multimodales.',
       fuente: 'https://blog.google/technology/google-deepmind/google-gemini-ai/',
       nota: 'Lanzamiento inicial en diciembre de 2023; las versiones y disponibilidades posteriores variaron.',
-      narracion: 'Entre 2023 y 2024, Gemini, de Google. Familia diseñada para procesar y combinar modalidades como texto, imagen, audio y código, con capacidades que varían según versión. Refuerza la transición desde modelos principalmente textuales hacia sistemas multimodales.'
+      narracion: 'Entre 2023 y 2024, Gemini, de Google. Familia diseñada para procesar y combinar modalidades como texto, imagen, audio y código, con capacidades que varían según versión. Refuerza la transición desde modelos principalmente textuales hacia sistemas multimodales.',
+      rotulo: 'Gemini',
+      resumen: 'Combina texto, imagen, audio y código.'
     },
     {
       id: 'sora',
@@ -312,7 +389,9 @@ EIA.data.lineaTiempo = {
       importancia: 'Extiende la IA generativa hacia secuencias temporales audiovisuales.',
       fuente: 'https://openai.com/index/sora/',
       nota: 'Anuncio de investigación en febrero de 2024; disponibilidad de producto posterior.',
-      narracion: 'Entre 2023 y 2024, generación de video: Sora, de OpenAI. Modelos que generan secuencias de video a partir de instrucciones y otros tipos de entrada, con disponibilidad escalonada. Extiende la IA generativa hacia secuencias temporales audiovisuales.'
+      narracion: 'Entre 2023 y 2024, generación de video: Sora, de OpenAI. Modelos que generan secuencias de video a partir de instrucciones y otros tipos de entrada, con disponibilidad escalonada. Extiende la IA generativa hacia secuencias temporales audiovisuales.',
+      rotulo: 'Video: Sora',
+      resumen: 'Genera video a partir de instrucciones.'
     },
     {
       id: 'claude-3-5-sonnet',
@@ -325,7 +404,9 @@ EIA.data.lineaTiempo = {
       importancia: 'Contribuye al desarrollo de modelos que ayudan a operar herramientas y entornos digitales.',
       fuente: 'https://www.anthropic.com/news/claude-3-5-sonnet',
       nota: 'Fuente oficial del lanzamiento de junio de 2024.',
-      narracion: '2024, Claude 3.5 Sonnet, de Anthropic. Modelo con mejoras reportadas en programación, razonamiento y tareas que implican interacción con interfaces informáticas. Contribuye al desarrollo de modelos que ayudan a operar herramientas y entornos digitales.'
+      narracion: '2024, Claude 3.5 Sonnet, de Anthropic. Modelo con mejoras reportadas en programación, razonamiento y tareas que implican interacción con interfaces informáticas. Contribuye al desarrollo de modelos que ayudan a operar herramientas y entornos digitales.',
+      rotulo: 'Claude 3.5 Sonnet',
+      resumen: 'Mejoras en programación y razonamiento.'
     },
     {
       id: 'razonamiento-avanzado',
@@ -338,7 +419,9 @@ EIA.data.lineaTiempo = {
       importancia: 'El foco se amplía desde la fluidez de las respuestas hacia la resolución de problemas de varios pasos.',
       fuente: 'https://arxiv.org/abs/2501.12948 ; https://www.anthropic.com/news/claude-4 ; https://openai.com/index/introducing-gpt-5/',
       nota: 'Hito agrupado por tendencia; modelos lanzados en fechas distintas. Las comparaciones requieren evaluaciones independientes.',
-      narracion: '2025, razonamiento avanzado. Modelos como DeepSeek-R1, Claude 4 y GPT-5 impulsan el razonamiento mediante aprendizaje por refuerzo, programación y resolución de problemas complejos. El foco se amplía desde la fluidez de las respuestas hacia la resolución de problemas de varios pasos.'
+      narracion: '2025, razonamiento avanzado. Modelos como DeepSeek-R1, Claude 4 y GPT-5 impulsan el razonamiento mediante aprendizaje por refuerzo, programación y resolución de problemas complejos. El foco se amplía desde la fluidez de las respuestas hacia la resolución de problemas de varios pasos.',
+      rotulo: 'Razonamiento avanzado',
+      resumen: 'Modelos como DeepSeek-R1, Claude 4 y GPT-5 impulsan el razonamiento y la resolución de problemas complejos.'
     },
     {
       id: 'era-agentica',
@@ -351,7 +434,9 @@ EIA.data.lineaTiempo = {
       importancia: 'La IA pasa de responder a solicitudes a ejecutar flujos de trabajo digitales.',
       fuente: 'https://openai.com/index/introducing-operator/ ; https://www.anthropic.com/news/claude-3-7-sonnet ; https://openai.com/index/introducing-chatgpt-agent/',
       nota: 'Hito agrupado por tendencia; el grado de autonomía depende del producto, permisos y controles humanos.',
-      narracion: 'Entre 2025 y 2026, la era agéntica. Agentes como Operator, Claude Code y ChatGPT Agent combinan modelos con navegación, herramientas y ejecución de tareas digitales de varios pasos, bajo distintos grados de supervisión. La IA pasa de responder a solicitudes a ejecutar flujos de trabajo digitales.'
+      narracion: 'Entre 2025 y 2026, la era agéntica. Agentes como Operator, Claude Code y ChatGPT Agent combinan modelos con navegación, herramientas y ejecución de tareas digitales de varios pasos, bajo distintos grados de supervisión. La IA pasa de responder a solicitudes a ejecutar flujos de trabajo digitales.',
+      rotulo: 'Era agéntica',
+      resumen: 'Agentes que ejecutan tareas digitales de varios pasos con herramientas y navegación.'
     },
     {
       id: 'ia-multimodal-fisica',
@@ -364,7 +449,9 @@ EIA.data.lineaTiempo = {
       importancia: 'La IA amplía su interacción con el mundo y aumenta la importancia de la seguridad y la gobernanza.',
       fuente: 'https://deepmind.google/blog/gemini-robotics-brings-ai-into-the-physical-world/ ; https://www.nist.gov/',
       nota: 'Hito agrupado; para publicación académica, añadir una fuente primaria específica por cada iniciativa regulatoria o de estándares.',
-      narracion: 'Entre 2025 y 2026, IA multimodal, física y gobernada. Avances multimodales y robóticos conectan la IA con el entorno físico, mientras iniciativas de estándares abordan interoperabilidad, seguridad y confianza. La IA amplía su interacción con el mundo y aumenta la importancia de la seguridad y la gobernanza.'
+      narracion: 'Entre 2025 y 2026, IA multimodal, física y gobernada. Avances multimodales y robóticos conectan la IA con el entorno físico, mientras iniciativas de estándares abordan interoperabilidad, seguridad y confianza. La IA amplía su interacción con el mundo y aumenta la importancia de la seguridad y la gobernanza.',
+      rotulo: 'IA multimodal, física y gobernada',
+      resumen: 'Modelos multimodales, robótica e iniciativas de seguridad e interoperabilidad.'
     }
   ]
 };

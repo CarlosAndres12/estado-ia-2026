@@ -172,6 +172,188 @@
     };
   }
 
+  /* Soft hyphens (U+00AD) in the long Spanish words of a text, at syllable breaks (V-CV, VC-CV and the
+   * inseparable pairs bl, br, cl, cr, dr, fl, fr, gl, gr, kl, kr, pl, pr, tr, ch, ll, rr): the narrow poster
+   * columns break "preentrenamiento" as preen-tre-na-mien-to, whatever hyphenation the browser has. */
+  var INSEPARABLE = ['bl', 'br', 'cl', 'cr', 'dr', 'fl', 'fr', 'gl', 'gr', 'kl', 'kr', 'pl', 'pr', 'tr', 'ch', 'll', 'rr'];
+  var VOWEL = /[aeiouáéíóúü]/i;
+  function hyphenate(text) {
+    return String(text || '').replace(/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]{9,}/g, function (w) {
+      var cuts = [];
+      for (var i = 1; i < w.length; i++) {
+        if (VOWEL.test(w[i]) || !VOWEL.test(w[i - 1])) continue;
+        var j = i;
+        while (j < w.length && !VOWEL.test(w[j])) j++;
+        if (j >= w.length) break;
+        var pair = w.slice(j - 2, j).toLowerCase(), insep = j - i >= 2 && INSEPARABLE.indexOf(pair) >= 0;
+        var cut = j - i === 1 ? i : insep ? j - 2 : j - 1;
+        if (cut >= 2 && w.length - cut >= 2) cuts.push(cut);
+        i = j;
+      }
+      var out = '', last = 0;
+      cuts.forEach(function (c) { out += w.slice(last, c) + '\u00AD'; last = c; });
+      return out + w.slice(last);
+    });
+  }
+
+  // ---------------------------------------------------------------------------------------------
+  // The poster line: a brush line through every dot, with waves between them and loops in some gaps
+
+  /* linePoints(dots, { x0, x1, y, amp, loops, seed }) -> flat [x, y, …] from x0 to x1 that passes
+   * exactly through every dot ({ x, y }, left to right). Between two dots the line bows up or down
+   * (alternating, amp px); a gap listed in loops (gap k = between dot k and dot k+1) gets a small curl. */
+  function linePoints(dots, o) {
+    o = o || {};
+    var amp = o.amp == null ? 10 : o.amp;
+    var y0 = dots.length ? dots[0].y : (o.y || 0);
+    var anchors = [{ x: o.x0 == null ? 0 : o.x0, y: y0 }].concat(dots, [{ x: o.x1 == null ? 100 : o.x1, y: dots.length ? dots[dots.length - 1].y : y0 }]);
+    var loops = o.loops || [];
+    var out = [anchors[0].x, anchors[0].y];
+    for (var k = 1; k < anchors.length; k++) {
+      var a = anchors[k - 1], b = anchors[k], len = b.x - a.x;
+      if (len <= 0) continue;
+      var bow = (k % 2 ? -1 : 0.6) * Math.min(amp, len * 0.12);
+      var n = Math.max(4, Math.round(len / 14));
+      var curl = loops.indexOf(k - 2) >= 0 ? Math.min(13, len * 0.1) : 0;  // segment k joins dot k-2 and dot k-1
+      for (var i = 1; i <= n; i++) {
+        var t = i / n;
+        if (i === n) { out.push(b.x, b.y); break; }
+        var x = a.x + len * t, y = a.y + (b.y - a.y) * t + Math.sin(Math.PI * t) * bow;
+        out.push(x, y);
+        if (curl && i === Math.floor(n / 2)) {
+          for (var j = 1; j < 16; j++) {
+            var th = j / 16 * Math.PI * 2;
+            out.push(x - curl * Math.sin(th) + (j / 16) * curl * 0.9, y - curl * (1 - Math.cos(th)));
+          }
+        }
+      }
+    }
+    return out;
+  }
+
+  var DOT_COLORS = ['tinta', 'rojo', 'azul', 'amarillo'];
+  var LOOPS = { fundamentos: [1, 4], generativa: [2, 5] };      // gaps with a curl, as on the poster
+
+  function dpr() { return Math.min(2, root.devicePixelRatio || 1); }
+  function fitCanvas(c, w, hgt) {
+    var k = dpr(), cw = Math.max(1, Math.round(w * k)), ch = Math.max(1, Math.round(hgt * k));
+    if (c.width === cw && c.height === ch) return null;
+    c.width = cw; c.height = ch;
+    var ctx = c.getContext('2d');
+    ctx.setTransform(k, 0, 0, k, 0, 0);
+    return ctx;
+  }
+  function paintArt(c, name) {
+    var w = c.clientWidth, hgt = c.clientHeight;
+    if (!w || !hgt) return;
+    var ctx = fitCanvas(c, w, hgt);
+    if (!ctx || !ui.lineaTiempoArte) return;
+    try { ui.lineaTiempoArte.draw(ctx, name, w, hgt); } catch (err) { if (root.console) root.console.warn('[s0] ' + name + ': ' + err.message); }
+  }
+
+  /* One era panel: poster title, spaced subtitle, short colored rule and flourish; then a scroller with
+   * the stage (line canvas + columns). A column with one milestone is a single button (drawing, dot,
+   * year, rótulo, resumen, place); a column of several shows one drawing, their dots and year, and one
+   * small button per milestone. buttons[i] and dots[i] follow the milestone order of the data. */
+  function buildPanel(era, k, hitos, helpId, buttons, dots) {
+    var h = ui.h;
+    var index = {};
+    hitos.forEach(function (x, i) { index[x.id] = i; });
+    var titleId = 's0--era-' + era.id;
+    var flourish = h('canvas', { class: 'poster__flourish', 'aria-hidden': 'true' });
+    var head = h('header', { class: 'poster__head' }, [
+      h('h3', { class: 'poster__title', id: titleId, text: era.titulo }),
+      h('p', { class: 'poster__subtitle' }, [h('span', { text: era.subtitulo }), h('span', { class: 'poster__years', text: era.anios })]),
+      h('span', { class: 'poster__rule', 'aria-hidden': 'true' }),
+      flourish
+    ]);
+    var line = h('canvas', { class: 'poster__line', 'aria-hidden': 'true' });
+    var cols = h('ol', { class: 'poster__cols', 'aria-labelledby': titleId });
+    var widths = [], arts = [];
+
+    function hitoButton(hito, i, mini, kids) {
+      var dot = h('span', { class: 'poster__dot poster__dot--' + DOT_COLORS[i % DOT_COLORS.length], 'aria-hidden': 'true' });
+      dots[i] = dot;
+      var btn = h('button', {
+        type: 'button', class: 'timeline__hito poster__hito' + (mini ? ' poster__hito--mini' : ''), id: 's0--' + hito.id,
+        'aria-pressed': 'false', 'aria-describedby': helpId, tabindex: i === 0 ? '0' : '-1', 'data-index': String(i)
+      }, (kids || []).concat(mini ? [] : [h('span', { class: 'poster__dotzone' }, [dot])], [
+        mini ? null : h('span', { class: 'poster__fecha', text: hito.fecha }),
+        h('span', { class: 'poster__rotulo', text: hyphenate(hito.rotulo) }),
+        h('span', { class: 'poster__resumen', text: hyphenate(hito.resumen) }),
+        h('span', { class: 'poster__lugar', text: hyphenate(hito.lugar) })
+      ].filter(Boolean)));
+      buttons[i] = btn;
+      return btn;
+    }
+
+    era.columnas.forEach(function (col) {
+      widths.push((col.ancho || 1) + 'fr');
+      var ids = col.hitos.filter(function (id) { return index[id] != null; });
+      var art = h('canvas', { class: 'poster__art', 'aria-hidden': 'true' });
+      arts.push({ canvas: art, name: col.arte });
+      var li = h('li', { class: 'poster__col' + (col.tinte ? ' poster__col--' + col.tinte : '') + (ids.length > 1 ? ' poster__col--grupo' : '') });
+      if (ids.length === 1) {
+        li.appendChild(hitoButton(hitos[index[ids[0]]], index[ids[0]], false, [art]));
+      } else {
+        var first = index[ids[0]];
+        var row = h('span', { class: 'poster__dotzone', 'aria-hidden': 'true' });
+        var items = h('ul', { class: 'poster__items' });
+        ids.forEach(function (id) {
+          var btn = hitoButton(hitos[index[id]], index[id], true);
+          row.appendChild(dots[index[id]]);
+          items.appendChild(h('li', {}, [btn]));
+        });
+        li.appendChild(h('div', { class: 'poster__group-head', 'data-first': String(first) }, [art, row,
+          h('span', { class: 'poster__fecha', 'aria-hidden': 'true', text: col.fecha || hitos[first].fecha })]));
+        li.appendChild(items);
+      }
+      cols.appendChild(li);
+    });
+    cols.style.gridTemplateColumns = widths.join(' ');
+    var units = era.columnas.reduce(function (sum, c) { return sum + (c.ancho || 1); }, 0);
+    var stage = h('div', { class: 'poster__stage', style: '--units: ' + units }, [line, cols]);
+    var el = h('section', { class: 'poster__panel poster__panel--' + era.id, 'aria-labelledby': titleId }, [
+      head, h('div', { class: 'poster__scroller' }, [stage])
+    ]);
+
+    function paintLine() {
+      var w = stage.clientWidth, hgt = stage.clientHeight;
+      if (!w || !hgt || !E().ink) return;
+      var ctx = fitCanvas(line, w, hgt);
+      if (!ctx) return;
+      var box = stage.getBoundingClientRect();
+      var pts = [];
+      era.columnas.forEach(function (col) {
+        col.hitos.forEach(function (id) {
+          var d = dots[index[id]];
+          if (!d) return;
+          var r = d.getBoundingClientRect();
+          pts.push({ x: r.left - box.left + r.width / 2, y: r.top - box.top + r.height / 2 });
+        });
+      });
+      if (!pts.length) return;
+      var last = era.id === 'generativa';
+      var x1 = w - (last ? 34 : 10);
+      var path = linePoints(pts, { x0: 6, x1: x1, loops: LOOPS[era.id] || [], amp: 16 });
+      var ink = E().ink;
+      try {
+        ink.line(ctx, path, { w: 3.6, profile: 'swell', seed: 's0-line-' + era.id });
+        if (last) ink.arrow(ctx, [x1 - 2, pts[pts.length - 1].y, w - 6, pts[pts.length - 1].y], { w: 3.4, headSize: 15, seed: 's0-arrow' });
+        else ink.dot(ctx, x1 + 2, pts[pts.length - 1].y, 5, E().palette.mundo.rojo);
+      } catch (err) { if (root.console) root.console.warn('[s0] line: ' + err.message); }
+    }
+
+    function paint() {
+      paintLine();
+      arts.forEach(function (a) { paintArt(a.canvas, a.name); });
+      paintArt(flourish, 'adorno-' + era.id);
+    }
+    return { el: el, stage: stage, paint: paint };
+  }
+
+  function E() { return EIA.engine || {}; }
+
   // ---------------------------------------------------------------------------------------------
   // View
 
@@ -194,33 +376,17 @@
     var pos = h('p', { class: 'timeline__pos', 'aria-live': 'polite' });
     body.appendChild(h('div', { class: 'timeline__controls', role: 'group', 'aria-label': copy('controles') }, [prevBtn, allBtn, nextBtn, introBtn, pos]));
 
-    // Track
+    // The poster: one panel per era, one column per poster column (see buildPanel)
     var helpId = 's0--ayuda';
     body.appendChild(h('p', { id: helpId, class: 'visually-hidden', text: copy('pistaAyuda') }));
-    var scroller = h('div', { class: 'timeline__scroller' });
-    var eras = h('ol', { class: 'timeline__eras', 'aria-label': copy('pista') });
-    D.eras.forEach(function (era) {
-      var list = h('ol', { class: 'timeline__list' });
-      hitos.forEach(function (hito, i) {
-        if (hito.era !== era.id) return;
-        var btn = h('button', {
-          type: 'button', class: 'timeline__hito', id: 's0--' + hito.id, 'aria-pressed': 'false',
-          'aria-describedby': helpId, tabindex: i === 0 ? '0' : '-1', 'data-index': String(i)
-        }, [
-          h('span', { class: 'timeline__dot', 'aria-hidden': 'true' }),
-          h('span', { class: 'timeline__fecha', text: hito.fecha }),
-          h('span', { class: 'timeline__nombre', text: hito.hito })
-        ]);
-        buttons[i] = btn;
-        list.appendChild(h('li', { class: 'timeline__item' }, [btn]));
-      });
-      eras.appendChild(h('li', { class: 'timeline__era timeline__era--' + era.id }, [
-        h('h3', { class: 'timeline__era-title' }, [h('span', { text: era.titulo }), h('span', { class: 'timeline__era-years', text: era.subtitulo })]),
-        list
-      ]));
+    var dots = [];
+    var poster = h('div', { class: 'poster' });
+    var panels = D.eras.map(function (era, k) {
+      var panel = buildPanel(era, k, hitos, helpId, buttons, dots);
+      poster.appendChild(panel.el);
+      return panel;
     });
-    scroller.appendChild(eras);
-    body.appendChild(scroller);
+    body.appendChild(poster);
 
     // Detail card and captions
     var detail = h('article', { class: 'card card--thin timeline__detail', 'aria-labelledby': 's0--detalle-titulo' });
@@ -274,6 +440,8 @@
     }
 
     function centerOn(btn, instant) {
+      var scroller = btn.closest('.poster__scroller');
+      if (!scroller || scroller.scrollWidth <= scroller.clientWidth) return;
       var box = scroller.getBoundingClientRect(), r = btn.getBoundingClientRect();
       var left = scroller.scrollLeft + (r.left - box.left) - (scroller.clientWidth - r.width) / 2;
       var behavior = instant || (ui.reducedMotion && ui.reducedMotion()) ? 'auto' : 'smooth';
@@ -306,6 +474,7 @@
         b.setAttribute('aria-pressed', on ? 'true' : 'false');
         b.classList.toggle('is-selected', on);
         b.setAttribute('tabindex', on || (i < 0 && k === 0) ? '0' : '-1');
+        dots[k].classList.toggle('is-selected', on);
       });
       renderDetail();
       var hito = hitos[i];
@@ -328,7 +497,11 @@
     buttons.forEach(function (btn, i) {
       btn.addEventListener('click', function () { select(i, { play: true, user: true }); });
     });
-    eras.addEventListener('keydown', function (e) {
+    poster.addEventListener('click', function (e) {
+      var art = e.target.closest && e.target.closest('[data-first]');
+      if (art) select(Number(art.getAttribute('data-first')), { play: true, user: true });
+    });
+    poster.addEventListener('keydown', function (e) {
       var btn = e.target.closest && e.target.closest('.timeline__hito');
       if (!btn) return;
       var i = Number(btn.getAttribute('data-index'));
@@ -375,8 +548,17 @@
 
     select(state && state.block ? indexOf(state.block) : -1, {});
     ui.prevNext(el);
-    return { destroy: function () { setPlayAll(false); player.stop(); } };
+    var ro = null;
+    if (typeof root.ResizeObserver === 'function') {
+      ro = new root.ResizeObserver(function (entries) {
+        entries.forEach(function (en) { panels.forEach(function (p) { if (p.stage === en.target) p.paint(); }); });
+      });
+      panels.forEach(function (p) { ro.observe(p.stage); });
+    } else {
+      root.addEventListener('resize', function () { panels.forEach(function (p) { p.paint(); }); });
+    }
+    return { destroy: function () { setPlayAll(false); player.stop(); if (ro) ro.disconnect(); } };
   }
 
-  ui.lineaTiempo = { mount: mount, sources: sources, clipFor: clipFor, cueAt: cueAt };
+  ui.lineaTiempo = { mount: mount, sources: sources, clipFor: clipFor, cueAt: cueAt, linePoints: linePoints, hyphenate: hyphenate };
 })(typeof window !== 'undefined' ? window : globalThis);

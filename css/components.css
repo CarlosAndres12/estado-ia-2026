@@ -2267,8 +2267,8 @@ html.has-modal, html.has-modal body { overflow: hidden; }
 /* ==== [/interactions] ==== */
 
 /* ==== [linea-tiempo] sesión 0: the AI timeline (js/ui/linea-tiempo.js) ==== */
-/* A horizontal track that scrolls on its own (never the page), one button per milestone on a brush
- * line, era headings above, and the detail card with the narration captions below. */
+/* The poster of the 24 milestones (two era panels), the controls above it and the detail card with
+ * the narration captions below. */
 .mapa-prelude { margin-bottom: var(--sp-6); max-width: 40rem; }
 .sesion-sign--0 { background-image: none; }
 
@@ -2276,51 +2276,78 @@ html.has-modal, html.has-modal body { overflow: hidden; }
 .timeline__controls .btn { min-height: var(--touch-target); }
 .timeline__pos { margin: 0 0 0 auto; font-size: var(--fs-sm); color: var(--color-texto-suave); }
 
-.timeline__scroller {
-  position: relative;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scroll-snap-type: x proximity;
-  padding: var(--sp-2) var(--sp-1) var(--sp-4);
-  margin: 0 calc(-1 * var(--sp-1));
+/* The poster (base_linea_del_tiempo/Untitled.jpg): two stacked era panels, each a big serif title,
+ * a spaced small-caps subtitle and a short colored rule, then a stage that scrolls inside itself
+ * (never the page) with the brush line drawn on a canvas (.poster__line) under the dots and over the
+ * columns. Each column: drawing, dot, year, rótulo, resumen and place; the last three sit on tinted
+ * cards. On wide screens the poster takes almost the whole window width, like the print. */
+.poster { margin: 0 0 var(--sp-4); }
+@media (min-width: 62rem) {
+  .poster { position: relative; left: 50%; width: calc(100vw - 2rem); max-width: 100rem; transform: translateX(-50%); }
 }
-.timeline__eras { display: flex; gap: var(--sp-5); list-style: none; margin: 0; padding: 0; width: max-content; }
-.timeline__era, .timeline__item { margin: 0; }  /* no list rhythm (li + li) inside the track */
-.timeline__era { flex: none; }
-/* The era name stays in view (sticky) while its milestones scroll past. */
-.timeline__era-title {
-  position: sticky; left: 0; display: flex; align-items: baseline; gap: var(--sp-2);
-  width: max-content; max-width: 100%; white-space: nowrap;
-  font-size: var(--fs-md); margin: 0 0 var(--sp-3); padding: 0 var(--sp-2) var(--sp-1);
-  background: var(--color-fondo); border-bottom: 4px solid var(--azul);
+.poster__panel { position: relative; padding: var(--sp-5) 0 var(--sp-3); }
+.poster__panel + .poster__panel { border-top: 3px solid var(--lienzo-ocre); }
+.poster__head { position: relative; padding-right: 15rem; margin: 0 0 var(--sp-2) var(--sp-2); }
+.poster__title {
+  margin: 0; max-width: 22ch; font-family: var(--font-display); font-weight: var(--fw-bold);
+  font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.05;
 }
-.timeline__era--generativa .timeline__era-title { border-bottom-color: var(--rojo); }
-.timeline__era-years { font-family: var(--font-sans); font-size: var(--fs-sm); font-weight: var(--fw-regular); color: var(--color-texto-suave); }
+.poster__subtitle {
+  display: flex; flex-wrap: wrap; gap: var(--sp-1) var(--sp-4); margin: var(--sp-2) 0 0;
+  font-size: var(--fs-xs); letter-spacing: 0.26em; text-transform: uppercase;
+}
+.poster__years { letter-spacing: 0.08em; color: var(--color-texto-suave); }
+.poster__rule { display: block; width: 3rem; height: 4px; margin-top: var(--sp-2); border-radius: 2px; background: var(--rojo); }
+.poster__panel--generativa .poster__rule { background: linear-gradient(90deg, var(--rojo) 50%, var(--azul) 50%); }
+.poster__flourish { position: absolute; top: -0.75rem; right: 0; width: 14rem; height: 5.75rem; pointer-events: none; }
 
-.timeline__list { position: relative; display: flex; list-style: none; margin: 0; padding: 0; }
-.timeline__list::before {
-  content: ""; position: absolute; left: 0; right: 0; top: calc(var(--sp-2) + 9px);
-  border-top: 3px solid var(--tinta); border-radius: 2px;
-}
-.timeline__item { flex: none; width: 9rem; scroll-snap-align: center; }
-.timeline__hito {
-  position: relative; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; gap: var(--sp-1);
-  width: 100%; min-height: 8.5rem; padding: var(--sp-2) var(--sp-2) var(--sp-3);
-  font: inherit; color: inherit; text-align: left; cursor: pointer;
+.poster__scroller { overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding: 4px 4px var(--sp-2); }
+.poster__stage { position: relative; min-width: calc(var(--units, 8) * 6rem); }
+.poster__line { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; pointer-events: none; }
+.poster__cols { display: grid; grid-auto-flow: column; align-items: start; gap: 0 2px; list-style: none; margin: 0; padding: 0; }
+.poster__col, .poster__items > li { margin: 0; }  /* no list rhythm (li + li) inside the poster */
+.poster__col { display: flex; flex-direction: column; min-width: 0; scroll-snap-align: start; }
+.poster__col--grupo { border-radius: var(--radius-card); }
+
+.poster__hito {
+  position: relative; display: flex; flex-direction: column; align-items: flex-start; flex: 1 1 auto;
+  width: 100%; padding: 0 6px var(--sp-3); font: inherit; color: inherit; text-align: left; cursor: pointer;
   background: transparent; border: 2px solid transparent; border-radius: var(--radius-card);
+  overflow-wrap: anywhere; hyphens: manual;
 }
-.timeline__hito:hover { background: rgba(249, 231, 166, 0.55); }
-.timeline__hito:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
-.timeline__hito.is-selected { background: var(--wash-amarillo); border-color: var(--tinta); }
-.timeline__dot {
-  width: 18px; height: 18px; border-radius: 50%; flex: none;
-  background: var(--lienzo); border: 3px solid var(--tinta);
+.poster__hito:hover { background: rgba(249, 231, 166, 0.45); }
+.poster__hito:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+.poster__hito.is-selected { background: rgba(249, 231, 166, 0.8); border-color: var(--tinta); }
+.poster__col--rosa .poster__hito { background: rgba(240, 190, 196, 0.5); }
+.poster__col--celeste .poster__hito { background: rgba(134, 190, 227, 0.32); }
+.poster__col--amarillo .poster__hito { background: rgba(245, 197, 24, 0.24); }
+.poster__col--rosa .poster__hito.is-selected,
+.poster__col--celeste .poster__hito.is-selected,
+.poster__col--amarillo .poster__hito.is-selected { border-color: var(--tinta); box-shadow: inset 0 0 0 2px var(--lienzo); }
+
+.poster__art { display: block; width: 100%; height: 7.5rem; }
+.poster__dotzone { position: relative; z-index: 2; display: flex; align-items: center; gap: 0.75rem; width: 100%; height: 2.5rem; }
+.poster__dot {
+  flex: none; width: 14px; height: 14px; border-radius: 50%;
+  background: var(--tinta); box-shadow: 0 0 0 3px var(--lienzo); transition: transform 0.15s ease;
 }
-.timeline__era--fundamentos .timeline__dot { border-color: var(--azul); }
-.timeline__era--generativa .timeline__dot { border-color: var(--rojo); }
-.timeline__hito.is-selected .timeline__dot { background: var(--tinta); border-color: var(--tinta); transform: scale(1.25); }
-.timeline__fecha { font-family: var(--font-display); font-weight: var(--fw-bold); font-size: var(--fs-md); line-height: var(--lh-tight); }
-.timeline__nombre { font-size: var(--fs-sm); line-height: var(--lh-snug); }
+.poster__dot--rojo { background: var(--rojo); }
+.poster__dot--azul { background: var(--azul); }
+.poster__dot--amarillo { background: var(--amarillo); }
+.poster__dot.is-selected { transform: scale(1.45); box-shadow: 0 0 0 3px var(--lienzo), 0 0 0 5px var(--tinta); }
+.poster__fecha { font-family: var(--font-display); font-weight: var(--fw-bold); font-size: var(--fs-lg); line-height: 1.1; }
+.poster__rotulo { margin-top: 2px; font-weight: var(--fw-bold); font-size: var(--fs-sm); line-height: 1.25; }
+.poster__resumen { margin-top: var(--sp-1); font-size: var(--fs-xs); line-height: 1.35; }
+.poster__lugar { margin-top: var(--sp-2); font-size: var(--fs-xs); line-height: 1.3; color: var(--color-texto-suave); }
+
+/* A column of several milestones: one drawing, their dots and shared years, then one small button each. */
+.poster__group-head { display: flex; flex-direction: column; padding: 0 6px; border-top: 2px solid transparent; cursor: pointer; }
+.poster__items { display: grid; grid-template-columns: repeat(auto-fill, minmax(5.25rem, 1fr)); gap: 2px; list-style: none; margin: 0; padding: 0; }
+.poster__items > li { display: flex; }
+.poster__hito--mini { padding: var(--sp-1) 6px var(--sp-2); }
+.poster__hito--mini .poster__rotulo { margin-top: 0; }
+.poster__hito--mini .poster__resumen { margin-top: 0; }
+.poster__hito--mini .poster__lugar { margin-top: 2px; }
 
 .timeline__detail { margin-top: var(--sp-4); }
 .timeline__detail-fecha { font-size: var(--fs-md); }
@@ -2341,14 +2368,15 @@ html.has-modal, html.has-modal body { overflow: hidden; }
 .timeline__sources a { overflow-wrap: anywhere; }
 
 @media (max-width: 40rem) {
-  .timeline__item { width: 7.75rem; }
-  .timeline__era-title { white-space: normal; max-width: calc(100vw - 3rem); flex-wrap: wrap; }
-  .timeline__hito { min-height: 8rem; }
+  .poster__panel { padding-top: var(--sp-7); }
+  .poster__head { padding-right: 0; margin-left: 0; }
+  .poster__flourish { top: -2.75rem; width: 6.5rem; height: 2.75rem; }
+  .poster__subtitle { letter-spacing: 0.16em; }
   .timeline__fields { grid-template-columns: 1fr; gap: var(--sp-1); }
   .timeline__fields dd { margin-bottom: var(--sp-2); }
   .timeline__pos { width: 100%; margin-left: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .timeline__hito.is-selected .timeline__dot { transform: none; }
+  .poster__dot { transition: none; }
 }
 /* ==== [/linea-tiempo] ==== */

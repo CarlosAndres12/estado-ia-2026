@@ -264,10 +264,16 @@ const INTERACT_STEPS = [
   },
   {
     // Captions only: the audio manifest is emptied first, so nothing is played (no audio checks here).
-    name: 'sesión 0 timeline: 24 milestones, click selects + captions, arrows move focus, deep link',
+    name: 'sesión 0 timeline: two poster panels drawn, 24 milestones, click selects + captions, arrows move focus, deep link',
     expr: `(async () => {
       await __chk.go('s0');
       EIA.timelineAudio = {};
+      await __chk.wait(300);
+      const panels = __chk.$$('#s0--hitos .poster__panel').length;
+      const inked = (c) => { try { const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; for (let i = 3; i < d.length; i += 4) if (d[i]) return true; } catch (e) {} return false; };
+      const lines = __chk.$$('#s0--hitos .poster__line').filter(inked).length;
+      const arts = __chk.$$('#s0--hitos .poster__art').filter(inked).length;
+      const pageScroll = document.documentElement.scrollWidth > document.documentElement.clientWidth;
       const btns = __chk.$$('#s0--hitos .timeline__hito');
       btns[2].click();
       await __chk.wait(600);
@@ -285,9 +291,10 @@ const INTERACT_STEPS = [
       await __chk.go('s0/chatgpt');
       await __chk.wait(300);
       const deep = __chk.$('#s0--detalle-titulo').textContent;
-      const ok = btns.length === 24 && title === 'Lisp y programación simbólica' && pressed === 'true' && caption.length > 0 &&
-        hash === '#s0/lisp' && moved && all === 'true' && deep === 'ChatGPT';
-      return { ok, detail: 'n=' + btns.length + ' «' + title + '» pressed=' + pressed + ' caption=' + caption.length + ' ' + hash + ' moved=' + moved + ' all=' + all + ' deep=«' + deep + '»' };
+      const ok = panels === 2 && lines === 2 && arts === 19 && !pageScroll && btns.length === 24 && title === 'Lisp y programación simbólica' &&
+        pressed === 'true' && caption.length > 0 && hash === '#s0/lisp' && moved && all === 'true' && deep === 'ChatGPT';
+      return { ok, detail: 'panels=' + panels + ' lines=' + lines + ' arts=' + arts + ' pageScroll=' + pageScroll + ' n=' + btns.length + ' «' + title + '» pressed=' + pressed +
+        ' caption=' + caption.length + ' ' + hash + ' moved=' + moved + ' all=' + all + ' deep=«' + deep + '»' };
     })()`
   },
   {

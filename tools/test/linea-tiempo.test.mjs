@@ -63,6 +63,32 @@ test('step 7 catches an edited field, a bad id, an unknown era and an invented n
   assert.ok(check((d) => { d.hitos.pop(); }).some((e) => e.includes('23 milestones')));
 });
 
+test('step 7 checks the poster texts: rótulo and resumen exist and invent no number', () => {
+  assert.ok(check((d) => { d.hitos[6].resumen += ' En 12 horas.'; }).some((e) => e.startsWith('lineaTiempo.hitos[6].resumen') && e.includes('«12»')));
+  assert.ok(check((d) => { d.hitos[4].rotulo = ''; }).some((e) => e.includes('rotulo is empty')));
+  assert.ok(check((d) => { delete d.hitos[4].resumen; }).some((e) => e.includes('resumen is empty')));
+  // Numbers of the row itself are fine (GPT-3, Claude 4, GPT-5 …).
+  assert.deepEqual(check((d) => { d.hitos[12].resumen = 'GPT-3 de OpenAI.'; }), []);
+});
+
+test('step 7 checks the poster columns: each milestone once, in its own era, dates from its rows', () => {
+  const cols = (d, era) => d.eras.find((e) => e.id === era).columnas;
+  assert.ok(check((d) => { cols(d, 'generativa').pop(); }).some((e) => e.includes('ia-multimodal-fisica is in no column')));
+  assert.ok(check((d) => { cols(d, 'generativa')[0].hitos.push('transformer'); }).some((e) => e.includes('transformer is already in')));
+  assert.ok(check((d) => { cols(d, 'fundamentos')[0].hitos.push('alphago'); }).some((e) => e.includes('alphago belongs to the era generativa')));
+  assert.ok(check((d) => { cols(d, 'fundamentos')[0].hitos = ['nada']; }).some((e) => e.includes('unknown milestone "nada"')));
+  assert.ok(check((d) => { cols(d, 'generativa')[6].fecha = '2022–2025'; }).some((e) => e.includes('«2025»')));
+  assert.ok(check((d) => { cols(d, 'generativa')[8].tinte = 'verde'; }).some((e) => e.includes('unknown tinte')));
+  assert.ok(check((d) => { cols(d, 'fundamentos')[1].arte = ''; }).some((e) => e.includes('arte is empty')));
+});
+
+test('reading the poster columns in order gives the milestones in order (one panel per era)', () => {
+  const order = LT.eras.flatMap((era) => era.columnas.flatMap((c) => c.hitos));
+  assert.deepEqual(plain(order), plain(LT.hitos.map((h) => h.id)));
+  assert.deepEqual(plain(LT.eras.map((e) => e.titulo)), ['La evolución de la Inteligencia Artificial', 'De la IA generativa a la era agéntica']);
+  for (const era of LT.eras) assert.ok(era.subtitulo && era.anios, era.id);
+});
+
 test('step 7 reports a missing CSV and missing data', () => {
   assert.ok(check(null, null).some((e) => e.includes('cannot read the CSV')));
   const report = createReport();
@@ -83,7 +109,42 @@ const LTUI = UI.ui.lineaTiempo;
 const plain = (v) => JSON.parse(JSON.stringify(v));
 
 test('the timeline UI loads without a DOM and exposes mount and its pure helpers', () => {
-  for (const name of ['mount', 'sources', 'clipFor', 'cueAt']) assert.equal(typeof LTUI[name], 'function', name);
+  for (const name of ['mount', 'sources', 'clipFor', 'cueAt', 'linePoints', 'hyphenate']) assert.equal(typeof LTUI[name], 'function', name);
+});
+
+// The drawings of the poster (js/ui/linea-tiempo-arte.js) load without a DOM too; drawing needs a canvas.
+const ART = await loadData({ root: ROOT, extra: ['js/engine/rng.js', 'js/engine/palette.js', 'js/engine/ink.js', 'js/engine/figures.js', 'js/ui/linea-tiempo-arte.js'] });
+
+test('every poster column names a drawing that exists', () => {
+  const names = ART.ui.lineaTiempoArte.names();
+  for (const era of LT.eras) for (const col of era.columnas) assert.ok(names.includes(col.arte), col.arte);
+});
+
+test('hyphenate() puts soft hyphens at Spanish syllable breaks of long words only', () => {
+  const show = (t) => LTUI.hyphenate(t).replace(/\u00AD/g, '-');
+  assert.equal(show('preentrenamiento'), 'preen-tre-na-mien-to');
+  assert.equal(show('comprensión de textos'), 'com-pren-sión de textos');
+  assert.equal(show('instrucciones'), 'ins-truc-cio-nes');
+  assert.equal(show('Kasparov en ajedrez'), 'Kasparov en ajedrez');
+  assert.equal(LTUI.hyphenate('GPT-3, 2023–2024').includes('\u00AD'), false);
+  for (const h of LT.hitos) assert.equal(LTUI.hyphenate(h.resumen).replace(/\u00AD/g, ''), h.resumen, h.id);
+});
+
+test('linePoints() passes through every dot and only loops inside the gaps', () => {
+  const dots = [{ x: 60, y: 120 }, { x: 200, y: 120 }, { x: 340, y: 120 }];
+  const pts = plain(LTUI.linePoints(dots, { x0: 10, x1: 400, loops: [1], seed: 't' }));
+  assert.equal(pts.length % 2, 0);
+  assert.equal(pts[0], 10);
+  assert.equal(pts[pts.length - 2], 400);
+  for (const d of dots) {
+    const hit = pts.some((v, i) => i % 2 === 0 && Math.abs(v - d.x) < 0.01 && Math.abs(pts[i + 1] - d.y) < 0.01);
+    assert.ok(hit, 'passes through ' + d.x);
+  }
+  // A loop goes back to the left: x is not monotonic between the second and third dot.
+  const xs = pts.filter((v, i) => i % 2 === 0);
+  const back = xs.some((x, i) => i && x < xs[i - 1] && x > 200 && x < 340);
+  assert.ok(back, 'loop between the second and third dot');
+  assert.deepEqual(plain(LTUI.linePoints([], { x0: 0, x1: 10 })).length >= 4, true);
 });
 
 test('sources() splits a multi-URL cell', () => {

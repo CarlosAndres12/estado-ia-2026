@@ -50,6 +50,9 @@ Luego abran <http://localhost:8000/>. Cualquier servidor de archivos estáticos 
 - Enlaces profundos: `#cifras/adop-1`, `#s3/actividad`, `#clase/3`, `#glosario/agente`, `#s0/alphago` (un hito).
 - La línea del tiempo sale de `base_linea_del_tiempo/linea_tiempo_evolucion_IA_1950_2026.csv` y se copia literal en
   `js/data/linea-tiempo.js`; `node tools/check-content.mjs` (paso 7) compara ambos campo por campo.
+- `#s0` se dibuja como el afiche `base_linea_del_tiempo/Untitled.jpg`: dos paneles (uno por era), una línea de
+  tinta con bucles y un dibujo por columna (`js/ui/linea-tiempo-arte.js`). Las columnas, el `rotulo` y el
+  `resumen` de cada hito están en `js/data/linea-tiempo.js`; el paso 7 rechaza cifras que no estén en su fila del CSV.
 - Una lámina sola, a 1280×720: `index.html?lamina=d07`.
 
 ---

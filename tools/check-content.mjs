@@ -17,7 +17,8 @@
  *   5 Banned    the KB §14 versions are errors outside the places that warn against them
  *   6 Series    adop-1…6 next to adop-7 is flagged for review (separate panels)
  *   7 Timeline  js/data/linea-tiempo.js (sesión 0) matches its CSV row by row and field by field; ids are
- *               unique deep-link ids; every number in a narration appears in that row's own text
+ *               unique deep-link ids; every number in a narration, rótulo or resumen appears in that row's
+ *               own text; every milestone sits in exactly one poster column of its era
  *   8 Report    errors, warnings, allowed corrections and (--verbose) every number with its figure
  */
 
@@ -1101,12 +1102,51 @@ export function checkLineaTiempo(EIA, csvText, report) {
     seen.add(h.id);
     if (!eras.has(h.era)) report.error(where, 'unknown era ' + JSON.stringify(h.era));
     if (!h.narracion) report.error(where, 'narracion is empty');
-    const rowText = row.join(' ');
-    for (const n of digitRuns(h.narracion)) {
-      if (!digitRuns(rowText).includes(n)) report.error(where + '.narracion', 'the number «' + n + '» is not in the CSV row');
+    const rowDigits = digitRuns(row.join(' '));
+    for (const key of ['narracion', 'rotulo', 'resumen']) {
+      if (!h[key]) { report.error(where, key + ' is empty'); continue; }
+      for (const n of digitRuns(h[key])) {
+        if (!rowDigits.includes(n)) report.error(where + '.' + key, 'the number «' + n + '» is not in the CSV row');
+      }
     }
   });
   if (!lt.intro || !lt.intro.narracion) report.error('lineaTiempo.intro', 'narracion is empty');
+  checkTimelineColumns(lt, rows, report);
+}
+
+// The poster layout: every milestone sits in exactly one column of its own era; a column's shared date
+// only uses numbers of its milestones' rows.
+const TIMELINE_TINTS = new Set(['rosa', 'celeste', 'amarillo']);
+function checkTimelineColumns(lt, rows, report) {
+  const hitos = lt.hitos || [];
+  const byId = new Map(hitos.map((h, i) => [h.id, i]));
+  const placed = new Map();
+  (lt.eras || []).forEach((era) => {
+    const cols = era.columnas || [];
+    if (!cols.length) report.error('lineaTiempo.eras.' + era.id, 'columnas is empty');
+    cols.forEach((col, c) => {
+      const where = 'lineaTiempo.eras.' + era.id + '.columnas[' + c + ']';
+      if (!col.arte) report.error(where, 'arte is empty');
+      if (col.ancho != null && !(col.ancho > 0)) report.error(where, 'ancho must be a positive number');
+      if (col.tinte != null && !TIMELINE_TINTS.has(col.tinte)) report.error(where, 'unknown tinte ' + JSON.stringify(col.tinte));
+      if (!(col.hitos || []).length) report.error(where, 'hitos is empty');
+      const digits = [];
+      (col.hitos || []).forEach((id) => {
+        const i = byId.get(id);
+        if (i == null) return report.error(where, 'unknown milestone ' + JSON.stringify(id));
+        if (hitos[i].era !== era.id) report.error(where, id + ' belongs to the era ' + hitos[i].era);
+        if (placed.has(id)) report.error(where, id + ' is already in ' + placed.get(id));
+        placed.set(id, where);
+        if (rows[i]) digits.push(...digitRuns(rows[i].join(' ')));
+      });
+      for (const n of digitRuns(col.fecha)) {
+        if (!digits.includes(n)) report.error(where + '.fecha', 'the number «' + n + '» is not in its CSV rows');
+      }
+    });
+  });
+  hitos.forEach((h, i) => {
+    if (!placed.has(h.id)) report.error('lineaTiempo.hitos[' + i + ']', h.id + ' is in no column of the poster');
+  });
 }
 
 // -------------------------------------------------------------------------------------------------
