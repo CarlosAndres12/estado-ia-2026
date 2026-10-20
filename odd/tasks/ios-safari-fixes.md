@@ -23,7 +23,7 @@ iPhone users get videos with long delays and no sound, a dead button and clipped
 - [x] I02 Fullscreen fallback: pseudo-fullscreen (fixed, full viewport) when the Fullscreen API is unavailable. Route: delegated (same writer). Commit 76a621b. Test: tools/test/ios-layout.test.mjs (static).
 - [x] I03 Replace `100vh` with `dvh` keeping a `vh` fallback; guard the Modo clase video width against negative values. Route: delegated (same writer). Commit 89bfb62. Also paired `.hero__art` (layout.css). Test: tools/test/ios-layout.test.mjs (static).
 - [x] I04 Bound the ink glyph cache. Route: delegated (same writer). Commit 69d1864. Counter cache LRU(240); evicted counter masks and shared layers set to 0x0 in a microtask. Test: tools/test/ink-cache.test.mjs.
-- [ ] I05 Verify (tests, check-content, WebKit iPhone emulation smoke), commit, deploy.
+- [x] I05 Verify + deploy. Parent: tests 246/246, check-content 0 errors; main fast-forwarded to f427541, GitHub Pages built f427541. WebKit iPhone smoke NOT run: Playwright WebKit download hung twice on this machine (unavailable).
 
 ## Acceptance criteria
 - Play starts immediately on WebKit iPhone emulation without the 8 s stall; no console errors.
@@ -34,3 +34,4 @@ iPhone users get videos with long delays and no sound, a dead button and clipped
 - 2026-10-20 feature document created.
 - 2026-10-20 I01–I04 done by one delegated writer. Checks: `node --test --test-concurrency=1 test/` 241/241 pass; `node tools/check-content.mjs` 0 errors, 0 warnings. No browser run (left to I05).
 - Behavior note (I01): before any tap, missing metadata no longer falls back to the browser voice after 8 s; the track stays the candidate and the first tap gives it 4 s (UNLOCK_WAIT) to load. On desktop metadata normally arrives before the tap, so nothing changes; on a stalled desktop network the browser-voice note appears only after a tap.
+- 2026-10-20 Published with s0 T04: Pages built f427541. Pending: real-iPhone confirmation by a user (no WebKit run here).

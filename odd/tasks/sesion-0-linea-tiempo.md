@@ -120,3 +120,4 @@ Commit `base_linea_del_tiempo/` (user decision), listen to a few clips (human ch
   `viewer-w390.png`, `viewer-notes-w390.png`; card with «Ver ficha» `review/fichas/s0_alphago-w390-p4.png`.
 - Gaps: on a 390 px phone the ficha is small inside the viewer (same as deck láminas); the ELIZA poster drawing
   carries its own English prompt text from T03.
+- 2026-10-20 T04 published: main fast-forwarded to f427541, GitHub Pages built f427541 (js/ui/linea-tiempo-fichas.js returns 200).
