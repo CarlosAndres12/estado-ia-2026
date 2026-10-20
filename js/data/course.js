@@ -471,6 +471,7 @@ EIA.data.course = {
         '6 · Riesgo y gobernanza',
         '7 · América Latina, Colombia y agenda'
       ],
+      sesionCero: '0 · Línea del tiempo de la IA',
       anterior: 'Anterior',
       siguiente: 'Siguiente',
       buscar: 'Buscar en el curso'
@@ -775,6 +776,9 @@ EIA.data.course = EIA.data.course || {}; EIA.data.course.ui = EIA.data.course.ui
   mapa: {
     camino: 'Camino del curso: siete estaciones, una por sesión.',
     irSesion: 'Ir a la sesión {n}',
+    antes: 'Antes de la sesión 1',
+    antesTexto: 'Recorre 24 hitos de la IA, de 1950 a 2026, con su ficha, su fuente y su narración.',
+    irLineaTiempo: 'Abrir la línea del tiempo',
     caso: 'Caso del equipo',
     casoTexto: 'Cada sesión deja un producto en el cuaderno del equipo:',
     sello: 'Sello de la sesión {n}',

@@ -2,8 +2,8 @@
  *
  *   EIA.ui.nav.mount(headerEl)    brush-lettered "Estado de la IA 2026" (canvas, writes itself on once),
  *                                 nav "Inicio · Mapa · Evidencia · Sesiones · Cifras · Proyecto · Glosario ·
- *                                 Preguntas · Referencias · Asistente · Modo clase"; "Sesiones" opens the 7
- *                                 sessions with their signs and KB §2 titles; a menu button on small
+ *                                 Preguntas · Referencias · Asistente · Modo clase"; "Sesiones" opens sesión 0
+ *                                 (the AI timeline, #s0) and the 7 sessions with their signs and KB §2 titles; a menu button on small
  *                                 screens; a search panel. Publishes the header height as --header-h.
  *   EIA.ui.nav.setCurrent(route)  aria-current on the active link; closes the menus
  *   EIA.ui.search.build()         the accent-insensitive search index (sessions, banco, glosario, preguntas)
@@ -78,6 +78,13 @@
       [h('span', { text: t('nav.sesiones') }), h('span', { class: 'caret', 'aria-hidden': 'true' })]);
     var list = h('ul', { id: 'nav-sesiones', class: 'site-nav__menu', hidden: true, 'aria-label': t('page.nav.sesionesMenu') });
     var labels = (EIA.data.course.ui.nav.sesionesMenu || []);
+    if (EIA.data.lineaTiempo) {
+      // Sesión 0, the AI timeline (linea-tiempo.js): no KB session sign, an empty one keeps the column.
+      list.appendChild(h('li', {}, [h('a', { class: 'site-nav__session', href: '#s0', 'data-route': 's0' }, [
+        h('span', { class: 'sesion-sign sesion-sign--0', 'aria-hidden': 'true' }),
+        h('span', { text: EIA.data.course.ui.nav.sesionCero || EIA.data.lineaTiempo.titulo })
+      ])]));
+    }
     for (var n = 1; n <= 7; n++) {
       list.appendChild(h('li', {}, [h('a', { class: 'site-nav__session', href: '#s' + n, 'data-route': 's' + n }, [
         h('span', { class: 'sesion-sign sesion-sign--' + n, 'aria-hidden': 'true' }),
@@ -140,6 +147,12 @@
     if (index) return index;
     index = [];
     var D = EIA.data;
+    if (D.lineaTiempo) {
+      var lt = D.lineaTiempo;
+      lt.hitos.forEach(function (x) {
+        index.push({ type: lt.kicker, title: x.fecha + ' · ' + x.hito, text: x.avance + ' ' + x.importancia, href: '#s0/' + x.id });
+      });
+    }
     for (var n = 1; n <= 7; n++) {
       var s = D.sesiones[n];
       if (!s) continue;

@@ -16,13 +16,17 @@
  *               appears in a referenced figure (or is illustrative, a plain year or structural)
  *   5 Banned    the KB §14 versions are errors outside the places that warn against them
  *   6 Series    adop-1…6 next to adop-7 is flagged for review (separate panels)
- *   7 Report    errors, warnings, allowed corrections and (--verbose) every number with its figure
+ *   7 Timeline  js/data/linea-tiempo.js (sesión 0) matches its CSV row by row and field by field; ids are
+ *               unique deep-link ids; every number in a narration appears in that row's own text
+ *   8 Report    errors, warnings, allowed corrections and (--verbose) every number with its figure
  */
 
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import * as P from './lib/kb-parse.mjs';
 import { loadData } from './lib/load-data.mjs';
+import { parseCsv } from './lib/csv.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const DEFAULT_ROOT = path.resolve(HERE, '..');
@@ -1060,11 +1064,57 @@ export function checkSeries(EIA, kb, report) {
 }
 
 // -------------------------------------------------------------------------------------------------
-// Step 7 · Report
+// Step 7 · Timeline (sesión 0): the data is the CSV, verbatim
+
+// CSV column → data field, in file order.
+export const TIMELINE_COLUMNS = [
+  ['Fecha', 'fecha'], ['Hito', 'hito'], ['Organización/personas', 'actores'], ['Lugar/contexto', 'lugar'],
+  ['Descripción del avance técnico', 'avance'], ['Importancia histórica', 'importancia'],
+  ['Fuente de verificación', 'fuente'], ['Nota de verificación', 'nota']
+];
+const TIMELINE_ID = /^[a-z0-9][a-z0-9-]*$/; // js/core/router.js BLOCK_RE: #s0/<id> must survive parse()
+
+/** Digit runs of a text ("4–1" -> ['4', '1'], "3.5" -> ['3', '5']). */
+const digitRuns = (text) => String(text || '').match(/\d+/g) || [];
+
+export function checkLineaTiempo(EIA, csvText, report) {
+  report.step('7');
+  const lt = EIA.data.lineaTiempo;
+  if (!lt) return report.error('lineaTiempo', 'missing: js/data/linea-tiempo.js is not loaded by index.html');
+  if (csvText == null) return report.error('lineaTiempo', 'cannot read the CSV ' + lt.csv);
+  const [header, ...rows] = parseCsv(csvText);
+  const expected = TIMELINE_COLUMNS.map(([col]) => col);
+  if (JSON.stringify(header) !== JSON.stringify(expected)) report.error('lineaTiempo.csv', 'header ' + JSON.stringify(header) + ' should be ' + JSON.stringify(expected));
+  const hitos = lt.hitos || [];
+  if (hitos.length !== rows.length) report.error('lineaTiempo.hitos', hitos.length + ' milestones, the CSV has ' + rows.length + ' rows');
+  const eras = new Set((lt.eras || []).map((e) => e.id));
+  const seen = new Set();
+  rows.forEach((row, i) => {
+    const h = hitos[i];
+    const where = 'lineaTiempo.hitos[' + i + ']';
+    if (!h) return report.error(where, 'missing (CSV row ' + (i + 2) + ': ' + row[1] + ')');
+    TIMELINE_COLUMNS.forEach(([col, key], k) => {
+      if (h[key] !== row[k]) report.error(where + '.' + key, 'differs from the CSV column «' + col + '»\n      site: ' + JSON.stringify(h[key]) + '\n      CSV:  ' + JSON.stringify(row[k]));
+    });
+    if (!TIMELINE_ID.test(h.id || '')) report.error(where, 'id ' + JSON.stringify(h.id) + ' is not a deep-link id (a-z, 0-9, -)');
+    if (seen.has(h.id)) report.error(where, 'duplicate id ' + h.id);
+    seen.add(h.id);
+    if (!eras.has(h.era)) report.error(where, 'unknown era ' + JSON.stringify(h.era));
+    if (!h.narracion) report.error(where, 'narracion is empty');
+    const rowText = row.join(' ');
+    for (const n of digitRuns(h.narracion)) {
+      if (!digitRuns(rowText).includes(n)) report.error(where + '.narracion', 'the number «' + n + '» is not in the CSV row');
+    }
+  });
+  if (!lt.intro || !lt.intro.narracion) report.error('lineaTiempo.intro', 'narracion is empty');
+}
+
+// -------------------------------------------------------------------------------------------------
+// Step 8 · Report
 
 export function formatReport(report, { verbose = false, kbMeta = {}, files = [] } = {}) {
   const out = [];
-  const titles = { 1: 'Load', 2: 'KB match', 3: 'References', 4: 'Numbers', 5: 'Banned versions', 6: 'Series' };
+  const titles = { 1: 'Load', 2: 'KB match', 3: 'References', 4: 'Numbers', 5: 'Banned versions', 6: 'Series', 7: 'Timeline' };
   out.push('check-content · Estado de la IA 2026');
   if (kbMeta['Versión']) out.push('KB ' + P.KB_FILE + ' · versión ' + kbMeta['Versión']);
   if (files.length) out.push('Data: ' + files.length + ' scripts loaded in a vm sandbox');
@@ -1127,6 +1177,17 @@ export async function run({ root = DEFAULT_ROOT, extra = [] } = {}) {
         report.step(name);
         report.error('checker', 'step ' + name + ' crashed: ' + (err.stack || err.message));
       }
+    }
+  }
+  if (EIA) {
+    const csvFile = EIA.data.lineaTiempo && EIA.data.lineaTiempo.csv;
+    let csvText = null;
+    try { if (csvFile) csvText = fs.readFileSync(path.join(root, csvFile), 'utf8'); } catch { /* reported by the step */ }
+    try {
+      checkLineaTiempo(EIA, csvText, report);
+    } catch (err) {
+      report.step('7');
+      report.error('checker', 'step 7 crashed: ' + (err.stack || err.message));
     }
   }
   return { report, EIA, kb };

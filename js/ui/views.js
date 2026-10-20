@@ -11,6 +11,7 @@
  *   #inicio      hero (hero.js), "La pregunta del curso", "Ficha del curso", "Cómo usar este sitio", V01
  *   #mapa        road with 7 stations, hilo conductor, trabajo autónomo, versiones, ruta de lectura (D2)
  *   #evidencia   KB §3: five types (meaning zone), fuentes, coberturas, criterios, four warning stamps, V02
+ *   #s0          sesión 0, the AI timeline 1950–2026 (linea-tiempo.js; deep links #s0/<milestone id>)
  *   #s1…#s7      one template, blocks: resultados, agenda, laminas, video, contenido (contenido-<n>),
  *                errores, actividad (<actividadId>), discusion, quiz, lecturas, facilitador
  *   #proyecto    KB §11: pesos, proyecto final (8 questions → notebook sheets), cuaderno, rúbrica, retro
@@ -182,6 +183,10 @@
   var block = ui.block;
 
   function viewTitle(route) {
+    if (route === 's0') {
+      var lt = EIA.data.lineaTiempo;
+      return lt ? t('page.nav.sesion', { n: 0, titulo: lt.titulo }) : '';
+    }
     var n = EIA.router.sessionNumber(route);
     if (n) {
       var s = EIA.data.sesiones[n];
@@ -600,7 +605,17 @@
     });
     wrap.appendChild(canvas);
     wrap.appendChild(list);
-    el.appendChild(h('div', { class: 'view-body' }, [wrap]));
+    var before = null;
+    if (EIA.data.lineaTiempo) {
+      // Sesión 0 (#s0) sits before the road: it is the historical prelude, not a KB station.
+      before = card({ thin: true, class: 'mapa-prelude', id: 'mapa--s0' }, [
+        h('p', { class: 'kicker', text: t('page.mapa.antes') }),
+        h('h2', { class: 'station__title' }, [h('a', { href: '#s0', text: viewTitle('s0') })]),
+        h('p', { text: t('page.mapa.antesTexto') }),
+        h('p', {}, [h('a', { class: 'btn btn--small', href: '#s0', text: t('page.mapa.irLineaTiempo') })])
+      ]);
+    }
+    el.appendChild(h('div', { class: 'view-body' }, [before, wrap]));
     var lastKey = '';
     function road() {
       var key = wrap.offsetWidth + 'x' + wrap.offsetHeight;
@@ -1239,7 +1254,11 @@
       if (ui.asistente && ui.asistente.mount) ui.asistente.mount(el, state);
       else { ui.viewHead(el, { title: t('asistente.titulo') }); }
     },
-    clase: renderClase
+    clase: renderClase,
+    s0: function (el, state) {
+      if (ui.lineaTiempo && ui.lineaTiempo.mount) ui.lineaTiempo.mount(el, state);
+      else { ui.viewHead(el, { title: viewTitle('s0') }); }
+    }
   };
   for (var sn = 1; sn <= 7; sn++) (function (n) { RENDER['s' + n] = function (el) { renderSesion(el, n); }; })(sn);
 
@@ -1247,7 +1266,7 @@
   var shown = null;
   var main = null;
   var baseTitle = '';
-  var NO_GLOSS = { glosario: true, asistente: true, clase: true };
+  var NO_GLOSS = { glosario: true, asistente: true, clase: true, s0: true };
 
   function ensureView(route) {
     var v = views[route];

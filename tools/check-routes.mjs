@@ -35,9 +35,9 @@ import { launchBrowser } from './lib/browser.mjs';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SITE = pathToFileURL(path.join(ROOT, 'index.html')).href;
 
-export const ROUTES = ['inicio', 'mapa', 'evidencia', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 'proyecto',
+export const ROUTES = ['inicio', 'mapa', 'evidencia', 's0', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 'proyecto',
   'cifras', 'glosario', 'preguntas', 'referencias', 'asistente', 'clase'];
-export const DEEP_LINKS = ['s1/actividad', 's3/actividad', 's3/contenido-4', 's5/facilitador', 's7/contenido-9',
+export const DEEP_LINKS = ['s0/alphago', 's1/actividad', 's3/actividad', 's3/contenido-4', 's5/facilitador', 's7/contenido-9',
   'cifras/adop-1', 'cifras/correccion-pwc', 'glosario/agente', 'preguntas/p3', 'referencias/mck25',
   'proyecto/hoja-s1-ficha', 'clase/3', 'clase/taller'];
 
@@ -260,6 +260,34 @@ const INTERACT_STEPS = [
       const score = __chk.$('.rubric__score', rb).textContent;
       const ok = !!sheet && notes === 1 && stored === 'La IA propone; una persona decide.' && score === 'Puntaje de la rúbrica: 20/100';
       return { ok, detail: 'sheet=' + !!sheet + ' notes=' + notes + ' stored=' + JSON.stringify(stored) + ' «' + score + '»' };
+    })()`
+  },
+  {
+    // Captions only: the audio manifest is emptied first, so nothing is played (no audio checks here).
+    name: 'sesión 0 timeline: 24 milestones, click selects + captions, arrows move focus, deep link',
+    expr: `(async () => {
+      await __chk.go('s0');
+      EIA.timelineAudio = {};
+      const btns = __chk.$$('#s0--hitos .timeline__hito');
+      btns[2].click();
+      await __chk.wait(600);
+      const title = __chk.$('#s0--detalle-titulo').textContent;
+      const pressed = btns[2].getAttribute('aria-pressed');
+      const caption = __chk.$('.timeline__caption').textContent;
+      const hash = location.hash;
+      btns[2].focus();
+      btns[2].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
+      const moved = document.activeElement === btns[3];
+      __chk.$('.timeline__controls .btn--primary').click();
+      await __chk.wait(300);
+      const all = __chk.$('.timeline__controls .btn--primary').getAttribute('aria-pressed');
+      __chk.$('.timeline__controls .btn--primary').click();
+      await __chk.go('s0/chatgpt');
+      await __chk.wait(300);
+      const deep = __chk.$('#s0--detalle-titulo').textContent;
+      const ok = btns.length === 24 && title === 'Lisp y programación simbólica' && pressed === 'true' && caption.length > 0 &&
+        hash === '#s0/lisp' && moved && all === 'true' && deep === 'ChatGPT';
+      return { ok, detail: 'n=' + btns.length + ' «' + title + '» pressed=' + pressed + ' caption=' + caption.length + ' ' + hash + ' moved=' + moved + ' all=' + all + ' deep=«' + deep + '»' };
     })()`
   },
   {

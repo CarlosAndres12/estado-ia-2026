@@ -33,9 +33,9 @@ test('loads without a DOM and exposes the router API', () => {
 });
 
 test('knows every route of the site, in course order first', () => {
-  assert.deepEqual(plain(R.ROUTES), ['inicio', 'mapa', 'evidencia', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 'proyecto',
+  assert.deepEqual(plain(R.ROUTES), ['inicio', 'mapa', 'evidencia', 's0', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 'proyecto',
     'cifras', 'glosario', 'preguntas', 'referencias', 'asistente', 'clase']);
-  assert.deepEqual(plain(R.ORDER), ['inicio', 'mapa', 'evidencia', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 'proyecto']);
+  assert.deepEqual(plain(R.ORDER), ['inicio', 'mapa', 'evidencia', 's0', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 'proyecto']);
 });
 
 test('an empty hash is #inicio', () => {
@@ -98,10 +98,11 @@ test('format() builds the hash back', () => {
   }
 });
 
-test('neighbors() follows inicio → mapa → evidencia → s1 … s7 → proyecto', () => {
+test('neighbors() follows inicio → mapa → evidencia → s0 → s1 … s7 → proyecto', () => {
   assert.deepEqual(plain(R.neighbors('inicio')), { prev: null, next: 'mapa' });
-  assert.deepEqual(plain(R.neighbors('evidencia')), { prev: 'mapa', next: 's1' });
-  assert.deepEqual(plain(R.neighbors('s1')), { prev: 'evidencia', next: 's2' });
+  assert.deepEqual(plain(R.neighbors('evidencia')), { prev: 'mapa', next: 's0' });
+  assert.deepEqual(plain(R.neighbors('s0')), { prev: 'evidencia', next: 's1' });
+  assert.deepEqual(plain(R.neighbors('s1')), { prev: 's0', next: 's2' });
   assert.deepEqual(plain(R.neighbors('s7')), { prev: 's6', next: 'proyecto' });
   assert.deepEqual(plain(R.neighbors('proyecto')), { prev: 's7', next: null });
 });
@@ -116,6 +117,14 @@ test('sessionNumber() reads s1…s7', () => {
   assert.equal(R.sessionNumber('s1'), 1);
   assert.equal(R.sessionNumber('s7'), 7);
   assert.equal(R.sessionNumber('cifras'), 0);
+  assert.equal(R.sessionNumber('s0'), 0, 's0 is the timeline, not a KB session');
+});
+
+test('the timeline route and its milestone deep links', () => {
+  assert.deepEqual(plain(R.parse('#s0')), { route: 's0', block: '', known: true });
+  assert.deepEqual(plain(R.parse('#s0/alphago')), { route: 's0', block: 'alphago', known: true });
+  assert.deepEqual(plain(R.parse('#s0/GPT-3')), { route: 's0', block: 'gpt-3', known: true });
+  assert.equal(R.format('s0', 'claude-3-5-sonnet'), '#s0/claude-3-5-sonnet');
 });
 
 test('current() is #inicio before the router starts', () => {

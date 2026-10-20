@@ -1,13 +1,14 @@
 /* Estado de la IA 2026 — hash router (prompt §9.1).
  *
- * Routes: #inicio #mapa #evidencia #s1…#s7 #proyecto #cifras #glosario #preguntas #referencias
- * #asistente #clase. Deep links name a block after a slash: #s3/actividad, #cifras/adop-1,
+ * Routes: #inicio #mapa #evidencia #s0 #s1…#s7 #proyecto #cifras #glosario #preguntas #referencias
+ * #asistente #clase. #s0 is the AI timeline (js/ui/linea-tiempo.js). Deep links name a block after a slash:
+ * #s0/alphago (a milestone), #s3/actividad, #cifras/adop-1,
  * #glosario/costo-total, #preguntas/p3, #clase/<1–7|taller> (Modo clase, js/ui/presenter.js).
  *
  *   EIA.router.parse(hash)          -> { route, block, known }   pure; unknown routes -> 'inicio'
  *   EIA.router.format(route, block) -> '#route' | '#route/block'
  *   EIA.router.neighbors(route)     -> { prev, next } in course order (null outside it)
- *   EIA.router.sessionNumber(route) -> 1…7 for s1…s7, else 0
+ *   EIA.router.sessionNumber(route) -> 1…7 for s1…s7, else 0 (s0 is the timeline, not a KB session)
  *   EIA.router.start(handler)       listens to hashchange; handler(state, info) renders the view, then
  *                                   the router fires window event 'eia:route' { detail: { route, block } }.
  *                                   info = { initial, sameRoute, previous }
@@ -23,7 +24,7 @@
 
   var EIA = root.EIA = root.EIA || {};
 
-  var ORDER = ['inicio', 'mapa', 'evidencia', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 'proyecto'];
+  var ORDER = ['inicio', 'mapa', 'evidencia', 's0', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 'proyecto'];
   var ROUTES = ORDER.concat(['cifras', 'glosario', 'preguntas', 'referencias', 'asistente', 'clase']);
   var CLASE_ARGS = ['1', '2', '3', '4', '5', '6', '7', 'taller'];
   var BLOCK_RE = /^[a-z0-9][a-z0-9-]*$/;

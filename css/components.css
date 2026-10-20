@@ -2265,3 +2265,90 @@ html.has-modal, html.has-modal body { overflow: hidden; }
   to { opacity: 1; transform: rotate(-1deg); }
 }
 /* ==== [/interactions] ==== */
+
+/* ==== [linea-tiempo] sesión 0: the AI timeline (js/ui/linea-tiempo.js) ==== */
+/* A horizontal track that scrolls on its own (never the page), one button per milestone on a brush
+ * line, era headings above, and the detail card with the narration captions below. */
+.mapa-prelude { margin-bottom: var(--sp-6); max-width: 40rem; }
+.sesion-sign--0 { background-image: none; }
+
+.timeline__controls { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-4); }
+.timeline__controls .btn { min-height: var(--touch-target); }
+.timeline__pos { margin: 0 0 0 auto; font-size: var(--fs-sm); color: var(--color-texto-suave); }
+
+.timeline__scroller {
+  position: relative;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  padding: var(--sp-2) var(--sp-1) var(--sp-4);
+  margin: 0 calc(-1 * var(--sp-1));
+}
+.timeline__eras { display: flex; gap: var(--sp-5); list-style: none; margin: 0; padding: 0; width: max-content; }
+.timeline__era, .timeline__item { margin: 0; }  /* no list rhythm (li + li) inside the track */
+.timeline__era { flex: none; }
+/* The era name stays in view (sticky) while its milestones scroll past. */
+.timeline__era-title {
+  position: sticky; left: 0; display: flex; align-items: baseline; gap: var(--sp-2);
+  width: max-content; max-width: 100%; white-space: nowrap;
+  font-size: var(--fs-md); margin: 0 0 var(--sp-3); padding: 0 var(--sp-2) var(--sp-1);
+  background: var(--color-fondo); border-bottom: 4px solid var(--azul);
+}
+.timeline__era--generativa .timeline__era-title { border-bottom-color: var(--rojo); }
+.timeline__era-years { font-family: var(--font-sans); font-size: var(--fs-sm); font-weight: var(--fw-regular); color: var(--color-texto-suave); }
+
+.timeline__list { position: relative; display: flex; list-style: none; margin: 0; padding: 0; }
+.timeline__list::before {
+  content: ""; position: absolute; left: 0; right: 0; top: calc(var(--sp-2) + 9px);
+  border-top: 3px solid var(--tinta); border-radius: 2px;
+}
+.timeline__item { flex: none; width: 9rem; scroll-snap-align: center; }
+.timeline__hito {
+  position: relative; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; gap: var(--sp-1);
+  width: 100%; min-height: 8.5rem; padding: var(--sp-2) var(--sp-2) var(--sp-3);
+  font: inherit; color: inherit; text-align: left; cursor: pointer;
+  background: transparent; border: 2px solid transparent; border-radius: var(--radius-card);
+}
+.timeline__hito:hover { background: rgba(249, 231, 166, 0.55); }
+.timeline__hito:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+.timeline__hito.is-selected { background: var(--wash-amarillo); border-color: var(--tinta); }
+.timeline__dot {
+  width: 18px; height: 18px; border-radius: 50%; flex: none;
+  background: var(--lienzo); border: 3px solid var(--tinta);
+}
+.timeline__era--fundamentos .timeline__dot { border-color: var(--azul); }
+.timeline__era--generativa .timeline__dot { border-color: var(--rojo); }
+.timeline__hito.is-selected .timeline__dot { background: var(--tinta); border-color: var(--tinta); transform: scale(1.25); }
+.timeline__fecha { font-family: var(--font-display); font-weight: var(--fw-bold); font-size: var(--fs-md); line-height: var(--lh-tight); }
+.timeline__nombre { font-size: var(--fs-sm); line-height: var(--lh-snug); }
+
+.timeline__detail { margin-top: var(--sp-4); }
+.timeline__detail-fecha { font-size: var(--fs-md); }
+.timeline__lead { max-width: var(--measure); }
+.timeline__narration { display: flex; flex-wrap: wrap; align-items: stretch; gap: var(--sp-3); margin: var(--sp-3) 0 var(--sp-4); }
+.timeline__narration > .btn { align-self: flex-start; min-height: var(--touch-target); }
+.timeline__caption-box {
+  flex: 1 1 16rem; min-height: 4.6rem; padding: var(--sp-2) var(--sp-3);
+  background: var(--noche); color: var(--lienzo); border-radius: 10px;
+}
+.timeline__caption-label { display: block; font-size: var(--fs-xs); opacity: 0.75; }
+.timeline__caption { margin: 0; font-size: var(--fs-md); line-height: var(--lh-snug); }
+.timeline__notice { font-size: var(--fs-sm); color: var(--color-texto-suave); margin: 0 0 var(--sp-3); }
+.timeline__fields { display: grid; grid-template-columns: minmax(9rem, 14rem) 1fr; gap: var(--sp-2) var(--sp-4); margin: 0; }
+.timeline__fields dt { font-weight: var(--fw-bold); }
+.timeline__fields dd { margin: 0; max-width: var(--measure); }
+.timeline__sources { list-style: none; margin: 0; padding: 0; }
+.timeline__sources a { overflow-wrap: anywhere; }
+
+@media (max-width: 40rem) {
+  .timeline__item { width: 7.75rem; }
+  .timeline__era-title { white-space: normal; max-width: calc(100vw - 3rem); flex-wrap: wrap; }
+  .timeline__hito { min-height: 8rem; }
+  .timeline__fields { grid-template-columns: 1fr; gap: var(--sp-1); }
+  .timeline__fields dd { margin-bottom: var(--sp-2); }
+  .timeline__pos { width: 100%; margin-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .timeline__hito.is-selected .timeline__dot { transform: none; }
+}
+/* ==== [/linea-tiempo] ==== */
